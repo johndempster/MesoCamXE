@@ -1,6 +1,6 @@
 
-MesoScan - Mesolens Laser Scanning Microscope Application
----------------------------------------------------------
+MesoCam - Mesolens Camera Image Acquisition Application
+-------------------------------------------------------
 
 The Embarcadero Delphi XE Integrated Development Environment is required to build this package.
 
@@ -23,7 +23,7 @@ Select "SESComponents.dpk"
 Select Project/Build SESComponents
 Select Components/Install Packages, click the ADD button and select the file ..\Libraries\Documents\RAD Studio\10.0\BPL\SESComponents.BBL
 
-To open the Mesoscan project:
+To open the MesoCam project:
 
 1) Extract the MesoCam project from the johndempster/MesoCamXE GitHub repository to the folder ..\Libraries\Documents\RAD Studio\MesoCamXE
 
@@ -32,6 +32,6 @@ To open the Mesoscan project:
 Select File/Open Project
 Select Files of Type "*.dpr"
 Select the "MesoCam" Folder
-Select "Mesoscan"
+Select "MesoCam"
 Click the Open button
 
