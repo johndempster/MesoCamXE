@@ -1,47 +1,27 @@
-# Windows image file caches
-Thumbs.db
-ehthumbs.db
+*.arm
+*.cmd
+*.gxc
+*.arn
+*.zip
+*.dcu
+*.tmp
+*.raw
+*.~*~
+*~
+*.local
+*.identcache
+__history
+*.drc
+*.map
+*.exe
+at*.dll
+./bin/*
+./temp/*.*
+./vprot/*.*
+./pprot/*.*
+./data/*.*
+./HelpSmith Files/*.*
 
-# Folder config file
-Desktop.ini
+/WinFluor Setup Project/
+/data/
 
-# Recycle Bin used on file shares
-$RECYCLE.BIN/
-
-# Windows Installer files
-*.cab
-*.msi
-*.msm
-*.msp
-
-# Windows shortcuts
-*.lnk
-
-# =========================
-# Operating System Files
-# =========================
-
-# OSX
-# =========================
-
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Thumbnails
-._*
-
-# Files that might appear in the root of a volume
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
