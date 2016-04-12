@@ -84,21 +84,24 @@ begin
      List.Clear ;
 
     List.AddObject('None',TObject(LineDisabled)) ;
-    for i := 0 to LabIO.NumResources-1 do begin
-        if (LabIO.Resource[i].ResourceType = DACOut) then begin
+    for i := 0 to LabIO.NumResources-1 do
+        begin
+        if (LabIO.Resource[i].ResourceType = DACOut) then
+           begin
            // Analog outputs
-            s := format('Dev%d: AO.%d',
+           s := format('Dev%d: AO.%d',
                  [LabIO.Resource[i].Device,
                   LabIO.Resource[i].StartChannel]) ;
                 List.AddObject(s,TObject(i))
-            end
-        else if (LabIO.Resource[i].ResourceType = DIGOut) then begin
+           end
+        else if (LabIO.Resource[i].ResourceType = DIGOut) then
+           begin
            // Digital outputs
-            s := format('Dev%d: PO.%d',
+           s := format('Dev%d: PO.%d',
                  [LabIO.Resource[i].Device,
                   LabIO.Resource[i].StartChannel]) ;
                 List.AddObject(s,TObject(i))
-            end ;
+           end ;
         end;
      end;
 
@@ -109,19 +112,24 @@ procedure TLightSource.Update ;
 // ---------------------------------
 var
     V : Single ;
-    i,Dev,Chan : Integer ;
+    i,Dev,Chan  : Integer ;
+    ResourceType : TResourceType ;
 begin
-     for i := 0 to High(ControlLines) do if ControlLines[i] < LineDisabled then begin
-        Dev := LabIO.Resource[i].Device ;
-        Chan := LabIO.Resource[i].StartChannel ;
-        if (LabIO.Resource[i].ResourceType = DACOut) then begin
+     for i := 0 to High(ControlLines) do if ControlLines[i] < LineDisabled then
+        begin
+        Dev := LabIO.Resource[ControlLines[i]].Device ;
+        Chan := LabIO.Resource[ControlLines[i]].StartChannel ;
+        ResourceType := LabIO.Resource[ControlLines[i]].ResourceType ;
+        if ResourceType = DACOut then
+           begin
            // Analogue outputs
-           if Active[i] then V := (MaxLevel[i] - MinLevel[i])*Intensity[i] + MinLevel[i]
+           if Active[i] then V := (MaxLevel[i] - MinLevel[i])*(Intensity[i]/100.0) + MinLevel[i]
                         else V := MinLevel[i] ;
            LabIO.DACOutState[Dev][Chan] := V ;
            LabIO.WriteDAC(Dev,V,Chan);
            end
-        else if (LabIO.Resource[i].ResourceType = DIGOut) then begin
+        else if ResourceType = DIGOut then
+           begin
            // Digital outputs
            if Active[i] then LabIO.SetBit(LabIO.DigOutState[Dev],Chan,0)
                         else LabIO.SetBit(LabIO.DigOutState[Dev],Chan,1) ;

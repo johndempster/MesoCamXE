@@ -1139,7 +1139,7 @@ object MainFrm: TMainFrm
     Top = 8
     Width = 583
     Height = 257
-    ActivePage = tbChan1
+    ActivePage = tbChan0
     TabOrder = 6
     OnChange = PageChange
     object tbChan0: TTabSheet
@@ -1164,7 +1164,6 @@ object MainFrm: TMainFrm
     object tbChan1: TTabSheet
       Caption = 'Channel 1'
       ImageIndex = 1
-      ExplicitLeft = -3
       object Image1: TImage
         Left = 3
         Top = 3
@@ -1361,6 +1360,7 @@ object MainFrm: TMainFrm
     CCDVerticalShiftSpeed = 0
     NumPixelShiftFrames = 1
     DisableExposureIntervalLimit = False
+    MonochromeImage = False
     Left = 352
     Top = 488
   end

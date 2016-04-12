@@ -356,39 +356,47 @@ begin
 
     case ControlState of
 
-        csIdle : begin
-          if MoveToRequest then begin
+        csIdle :
+          begin
+          if MoveToRequest then
+             begin
              // Go to required position
              SendCommand(format('U %d',[Round((MoveToPosition-ZPosition)*ZScaleFactor)])) ;
              ControlState := csWaitingForCompletion ;
              MoveToRequest := False ;
-          end
-          else begin
-            // Request stage position
-            SendCommand( 'PZ' ) ;
-            ControlState := csWaitingForPosition ;
-          end ;
-        end;
+             end
+          else
+             begin
+             // Request stage position
+             SendCommand( 'PZ' ) ;
+             ControlState := csWaitingForPosition ;
+             end ;
+          end;
 
-        csWaitingForPosition : begin
+        csWaitingForPosition :
+          begin
           Status := Status + ReceiveBytes( EndOfLine ) ;
-          if EndOfLine then begin
+          if EndOfLine then
+             begin
              ZScaleFactor := Max(ZScaleFactor,1E-3) ;
              ZPosition := StrToInt64(Status)/ZScaleFactor ;
              Status := '' ;
              ControlState := csIdle ;
-          end;
-        end ;
+             end;
+          end ;
 
-        csWaitingForCompletion : begin
+        csWaitingForCompletion :
+          begin
           Status := ReceiveBytes( EndOfLine ) ;
-          if EndOfLine then begin
+          if EndOfLine then
+             begin
              Status := '' ;
              ControlState := csIdle ;
-          end;
+             end;
 
-        end;
+          end;
     end;
+
 end;
 
 
@@ -399,7 +407,7 @@ procedure TZStage.MoveToOSII( Position : Double ) ;
 begin
     MoveToPosition := Position ;
     MoveToRequest := True ;
-    end;
+end;
 
 
 procedure TZStage.SetControlPort( Value : DWord ) ;
@@ -429,8 +437,10 @@ procedure TZStage.ResetCOMPort ;
 // --------------------------
 begin
     case FStageType of
-        stOptiscanII : begin
-          if ComPortOpen then begin
+        stOptiscanII :
+          begin
+          if ComPortOpen then
+             begin
              CloseComPort ;
              OpenComPort ;
              end;
@@ -447,11 +457,12 @@ begin
 
     FEnabled := Value ;
     case FStageType of
-        stOptiscanII : begin
+        stOptiscanII :
+          begin
           if FEnabled and (not ComPortOpen) then OpenComPort
           else if (not FEnabled) and ComPortOpen then CloseComPort ;
           end;
-        end ;
+    end ;
 
     end;
 
@@ -487,10 +498,12 @@ begin
 
     iPort := 0 ;
     for iDev := 1 to LabIO.NumDevices do
-        for iChan := 0 to LabIO.NumDACs[iDev]-1 do begin
-            if iPort = FControlPort then begin
-                LabIO.WriteDAC(iDev,Position*ZScaleFactor,iChan);
-                end;
+        for iChan := 0 to LabIO.NumDACs[iDev]-1 do
+            begin
+            if iPort = FControlPort then
+               begin
+               LabIO.WriteDAC(iDev,Position*ZScaleFactor,iChan);
+               end;
             inc(iPort) ;
             end;
     end ;

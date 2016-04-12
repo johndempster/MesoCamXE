@@ -53,7 +53,7 @@ object SettingsFrm: TSettingsFrm
     Top = 8
     Width = 497
     Height = 401
-    ActivePage = LightSourceTab
+    ActivePage = CameraTab
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
@@ -157,8 +157,8 @@ object SettingsFrm: TSettingsFrm
             Caption = 'Readout Speed'
           end
           object cbReadoutSpeed: TComboBox
-            Left = 112
-            Top = 3
+            Left = 110
+            Top = 2
             Width = 97
             Height = 22
             Style = csDropDownList
@@ -388,10 +388,51 @@ object SettingsFrm: TSettingsFrm
           TabOrder = 2
         end
       end
+      object GroupBox5: TGroupBox
+        Left = 239
+        Top = 175
+        Width = 240
+        Height = 89
+        TabOrder = 3
+        object Label25: TLabel
+          Left = 8
+          Top = 8
+          Width = 107
+          Height = 13
+          Caption = 'Image-J Program Path'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+        end
+        object edImageJPath: TEdit
+          Left = 8
+          Top = 26
+          Width = 217
+          Height = 21
+          TabOrder = 0
+          Text = 'edImageJPath'
+        end
+        object ckSaveAsMultipageTIFF: TCheckBox
+          Left = 64
+          Top = 50
+          Width = 161
+          Height = 17
+          Alignment = taLeftJustify
+          Caption = 'Save stacks as multipage TIFF'
+          TabOrder = 1
+        end
+      end
     end
     object LightSourceTab: TTabSheet
       Caption = 'Light Source'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object GroupBox1: TGroupBox
         Left = 0
         Top = 3
@@ -866,6 +907,10 @@ object SettingsFrm: TSettingsFrm
     object ZStageTab: TTabSheet
       Caption = 'Z Stage'
       ImageIndex = 2
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object GroupBox2: TGroupBox
         Left = 4
         Top = 8

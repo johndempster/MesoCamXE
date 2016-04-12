@@ -103,6 +103,10 @@ type
     rbCameraTriggerActiveLow: TRadioButton;
     Label9: TLabel;
     edCameraPixelSize: TValidatedEdit;
+    GroupBox5: TGroupBox;
+    Label25: TLabel;
+    edImageJPath: TEdit;
+    ckSaveAsMultipageTIFF: TCheckBox;
     procedure FormShow(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCancelClick(Sender: TObject);
@@ -120,7 +124,7 @@ type
               Num : Integer ;
               Panel : TPanel ) ;
 
-    procedure NewCamera ;
+    procedure NewCamera(Reopen : Boolean) ;
   public
     { Public declarations }
   end;
@@ -133,6 +137,81 @@ implementation
 {$R *.dfm}
 
 uses MainUnit, ZStageUnit;
+
+
+procedure TSettingsFrm.FormShow(Sender: TObject);
+// --------------------------
+// Initialise form on display
+// --------------------------
+var
+    i : Integer ;
+    s : string ;
+begin
+
+     if MainFrm.Cam1.CameraActive then MainFrm.Cam1.StopCapture ;
+
+     // Get camera library list
+     MainFrm.Cam1.GetCameraLibList( cbCamera.Items ) ;
+     cbCamera.ItemIndex := MainFrm.CameraType ;
+
+     // Get names of available cameras
+     MainFrm.Cam1.GetCameraNameList( cbCameraNames.Items ) ;
+     cbCameraNames.ItemIndex := MainFrm.Cam1.SelectedCamera ;
+
+     // Get camera COM port
+     cbCameraPort.ItemIndex := MainFrm.Cam1.ComPort - 1 ;
+
+     // Reset camera
+     NewCamera(false) ;
+
+    // Camera trigger output channel
+    cbCameraTrigger.Clear ;
+    cbCameraTrigger.Items.AddObject('Internal',TObject(MaxResources+1)) ;
+    for i := 0 to LabIO.NumResources-1 do
+        begin
+        if (LabIO.Resource[i].ResourceType = DIGOut) then
+           begin
+           // Digital outputs
+           s := format('Dev%d: PO.%d',[LabIO.Resource[i].Device,LabIO.Resource[i].StartChannel]) ;
+           cbCameraTrigger.Items.AddObject(s,TObject(i))
+           end ;
+        end;
+
+     cbCameraTrigger.ItemIndex := Max( 0,
+     cbCameraTrigger.Items.IndexOfObject(TObject(MainFrm.CameraTriggerOutput))) ;
+     rbCameraTriggerActiveHigh.Checked := MainFrm.CameraTriggerActiveHigh ;
+     rbCameraTriggerActiveLow.Checked := not rbCameraTriggerActiveHigh.Checked ;
+
+    // Z stage control
+    ZStage.GetZStageTypes(cbZStageType.Items);
+    cbZStageType.ItemIndex := Min(Max(ZStage.StageType,0),cbZStageType.Items.Count-1) ;
+
+    ZStage.GetControlPorts(cbZStagePort.Items);
+    cbZStagePort.ItemIndex := Min(Max(ZStage.ControlPort,0),cbZStagePort.Items.Count-1) ;
+
+    // Light Sources
+    SetLightSourcePanel( 0, pnLightSource0 ) ;
+    SetLightSourcePanel( 1, pnLightSource1 ) ;
+    SetLightSourcePanel( 2, pnLightSource2 ) ;
+    SetLightSourcePanel( 3, pnLightSource3 ) ;
+    SetLightSourcePanel( 4, pnLightSource4 ) ;
+    SetLightSourcePanel( 5, pnLightSource5 ) ;
+    SetLightSourcePanel( 6, pnLightSource6 ) ;
+    SetLightSourcePanel( 7, pnLightSource7 ) ;
+
+    edZScaleFactor.Units := ZStage.ZScaleFactorUnits ;
+    edZScaleFactor.Value := ZStage.ZScaleFactor ;
+    edZStepTime.Value := ZStage.ZStepTime ;
+
+    edLensMagnification.Value := MainFrm.LensMagnification ;
+    edCameraPixelSize.Value := MainFrm.CameraPixelSize ;
+
+    edImageJPath.Text := MainFrm.ImageJPath ;
+    ckSaveAsMultipageTIFF.Checked := MainFrm.SaveAsMultipageTIFF ;
+
+end;
+
+
 
 procedure TSettingsFrm.bCancelClick(Sender: TObject);
 // ---------------------
@@ -173,6 +252,9 @@ begin
     MainFrm.Cam1.GetCameraGainList( MainFrm.cbCameraGain.Items );
     MainFrm.cbCameraGain.ItemIndex := 0 ;
 
+    MainFrm.ImageJPath := edImageJPath.Text ;
+    MainFrm.SaveAsMultipageTIFF := ckSaveAsMultipageTIFF.Checked ;
+
     Close ;
     end;
 
@@ -180,6 +262,7 @@ begin
 procedure TSettingsFrm.cbCameraADCChange(Sender: TObject);
 begin
      MainFrm.Cam1.CameraADC := cbCameraADC.ItemIndex ;
+     NewCamera(true) ;
      end;
 
 procedure TSettingsFrm.cbCameraChange(Sender: TObject);
@@ -188,26 +271,28 @@ procedure TSettingsFrm.cbCameraChange(Sender: TObject);
 // --------------
 begin
 
-     NewCamera ;
+     NewCamera(true) ;
 
      // Set camera readout speed to maximum
-     if cbReadoutSpeed.Visible then begin
+     if cbReadoutSpeed.Visible then
+        begin
         cbReadoutSpeed.ItemIndex := MainFrm.Cam1.DefaultReadoutSpeed ;
         end ;
 
-     end;
+end;
 
 procedure TSettingsFrm.cbCameraModeChange(Sender: TObject);
 begin
      MainFrm.Cam1.CameraMode := cbCameraMode.ItemIndex ;
-     MainFrm.Cam1.CameraADC := MainFrm.Cam1.CameraADC ;
-     end;
+//     MainFrm.Cam1.CameraADC := MainFrm.Cam1.CameraADC ;
+     NewCamera(true) ;
+end;
 
 procedure TSettingsFrm.cbCameraNamesChange(Sender: TObject);
 begin
     MainFrm.Cam1.SelectedCamera := cbCameraNames.ItemIndex ;
-    NewCamera ;
-    end;
+    NewCamera(true) ;
+end;
 
 procedure TSettingsFrm.cbZStageTypeChange(Sender: TObject);
 //
@@ -221,76 +306,7 @@ begin
     edZScaleFactor.Units := ZStage.ZScaleFactorUnits ;
     edZScaleFactor.Value := ZStage.ZScaleFactor ;
 
-    end;
-
-procedure TSettingsFrm.FormShow(Sender: TObject);
-// --------------------------
-// Initialise form on display
-// --------------------------
-var
-    i : Integer ;
-    s : string ;
-begin
-
-     if MainFrm.Cam1.CameraActive then MainFrm.Cam1.StopCapture ;
-
-     // Get camera library list
-     MainFrm.Cam1.GetCameraLibList( cbCamera.Items ) ;
-     cbCamera.ItemIndex := MainFrm.CameraType ;
-
-     // Get names of available cameras
-     MainFrm.Cam1.GetCameraNameList( cbCameraNames.Items ) ;
-     cbCameraNames.ItemIndex := MainFrm.Cam1.SelectedCamera ;
-
-     // Get camera COM port
-     cbCameraPort.ItemIndex := MainFrm.Cam1.ComPort - 1 ;
-
-     // Reset camera
-     NewCamera ;
-
-    // Camera trigger output channel
-    cbCameraTrigger.Clear ;
-    cbCameraTrigger.Items.AddObject('Internal',TObject(MaxResources+1)) ;
-    for i := 0 to LabIO.NumResources-1 do begin
-        if (LabIO.Resource[i].ResourceType = DIGOut) then begin
-           // Digital outputs
-            s := format('Dev%d: PO.%d',
-                 [LabIO.Resource[i].Device,
-                  LabIO.Resource[i].StartChannel]) ;
-                cbCameraTrigger.Items.AddObject(s,TObject(i))
-            end ;
-        end;
-
-     cbCameraTrigger.ItemIndex := Max( 0,
-     cbCameraTrigger.Items.IndexOfObject(TObject(MainFrm.CameraTriggerOutput))) ;
-     rbCameraTriggerActiveHigh.Checked := MainFrm.CameraTriggerActiveHigh ;
-     rbCameraTriggerActiveLow.Checked := not rbCameraTriggerActiveHigh.Checked ;
-
-    // Z stage control
-    ZStage.GetZStageTypes(cbZStageType.Items);
-    cbZStageType.ItemIndex := Min(Max(ZStage.StageType,0),cbZStageType.Items.Count-1) ;
-
-    ZStage.GetControlPorts(cbZStagePort.Items);
-    cbZStagePort.ItemIndex := Min(Max(ZStage.ControlPort,0),cbZStagePort.Items.Count-1) ;
-
-    // Light Sources
-    SetLightSourcePanel( 0, pnLightSource0 ) ;
-    SetLightSourcePanel( 1, pnLightSource1 ) ;
-    SetLightSourcePanel( 2, pnLightSource2 ) ;
-    SetLightSourcePanel( 3, pnLightSource3 ) ;
-    SetLightSourcePanel( 4, pnLightSource4 ) ;
-    SetLightSourcePanel( 5, pnLightSource5 ) ;
-    SetLightSourcePanel( 6, pnLightSource6 ) ;
-    SetLightSourcePanel( 7, pnLightSource7 ) ;
-
-    edZScaleFactor.Units := ZStage.ZScaleFactorUnits ;
-    edZScaleFactor.Value := ZStage.ZScaleFactor ;
-    edZStepTime.Value := ZStage.ZStepTime ;
-
-    edLensMagnification.Value := MainFrm.LensMagnification ;
-    edCameraPixelSize.Value := MainFrm.CameraPixelSize ;
-
-    end;
+end;
 
 
 procedure TSettingsFrm.SetLightSourcePanel(
@@ -305,18 +321,19 @@ begin
       for i := 0 to 3 do if Panel.Controls[i].Tag = 0 then
           TEdit(Panel.Controls[i]).Text := LightSource.Names[Num] ;
 
-      for i := 0 to 3 do if Panel.Controls[i].Tag = 1 then begin
+      for i := 0 to 3 do if Panel.Controls[i].Tag = 1 then
+          begin
           LightSource.GetControlLineNames( TComboBox(Panel.Controls[i]).Items ) ;
           TComboBox(Panel.Controls[i]).ItemIndex :=
              TComboBox(Panel.Controls[i]).Items.IndexOfObject(TObject(LightSource.ControlLines[Num])) ;
-             end ;
+          end ;
       for i := 0 to 3 do if Panel.Controls[i].Tag = 2 then
           TValidatedEdit(Panel.Controls[i]).Value := LightSource.MinLevel[Num] ;
 
       for i := 0 to 3 do if Panel.Controls[i].Tag = 3 then
           TValidatedEdit(Panel.Controls[i]).Value := LightSource.MaxLevel[Num] ;
 
-      end;
+end;
 
 procedure TSettingsFrm.GetLightSourcePanel(
           Num : Integer ;
@@ -343,8 +360,7 @@ begin
       end;
 
 
-
-procedure TSettingsFrm.NewCamera ;
+procedure TSettingsFrm.NewCamera(Reopen : Boolean) ;
 // ---------------------------------------------
 // Setup up dialog box for newly selected camera
 // ---------------------------------------------
@@ -353,12 +369,10 @@ var
     iTop : Integer ;
 begin
 
-     // Close existing camera and re-open new if camera changed
+     // Close existing camera and re-open new if required
 
-     if (cbCamera.ItemIndex <> MainFrm.CameraType) or
-        (cbCameraNames.ItemIndex <> MainFrm.Cam1.SelectedCamera) or
-        (cbCameraADC.ItemIndex <> MainFrm.Cam1.CameraADC) or
-        (cbCameraPort.ItemIndex <> (MainFrm.Cam1.ComPort-1)) then begin
+     if Reopen then
+        begin
 
         Screen.Cursor := crHourglass ;
         MainFrm.edStatus.Text := ' WAIT: Initialising camera ... ' ;
@@ -372,20 +386,8 @@ begin
         MainFrm.Cam1.ComPort := cbCameraPort.ItemIndex + 1 ;
         MainFrm.Cam1.OpenCamera( MainFrm.CameraType ) ;
 
-        MainFrm.Cam1.SelectedCamera := cbCameraNames.ItemIndex ;
-        MainFrm.SelectedCamera := MainFrm.Cam1.SelectedCamera ;
-
-        MainFrm.Cam1.CameraADC := cbCameraADC.ItemIndex ;
-        cbCameraADC.ItemIndex := MainFrm.Cam1.CameraADC ;
-
         MainFrm.Cam1.FrameInterval := 0.1 ;
-
-        // Initialise look-up tables
-        MainFrm.GreyLo := 0 ;
-        MainFrm.GreyHi := MainFrm.Cam1.GreyLevelMax ;
-        MainFrm.UpdateLUT( MainFrm.Cam1.GreyLevelMax ) ;
-
-       MainFrm.edStatus.Text := ' Camera Initialised ' ;
+        MainFrm.edStatus.Text := ' Camera Initialised ' ;
 
         Screen.Cursor := crDefault ;
 
@@ -397,11 +399,18 @@ begin
 
      // Show camera selection panel if more than one camera available
      CameraPanel.Top := iTop ;
-     if MainFrm.Cam1.NumCameras > 1 then begin
+     if MainFrm.Cam1.NumCameras > 1 then
+        begin
         CameraPanel.Visible := True ;
         iTop := iTop + CameraPanel.Height ;
         end
      else CameraPanel.Visible := False ;
+
+     // Initialise look-up tables
+     MainFrm.GreyLo := 0 ;
+     MainFrm.GreyHi := MainFrm.Cam1.GreyLevelMax ;
+     MainFrm.GreyLevelMax := MainFrm.Cam1.GreyLevelMax ;
+     MainFrm.UpdateLUT( MainFrm.Cam1.GreyLevelMax ) ;
 
      ModePanel.Top := iTop ;
      MainFrm.Cam1.GetCameraModeList( cbCameraMode.Items );
@@ -429,12 +438,14 @@ begin
 
      // Display camera control COM port (if present)
      ComPanel.Top := iTop ;
-     if MainFrm.Cam1.ComPortUsed then begin
+     if MainFrm.Cam1.ComPortUsed then
+        begin
         ComPanel.Visible := True ;
         iTop := iTop + ComPanel.Height ;
         cbCameraPort.ItemIndex := MainFrm.Cam1.ComPort - 1 ;
         end
-     else begin
+     else
+        begin
         cbCameraPort.ItemIndex := -1 ;
         ComPanel.Visible := False ;
         end ;
@@ -444,8 +455,7 @@ begin
 
      CamTriggerPanel.Top := iTop ;
 
-
-     end ;
+end ;
 
 
 
