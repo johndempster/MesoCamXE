@@ -5,6 +5,9 @@ unit MainUnit;
 // (c) John Dempster, University of Strathclyde 2011-16
 // V1.0
 // V1.5.1 12.04.16 S
+// V1.5.2 29.04.16
+// V1.5.3 9.05.16 Nearly working with Vieworks camera
+//                Upper exposure time limited to 140ms
 
 interface
 
@@ -100,7 +103,6 @@ type
     bEnterCCDArea: TButton;
     Label8: TLabel;
     cbCameraGain: TComboBox;
-    mnLoadImage: TMenuItem;
     edStatus: TEdit;
     pnLightSource0: TPanel;
     ckLightSourceOn: TCheckBox;
@@ -163,6 +165,7 @@ type
     ckAcquireZStack: TCheckBox;
     tbChan3: TTabSheet;
     Image3: TImage;
+    edZStatus: TEdit;
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -212,6 +215,7 @@ type
     procedure ckAcquireZStackClick(Sender: TObject);
     procedure ckSeparateLightSourcesClick(Sender: TObject);
     procedure PageChange(Sender: TObject);
+    procedure File1Click(Sender: TObject);
   private
 
     { Private declarations }
@@ -231,10 +235,13 @@ type
     CameraPixelSize : double ;            // Camera pixel size (microns)
     CameraTriggerOutput : Integer ;       // Camera trigger digital output line
     CameraTriggerActiveHigh : Boolean ;   // TTL high level triggers camera
+    CameraTriggerBit : Integer ;
+    CameraGainIndex : Integer ;
     Initialising : Boolean ;
     ShowCapturedImage : Boolean ;
     LiveImagingInProgress : Boolean ;
     ShowCameraImage : Boolean ;
+    RawImageAvailable : Boolean ;
     DeviceNum : Integer ;
     pFrameBuf : Pointer ;
     TempBuf : PBig16bitArray ;
@@ -249,6 +256,7 @@ type
     NumFramesRequired : Integer ;     //  No. of frames required to be captured
     OldNumFramesAcquired : Integer ;
     PulseCounter : Integer ;
+    NextCameraTrigger : Integer ;
 
     BufSize : Integer ;
     XCentre : Double ;
@@ -278,8 +286,12 @@ type
     NumBitsPerPixel : Integer ;           // No. of bits in component
     GreyLevelMax2 : Double ;               // No. of grey levels in component
 
-    HRFrameWidth : Integer ;       // Width of high res. image
-    HRFrameHeight : Integer ;      // Height of image of display
+//  High resolution image
+    HRFrameWidth : Integer ;                 // Width
+    HRFrameHeight : Integer ;                // Height
+    HRNumComponentsPerPixel : Integer ;     // No. of colour components per pixel
+    HRNumComponentsPerFrame : Integer ;     // No. of colour components
+
     ScanInfo : String ;
     SlidersDisabled : Boolean ;
 
@@ -515,13 +527,13 @@ begin
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
-     Caption := 'MesoCam V1.5.0 ';
+     Caption := 'MesoCam V1.5.3 ';
      {$IFDEF WIN32}
      Caption := Caption + '(32 bit)';
     {$ELSE}
      Caption := Caption + '(64 bit)';
     {$IFEND}
-    Caption := Caption + ' 12/04/16';
+    Caption := Caption + ' 09/05/16';
 
      TempBuf := Nil ;
      DeviceNum := 1 ;
@@ -621,7 +633,7 @@ begin
 
      // Set camera gain list
      Cam1.GetCameraGainList( cbCameraGain.Items );
-     cbCameraGain.ItemIndex := 0 ;
+     cbCameraGain.ItemIndex := CameraGainIndex ;
 
      RawImagesFileName := ProgDirectory + 'mesocam.raw' ;
 
@@ -648,8 +660,8 @@ begin
 
     iDev := LabIO.Resource[CameraTriggerOutput].Device ;
     iChan := LabIO.Resource[CameraTriggerOutput].StartChannel ;
-    if CameraTriggerActiveHigh then LabIO.SetBit(LabIO.DigOutState[iDev],iChan,0)
-                               else LabIO.SetBit(LabIO.DigOutState[iDev],iChan,1) ;
+    LabIO.SetBit(LabIO.DigOutState[iDev],iChan,CameraTriggerBit);
+    CameraTriggerBit := 0 ;
     // Initialise digital outputs
     for iDev := 1 to LabIO.NumDevices do begin
         LabIO.WriteToDigitalOutPutPort( iDev, LabIO.DigOutState[iDev] ) ;
@@ -1157,6 +1169,8 @@ begin
        begin
        FrameWidth := Cam1.FrameWidth ;
        FrameHeight := Cam1.FrameHeight ;
+       NumComponentsPerFrame := Cam1.NumComponentsPerFrame ;
+       NumComponentsPerPixel := Cam1.NumComponentsPerPixel ;
        pImBuf := pLiveImageBuf ;
        pDisplayBuf := pLiveImageBuf ;
        end
@@ -1166,6 +1180,8 @@ begin
        pDisplayBuf := pImageBuf ;
        FrameWidth := HRFrameWidth ;
        FrameHeight := HRFrameHeight ;
+       NumComponentsPerFrame := HRNumComponentsPerFrame ;
+       NumComponentsPerPixel := HRNumComponentsPerPixel ;
        end;
 
     if pImBuf = Nil then Exit ;
@@ -1239,6 +1255,7 @@ begin
      FreeMem(XMap) ;
      FreeMem(YMap) ;
 
+     SetImagePanels ;
 
      end ;
 
@@ -1344,6 +1361,7 @@ begin
     ShowCapturedImage := False ;
     ShowCameraImage := True ;
 
+    CCDRegion.Top := 0.0 ;
     StartNewScan ;
 end ;
 
@@ -1353,7 +1371,11 @@ procedure TMainFrm.bCaptureImageClick(Sender: TObject);
 // ----------------------------
 begin
     bCaptureImage.Enabled := False ;
-    LiveImagingInProgress := False ;
+    if LiveImagingInProgress then
+       begin
+       StopCamera ;
+       LiveImagingInProgress := False ;
+       end;
 
     bLiveImage.Enabled := True ;
     bStopImage.Enabled := True ;
@@ -1368,6 +1390,9 @@ procedure TMainFrm.bEnterCCDAreaClick(Sender: TObject);
 // Set CCD readout region as % of total area
 // -----------------------------------------
 begin
+
+     if LiveImagingInProgress then StopCamera ;
+
      SetCCDReadoutFrm := TSetCCDReadoutFrm.Create(Self) ;
      SetCCDReadoutFrm.Show ;
      SetCCDReadoutFrm.Left := 20 ;
@@ -1399,7 +1424,8 @@ begin
     ZSection := 0 ;
     NumZSectionsAvailable := 0 ;
     NumImagesInFile := 0 ;
-    ZStep := edNumPixelsPerZStep.Value*Cam1.PixelWidth ;
+    RawImageAvailable := False ;
+    ZStep := edNumPixelsPerZStep.Value*(Cam1.PixelWidth/Cam1.BinFactor) ;
     edMicronsPerZStep.Value := ZStep ;
     //NumZSections := Round(edNumZSections.Value) ;
 
@@ -1474,7 +1500,7 @@ begin
 
     if not bLiveImage.Enabled then
        begin
-       if (CCDRegion.Height < 0.5) or (Cam1.ReadoutTime <= 0.1) then Cam1.BinFactor := 1
+       if (CCDRegion.Height < 0.5) {or (Cam1.ReadoutTime <= 0.1)} then Cam1.BinFactor := 1
                                                                 else Cam1.BinFactor := 4 ;
 
        Cam1.TriggerMode := camFreeRun ;
@@ -1485,7 +1511,7 @@ begin
        Cam1.BinFactor := 1 ;
        Cam1.TriggerMode := CamExtTrigger ;
        Cam1.NumPixelShiftFrames := Integer(cbCaptureMode.Items.Objects[cbCaptureMode.ItemIndex]) ;
-       if Cam1.NumPixelShiftFrames > 1 then Cam1.TriggerMode := CamExtTrigger
+       if Cam1.NumPixelShiftFrames > 0 then Cam1.TriggerMode := CamExtTrigger
                                        else Cam1.TriggerMode := camFreeRun ;
        end;
     NumFramesRequired := Cam1.NumPixelShiftFrames ;
@@ -1509,12 +1535,16 @@ begin
        NumComponentsPerPixel := Cam1.NumComponentsPerPixel ;
        pLiveImageBuf := GetMemory(Cam1.NumComponentsPerFrame*SizeOf(Integer)) ;
        for i := 0 to Cam1.NumComponentsPerFrame-1 do pLiveImageBuf^[i] := 0 ;
-       FrameWidth := Cam1.FrameWidth ;
-       FrameHeight := Cam1.FrameHeight ;
+//       FrameWidth := Cam1.FrameWidth ;
+//       FrameHeight := Cam1.FrameHeight ;
        NumBitsPerPixel := Cam1.PixelDepth ;
        GreyLevelMax := Cam1.GreyLevelMax ;
        end;
 
+//       FrameWidth := Cam1.FrameWidth ;
+//       FrameHeight := Cam1.FrameHeight ;
+       NumBitsPerPixel := Cam1.PixelDepth ;
+       GreyLevelMax := Cam1.GreyLevelMax ;
     nShifts := Round(sqrt(Cam1.NumPixelShiftFrames)) ;
 
     Cam1.NumFramesInBuffer := 18 ;
@@ -1536,6 +1566,10 @@ begin
     OldNumFramesAcquired := 0 ;
     PulseCounter := 5 ;
 
+    SetImagePanels ;
+
+    CameraTriggerBit := 1 ;
+
     end;
 
 procedure TMainFrm.StopCamera ;
@@ -1551,6 +1585,8 @@ begin
 // Set frame capture area to full frame
 // ------------------------------------
 begin
+
+    if LiveImagingInProgress then StopCamera ;
 
      bFullFrame.Enabled := False ;
 
@@ -1624,8 +1660,12 @@ procedure TMainFrm.edExposureTimeKeyPress(Sender: TObject; var Key: Char);
 // Exposure time changed
 // ---------------------
 begin
-    if (Key = #13) and LiveImagingInProgress then ScanRequested := True ;
-    //StartCamera ;
+    if (Key = #13) and LiveImagingInProgress then
+       begin
+       ScanRequested := True ;
+       StopCamera ;
+       end;
+
     end;
 
 procedure TMainFrm.edGotoZPositionKeyPress(Sender: TObject; var Key: Char);
@@ -1709,6 +1749,8 @@ begin
        begin
        FrameWidth := Cam1.FrameWidth ;
        FrameHeight := Cam1.FrameHeight ;
+       NumComponentsPerFrame := Cam1.NumComponentsPerFrame ;
+       NumComponentsPerPixel := Cam1.NumComponentsPerPixel ;
        pImBuf := pLiveImageBuf ;
        end
     else
@@ -1716,6 +1758,8 @@ begin
        PimBuf := pImageBuf ;
        FrameWidth := HRFrameWidth ;
        FrameHeight := HRFrameHeight ;
+       NumComponentsPerFrame := HRNumComponentsPerFrame ;
+       NumComponentsPerPixel := HRNumComponentsPerPixel ;
        end;
 
     NumPixels := FrameWidth*FrameHeight - 4 ;
@@ -1792,17 +1836,31 @@ begin
     //if pImageBuf = Nil then Exit ;
 
     // Camera exposure trigger
-
+    if timegettime >= NextCameraTrigger then
+       begin
+       if Cam1.CameraActive and (not LiveImagingInProgress) then Cam1.SoftwareTriggerCapture ;
+       NextCameraTrigger := timegettime + 1000 + Round(edExposureTime.Value*1000) ;
+       end;
     iDev := LabIO.Resource[CameraTriggerOutput].Device ;
     iChan := LabIO.Resource[CameraTriggerOutput].StartChannel ;
-    if PulseCounter <= 0 then begin
+//    LabIO.SetBit(LabIO.DigOutState[iDev],iChan,CameraTriggerBit) ;
+ //   if CameraTriggerBit <> 0 then Cam1.SoftwareTriggerCapture ;
+    CameraTriggerBit := 0 ;
+
+{    if TriggerCameraExposure then
+       begin
        LabIO.SetBit(LabIO.DigOutState[iDev],iChan,1) ;
-       PulseCounter := 750 div Timer.Interval ;
+       TriggerCameraExposure := False ;
+       end
+    else
+    if PulseCounter <= 0 then begin
+//       LabIO.SetBit(LabIO.DigOutState[iDev],iChan,1) ;
+       PulseCounter := Round((0.5 + edExposureTime.Value)*1000.0) div Timer.Interval ;
        end
     else begin
        Dec(PulseCounter) ;
-       LabIO.SetBit(LabIO.DigOutState[iDev],iChan,0) ;
-       end ;
+//       LabIO.SetBit(LabIO.DigOutState[iDev],iChan,0) ;
+       end ;}
 
     for iDev := 1 to LabIO.NumDevices do begin
         LabIO.WriteToDigitalOutPutPort( iDev, LabIO.DigOutState[iDev] ) ;
@@ -1812,8 +1870,9 @@ begin
     if ScanRequested then
        begin
        ScanRequested := False ;
+    //   StartCamera ;
        StartCamera ;
-       StartCamera ;
+       NextCameraTrigger := timegettime + 2000 ;
        UpdateImage ;
     end ;
 
@@ -1879,6 +1938,7 @@ begin
     if Cam1.FrameCount > 0 then
        begin
        MostRecentFrame := (Cam1.FrameCount-1) mod Cam1.NumFramesInBuffer ;
+ //     if  NumFramesAcquired <> Cam1.FrameCount then Cam1.SoftwareTriggerCapture ;//CameraTriggerBit := 1 ;
        NumFramesAcquired := Cam1.FrameCount ;
        end;
 
@@ -1920,20 +1980,20 @@ begin
     if LiveImagingInProgress then
        begin
        edStatus.Text := format('Live: Frame %2d/%2d (%5.2f FPS)',[Cam1.FrameCount mod Cam1.NumFramesInBuffer,Cam1.NumFramesInBuffer,FrameRate]);
+       edZStatus.Text := '' ;
        end
     else
        begin
 
        if ckAcquireZStack.Checked then
           begin
-          edStatus.Text := format('Capture: Z Section %2d/%2d Frame %2d/%2d',
-                                  [NumZSectionsAvailable+1,
-                                   Round(edNumZSections.Value),
-                                   Cam1.FrameCount,Cam1.NumPixelShiftFrames]);
+          edStatus.Text := format('Capture: Frame %2d/%2d',[Cam1.FrameCount,Cam1.NumPixelShiftFrames]);
+          edZStatus.Text := format('Z Section: %2d/%2d',[NumZSectionsAvailable+1,Round(edNumZSections.Value)]);
           end
        else
           begin
           edStatus.Text := format('Capture: Frame %2d/%2d',[Cam1.FrameCount,Cam1.NumPixelShiftFrames]);
+          edZStatus.Text := '' ;
           end ;
        end ;
 
@@ -1949,15 +2009,16 @@ begin
        Cam1.NumPixelShiftFrames := nTemp ;
 
        nShifts := Round(sqrt(Cam1.NumPixelShiftFrames)) ;
-       FrameWidth := Cam1.FrameWidth*nShifts ;
-       FrameHeight := Cam1.FrameHeight*nShifts ;
-       HRFrameWidth := FrameWidth ;
-       HRFrameHeight := FrameHeight ;
-       NumComponentsPerPixel := Cam1.NumComponentsPerPixel ;
-       NumComponentsPerFrame := FrameWidth*FrameHeight*NumComponentsPerPixel ;
+       HRFrameWidth := Cam1.FrameWidth*nShifts ;
+       HRFrameHeight := Cam1.FrameHeight*nShifts ;
+   //    HRFrameWidth := FrameWidth ;
+   //    HRFrameHeight := FrameHeight ;
+       HRNumComponentsPerPixel := Cam1.NumComponentsPerPixel ;
+       HRNumComponentsPerFrame := HRFrameWidth*HRFrameHeight*HRNumComponentsPerPixel ;
 
        if PImageBuf <> Nil then FreeMem(PImageBuf) ;
-       PImageBuf := GetMemory( Int64(Cam1.NumComponentsPerFrame)*SizeOf(Integer)) ;
+       PImageBuf := GetMemory( Int64(HRNumComponentsPerFrame)*SizeOf(Integer)) ;
+       outputdebugstring(pchar(format('numpix=%d',[HRNumComponentsPerFrame])));
        //InitialiseImage ;
 
        // Copy to display buffer
@@ -2014,7 +2075,7 @@ begin
            for y := 0 to Cam1.FrameHeight-1 do
                begin
                ifrom := y*Cam1.FrameWidth*Cam1.NumComponentsPerPixel ;
-               ito := ((y*nShifts + yShift[iFrame])*FrameWidth + xShift[iFrame])*Cam1.NumComponentsPerPixel ;
+               ito := ((y*nShifts + yShift[iFrame])*HRFrameWidth + xShift[iFrame])*Cam1.NumComponentsPerPixel ;
                if Cam1.NumBytesPerPixel = 1 then
                   begin
                   for x := 0 to Cam1.FrameWidth-1 do
@@ -2037,35 +2098,35 @@ begin
                end;
            end ;
 
-      if Cam1.NumPixelShiftFrames = 9 then
+{      if Cam1.NumPixelShiftFrames = 9 then
          begin
 
          // Interleave 3x3 pixel shifted LR images into HR image
 
-         for y := 0 to FrameHeight-1 do
+         for y := 0 to HRFrameHeight-1 do
              begin
-             j := FrameWidth*y ;
+             j := HRFrameWidth*y ;
              PWordArray(pFrameBuf)[j] := pImageBuf^[j] ;
              PWordArray(pFrameBuf)[j+1] := pImageBuf^[j+1] ;
              end ;
-         for x := 0 to FrameWidth-1 do
+         for x := 0 to HRFrameWidth-1 do
              begin
              PWordArray(pFrameBuf)[x] := pImageBuf^[x] ;
-             PWordArray(pFrameBuf)[x+FrameWidth] := pImageBuf^[x+FrameWidth] ;
+             PWordArray(pFrameBuf)[x+HRFrameWidth] := pImageBuf^[x+HRFrameWidth] ;
              end ;
 
-         for y := 2 to FrameHeight-3 do
+         for y := 2 to HRFrameHeight-3 do
              begin
-             for x := 2 to FrameWidth-3 do
+             for x := 2 to HRFrameWidth-3 do
                  begin
-                 j := FrameWidth*y + x ;
+                 j := HRFrameWidth*y + x ;
                  Sum := 0 ;
                  for dy  := -2 to 2 do
-                     for dx  := -2 to 2 do Sum := Sum + pImageBuf^[j+dy*FrameWidth+dx] ;
+                     for dx  := -2 to 2 do Sum := Sum + pImageBuf^[j+dy*HRFrameWidth+dx] ;
                  PWordArray(pFrameBuf)[j] := Sum div 25 ;
                  end;
              end ;
-         for i := 0 to FrameHeight*FrameWidth-1 do pImageBuf^[i] := PWordArray(pFrameBuf)[i] ;
+         for i := 0 to HRFrameHeight*HRFrameWidth-1 do pImageBuf^[i] := PWordArray(pFrameBuf)[i] ;
 
          end
        else if Cam1.NumPixelShiftFrames = 4 then
@@ -2073,30 +2134,30 @@ begin
 
          // Interleave 2x2 pixel shifted LR images into HR image
 
-         for y := 0 to FrameHeight-1 do
+         for y := 0 to HRFrameHeight-1 do
              begin
-             j := FrameWidth*y ;
+             j := HRFrameWidth*y ;
              PWordArray(pFrameBuf)[j] := pImageBuf^[j] ;
              end ;
-         for x := 0 to FrameWidth-1 do
+         for x := 0 to HRFrameWidth-1 do
              begin
              PWordArray(pFrameBuf)[x] := pImageBuf^[x] ;
              end ;
 
-         for y := 1 to FrameHeight-2 do
+         for y := 1 to HRFrameHeight-2 do
               begin
-              for x := 1 to FrameWidth-2 do
+              for x := 1 to HRFrameWidth-2 do
                   begin
-                  j := FrameWidth*y + x ;
+                  j := HRFrameWidth*y + x ;
                   PWordArray(pFrameBuf)[j] := pImageBuf^[j] +
-                      (pImageBuf^[j-FrameWidth] + pImageBuf^[j+FrameWidth] + pImageBuf^[j+1] + pImageBuf^[j-1]) div 2 +
-                      (pImageBuf^[(j-FrameWidth)-1] + pImageBuf^[(j-FrameWidth)+1]) div 4 +
-                      (pImageBuf^[(j+FrameWidth)-1] + pImageBuf^[(j+FrameWidth)+1]) div 4 ;
+                      (pImageBuf^[j-HRFrameWidth] + pImageBuf^[j+HRFrameWidth] + pImageBuf^[j+1] + pImageBuf^[j-1]) div 2 +
+                      (pImageBuf^[(j-HRFrameWidth)-1] + pImageBuf^[(j-HRFrameWidth)+1]) div 4 +
+                      (pImageBuf^[(j+HRFrameWidth)-1] + pImageBuf^[(j+HRFrameWidth)+1]) div 4 ;
                   end;
               end ;
 
-         for i := 0 to FrameHeight*FrameWidth-1 do pImageBuf^[i] := PWordArray(pFrameBuf)[i] div 4 ;
-         end ;
+         for i := 0 to HRFrameHeight*HRFrameWidth-1 do pImageBuf^[i] := PWordArray(pFrameBuf)[i] div 4 ;
+         end ;  }
 
       // Save to raw image file
        edStatus.Text := 'Capture: Saving' ;
@@ -2133,7 +2194,9 @@ begin
          // All images captured - stop
          ShowCameraImage := False ;
          ShowCapturedImage := True ;
+         UpdateImage ;
          bStopImage.Click ;
+         UpdateDisplay := True ;
          end;
        end ;
 
@@ -2196,6 +2259,9 @@ procedure TMainFrm.bSelectedRegionClick(Sender: TObject);
 // ---------------------------
 begin
 
+
+    if LiveImagingInProgress then StopCamera ;
+
      bSelectedRegion.Enabled := False ;
 
      CCDRegion.Right := (SelectedRectBM.Right/XScaletoBM + XLeft +1)*(CCDRegion.Width/FrameWidth) + CCDRegion.Left ;
@@ -2204,6 +2270,7 @@ begin
 
      CCDRegion.Bottom := (SelectedRectBM.Bottom/YScaletoBM - YTop +1)*(CCDRegion.Height/FrameHeight) + CCDRegion.Top ;
      CCDRegion.Top := (SelectedRectBM.Top/YScaletoBM - YTop)*(CCDRegion.Height/FrameHeight) + CCDRegion.Top ;
+//     if LiveImagingInProgress then CCDRegion.Top := 0.0 ;
      CCDRegion.Height := CCDRegion.Bottom - CCDRegion.Top ;
 
      SelectedRect.Left := 0 ;
@@ -2265,7 +2332,12 @@ procedure TMainFrm.cbCameraGainChange(Sender: TObject);
 // Gain changed
 // ---------------------
 begin
-         ScanRequested := True ;//StartCamera ;
+    if LiveImagingInProgress then
+       begin
+       ScanRequested := True ;
+       StopCamera ;
+       end;
+    CameraGainIndex := cbCameraGain.ItemIndex
     end;
 
 procedure TMainFrm.cbCaptureModeChange(Sender: TObject);
@@ -2458,12 +2530,12 @@ begin
                                        else nFrames := 1 ;
 
                 if not ImageFile.CreateFile( SectionFileName(FileName,iPanel,iSection),
-                                             FrameWidth,
-                                             FrameHeight,
+                                             HRFrameWidth,
+                                             HRFrameHeight,
                                              NumBitsPerPixel,
-                                             NumComponentsPerPixel,
+                                             HRNumComponentsPerPixel,
                                              nFrames ) then Exit ;
-                ImageFile.XResolution := Cam1.PixelWidth ;
+                ImageFile.XResolution := Cam1.PixelWidth / sqrt(Max(Cam1.NumPixelShiftFrames,1)) ;
                 ImageFile.YResolution := ImageFile.XResolution ;
                 ImageFile.ZResolution := ZStep ;
                 ImageFile.SaveFrame32( 1, PImageBuf ) ;
@@ -2726,11 +2798,11 @@ var
 begin
 
       // Copy into I/O buf
-      NumBytes := Int64(NumComponentsPerFrame)*Int64(SizeOf(Word)) ;
+      NumBytes := Int64(HRNumComponentsPerFrame)*Int64(SizeOf(Word)) ;
       pBufW := GetMemory( NumBytes ) ;
 
       // Copy from image buffer
-      for i := 0 to NumComponentsPerFrame-1 do pBufW^[i] := WORD(pImageBuf^[i]) ;
+      for i := 0 to HRNumComponentsPerFrame-1 do pBufW^[i] := WORD(pImageBuf^[i]) ;
 
       if not FileExists(FileName) then FileHandle := FileCreate( FileName )
                                   else FileHandle := FileOpen( FileName, fmOpenWrite ) ;
@@ -2738,9 +2810,9 @@ begin
       NumImagesInFile := Max(NumImagesInFile,iImage+1) ;
 
       FileWrite( FileHandle, NumImagesInFile, Sizeof(NumImagesInFile)) ;
-      FileWrite( FileHandle, FrameWidth, Sizeof(FrameWidth)) ;
-      FileWrite( FileHandle, FrameHeight, Sizeof(FrameHeight)) ;
-      FileWrite( FileHandle, NumComponentsPerFrame, Sizeof(NumComponentsPerFrame)) ;
+      FileWrite( FileHandle, HRFrameWidth, Sizeof(HRFrameWidth)) ;
+      FileWrite( FileHandle, HRFrameHeight, Sizeof(HRFrameHeight)) ;
+      FileWrite( FileHandle, HRNumComponentsPerFrame, Sizeof(HRNumComponentsPerFrame)) ;
       FileWrite( FileHandle, NumBitsPerPixel, Sizeof(NumBitsPerPixel)) ;
 
       FileWrite( FileHandle, ZStep, Sizeof(ZStep)) ;
@@ -2752,6 +2824,8 @@ begin
       FileClose(FileHandle) ;
 
       FreeMem(pBufW) ;
+
+      RawImageAvailable := True ;
 
       end;
 
@@ -2770,16 +2844,18 @@ var
     pBufW : PWordArray ;
 begin
 
+      if not RawImageAvailable then Exit ;
+
       FileHandle := FileOpen( FileName, fmOpenRead ) ;
 
       FileRead( FileHandle, NumImagesInFile, Sizeof(NumImagesInFile)) ;
-      FileRead( FileHandle, FrameWidth, Sizeof(FrameWidth)) ;
-      FileRead( FileHandle, FrameHeight, Sizeof(FrameHeight)) ;
-      FileRead( FileHandle, NumComponentsPerFrame, Sizeof(NumComponentsPerFrame)) ;
+      FileRead( FileHandle, HRFrameWidth, Sizeof(HRFrameWidth)) ;
+      FileRead( FileHandle, HRFrameHeight, Sizeof(HRFrameHeight)) ;
+      FileRead( FileHandle, HRNumComponentsPerFrame, Sizeof(HRNumComponentsPerFrame)) ;
       FileRead( FileHandle, NumBitsPerPixel, Sizeof(NumBitsPerPixel)) ;
       FileRead( FileHandle, ZStep, Sizeof(ZStep)) ;
 
-      NumBytes := NumComponentsPerFrame*2 ;
+      NumBytes := HRNumComponentsPerFrame*2 ;
       pBufW := GetMemory( NumBytes ) ;
 
       FilePointer := FileSeek( FileHandle, 0, 1 ) ;
@@ -2788,7 +2864,7 @@ begin
       FileRead( FileHandle, pBufW^, NumBytes) ;
 
       // Copy from image buffer
-      for i := 0 to NumComponentsPerFrame-1 do  pImageBuf^[i] := pBufW^[i] ;
+      for i := 0 to HRNumComponentsPerFrame-1 do  pImageBuf^[i] := pBufW^[i] ;
 
       FileClose(FileHandle) ;
 
@@ -2837,6 +2913,9 @@ begin
     AddElementInt( ProtNode, 'CAMERAADC', Cam1.CameraADC ) ;
 
     AddElementDouble( ProtNode, 'EXPOSURETIME', edExposureTime.Value ) ;
+
+    CameraGainIndex := cbCameraGain.ItemIndex ;
+    AddElementInt( ProtNode, 'CAMERAGAIN', CameraGainIndex ) ;
 
     AddElementInt( ProtNode, 'HRFRAMEWIDTH', HRFrameWidth ) ;
     AddElementBool( ProtNode,'ROIMODE', rbROIMode.Checked ) ;
@@ -2936,6 +3015,7 @@ begin
     Cam1.CameraADC := GetElementInt( ProtNode, 'CAMERAADC', Cam1.CameraADC ) ;
 
     edExposureTime.Value := GetElementDouble( ProtNode, 'EXPOSURETIME', edExposureTime.Value ) ;
+    CameraGainIndex := GetElementInt( ProtNode, 'CAMERAGAIN', CameraGainIndex ) ;
 
     HRFrameWidth := GetElementInt( ProtNode, 'HRFRAMEWIDTH', HRFrameWidth ) ;
     rbROIMode.Checked := GetElementBool( ProtNode,'ROIMODE', rbROIMode.Checked ) ;
@@ -3189,6 +3269,15 @@ begin
 
     end ;
 
+
+procedure TMainFrm.File1Click(Sender: TObject);
+// ----------------
+// File menu opened
+// ----------------
+begin
+    mnSaveImage.Enabled := RawImageAvailable ;
+    mnSaveToImageJ.Enabled := RawImageAvailable ;
+end;
 
 function TMainFrm.FindXMLNode(
          const ParentNode : IXMLNode ;  // Node to be searched

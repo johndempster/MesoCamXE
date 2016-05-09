@@ -56,6 +56,7 @@ begin
      ClientHeight := bOK.Top + bOK.Height + 5 ;
 
      if not MainFrm.bLiveImage.Enabled then begin
+
         MainFrm.bStopImage.Click ;
         ImagingRestartRequired := True ;
         end
@@ -74,6 +75,7 @@ begin
     MainFrm.CCDRegion.Left := edXRange.LoValue ;
     MainFrm.CCDRegion.Right := edXRange.HiValue ;
     MainFrm.CCDRegion.Top := edYRange.LoValue ;
+    if MainFrm.LiveImagingInProgress then MainFrm.CCDRegion.Top := 0.0 ;
     MainFrm.CCDRegion.Bottom := edYRange.HiValue ;
 
     if ImagingRestartRequired then MainFrm.bLiveImage.Click ;

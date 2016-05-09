@@ -99,7 +99,7 @@ object MainFrm: TMainFrm
     end
     object bLiveImage: TButton
       Left = 8
-      Top = 16
+      Top = 10
       Width = 101
       Height = 20
       Hint = 'Display live images from camera'
@@ -129,10 +129,10 @@ object MainFrm: TMainFrm
     end
     object edExposureTime: TValidatedEdit
       Left = 115
-      Top = 33
+      Top = 36
       Width = 57
       Height = 21
-      Hint = 'No. of sections in Z stage'
+      Hint = 'Exposure time (ms)'
       OnKeyPress = edExposureTimeKeyPress
       ShowHint = True
       Text = ' 1 ms'
@@ -141,7 +141,7 @@ object MainFrm: TMainFrm
       Units = 'ms'
       NumberFormat = '%.4g'
       LoLimit = 0.000009999999747379
-      HiLimit = 100.000000000000000000
+      HiLimit = 0.140000000596046400
     end
     object CCDAreaGrp: TGroupBox
       Left = 3
@@ -1123,15 +1123,23 @@ object MainFrm: TMainFrm
     Left = 8
     Top = 741
     Width = 217
-    Height = 43
+    Height = 60
     TabOrder = 5
     object edStatus: TEdit
-      Left = 8
-      Top = 8
+      Left = 13
+      Top = 3
       Width = 201
       Height = 21
       ReadOnly = True
       TabOrder = 0
+    end
+    object edZStatus: TEdit
+      Left = 13
+      Top = 30
+      Width = 201
+      Height = 22
+      ReadOnly = True
+      TabOrder = 1
     end
   end
   object Page: TPageControl
@@ -1315,9 +1323,7 @@ object MainFrm: TMainFrm
     Top = 496
     object File1: TMenuItem
       Caption = 'File'
-      object mnLoadImage: TMenuItem
-        Caption = '&Open Image'
-      end
+      OnClick = File1Click
       object mnSaveToImageJ: TMenuItem
         Caption = 'Save to Image-J'
         OnClick = mnSaveToImageJClick
