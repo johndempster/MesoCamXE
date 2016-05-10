@@ -8,6 +8,7 @@ unit MainUnit;
 // V1.5.2 29.04.16
 // V1.5.3 9.05.16 Nearly working with Vieworks camera
 //                Upper exposure time limited to 140ms
+//        10.05.16 Black level offset still present
 
 interface
 
@@ -533,7 +534,7 @@ begin
     {$ELSE}
      Caption := Caption + '(64 bit)';
     {$IFEND}
-    Caption := Caption + ' 09/05/16';
+    Caption := Caption + ' 10/05/16';
 
      TempBuf := Nil ;
      DeviceNum := 1 ;
@@ -1398,6 +1399,8 @@ begin
      SetCCDReadoutFrm.Left := 20 ;
      SetCCDReadoutFrm.Top := 20 ;
      bEnterCCDArea.Enabled := False ;
+
+     if LiveImagingInProgress then ScanRequested := True ;
 end;
 
 procedure TMainFrm.StartNewScan ;
@@ -1603,7 +1606,7 @@ begin
                               Round(CCDRegion.Right*MainFrm.Cam1.FrameWidthMax)-1,
                               Round(CCDRegion.Bottom*MainFrm.Cam1.FrameHeightMax)-1);
 
-     ScanRequested := True ;
+     if LiveImagingInProgress then ScanRequested := True ;
      bFullFrame.Enabled := True ;
 
      end;
@@ -2280,7 +2283,7 @@ begin
      SelectedRect.Bottom := 1.0 ;
      SelectedRect.Height := 1.0 ;
 
-     ScanRequested := True ;
+     if LiveImagingInProgress then ScanRequested := True ;
      bSelectedRegion.Enabled := True  ;
 
 end;
