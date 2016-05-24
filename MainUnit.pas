@@ -9,6 +9,7 @@ unit MainUnit;
 // V1.5.3 9.05.16 Nearly working with Vieworks camera
 //                Upper exposure time limited to 140ms
 //        10.05.16 Black level offset still present
+//        24.05.16 Settings now saved in C:\Users\Public\Documents\MesoCam
 
 interface
 
@@ -17,7 +18,7 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ComCtrls, StdCtrls, ValidatedEdit, LabIOUnit, RangeEdit, math,
   ExtCtrls, ImageFile, xmldoc, xmlintf, ActiveX, Vcl.Menus, system.types, strutils, UITypes,
-  SESCam, mmsystem, Vcl.ToolWin, Vcl.Buttons, LightSourceUnit, shellapi ;
+  SESCam, mmsystem, Vcl.ToolWin, Vcl.Buttons, LightSourceUnit, shellapi,shlobj ;
 
 const
     VMax = 10.0 ;
@@ -167,6 +168,7 @@ type
     tbChan3: TTabSheet;
     Image3: TImage;
     edZStatus: TEdit;
+    cbLiveBin: TComboBox;
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -217,6 +219,7 @@ type
     procedure ckSeparateLightSourcesClick(Sender: TObject);
     procedure PageChange(Sender: TObject);
     procedure File1Click(Sender: TObject);
+    procedure cbLiveBinChange(Sender: TObject);
   private
 
     { Private declarations }
@@ -227,13 +230,15 @@ type
                   Y : Integer ) ;
 
         procedure FixRectangle( var Rect : TRect ) ;
+        function GetSpecialFolder(const ASpecialFolderID: Integer): string;
 
   public
     { Public declarations }
     CameraType : Integer ;
-    PixelWidth : Double ;                 // Camera pixel size (um)
+//    PixelWidth : Double ;                 // Camera pixel size (um)
     LensMagnification : Double ;          // Lens magnification
     CameraPixelSize : double ;            // Camera pixel size (microns)
+    MagnifiedCameraPixelSize : double ;             // Image pixel size (microns)
     CameraTriggerOutput : Integer ;       // Camera trigger digital output line
     CameraTriggerActiveHigh : Boolean ;   // TTL high level triggers camera
     CameraTriggerBit : Integer ;
@@ -350,6 +355,7 @@ type
     INIFileName : String ;
     ProgDirectory : String ;
     SaveDirectory : String ;
+    SettingsDirectory : String ;
     RawImagesFileName : String ;
     iImage : Integer ;
     NumImagesInFile : Integer ;        // Num images in file
@@ -534,7 +540,7 @@ begin
     {$ELSE}
      Caption := Caption + '(64 bit)';
     {$IFEND}
-    Caption := Caption + ' 10/05/16';
+     Caption := Caption + ' 24/05/16';
 
      TempBuf := Nil ;
      DeviceNum := 1 ;
@@ -546,7 +552,7 @@ begin
 //     CameraType := IMAQ ;
 
      Cam1.BinFactor := 1 ;
-     PixelWidth := Cam1.PixelWidth ;
+   //  PixelWidth := Cam1.PixelWidth ;
 
      edStatus.Text := LabIO.DeviceName[1] + ': ' + LabIO.DeviceBoardName[1] ;
 
@@ -570,6 +576,13 @@ begin
          Magnification[i+1] := Magnification[i] + Max(Round(Magnification[i]*0.25),1) ;
          end ;
      iZoom := 0 ;
+
+     // Live mode binning
+     cbLiveBin.Clear ;
+     cbLiveBin.Items.AddObject('Live Bin 4x4',TObject(4));
+     cbLiveBin.Items.AddObject('Live Bin 2x2',TObject(2));
+     cbLiveBin.Items.AddObject('Live Bin 1x1',TObject(1));
+     cbLiveBin.ItemIndex := 0 ;
 
      cbCaptureMode.Clear ;
      cbCaptureMode.Items.AddObject('Standard (X1)',TObject(1));
@@ -621,14 +634,27 @@ begin
 
      LensMagnification := 1.0 ;
      CameraPixelSize := 1.0 ;
+     MagnifiedCameraPixelSize := CameraPixelSize / LensMagnification ;
 
      // Image-J program path
      ImageJPath := 'C:\ImageJ\imagej.exe';
 
-     // Load last used settings
      ProgDirectory := ExtractFilePath(ParamStr(0)) ;
-     INIFileName := ProgDirectory + 'mesocam settings.xml' ;
+
+     // Create settings directory path
+     SettingsDirectory := GetSpecialFolder(CSIDL_COMMON_DOCUMENTS) + '\MesoCam\';
+     if not SysUtils.DirectoryExists(SettingsDirectory) then begin
+        if not SysUtils.ForceDirectories(SettingsDirectory) then
+           ShowMessage( 'Unable to create settings folder' + SettingsDirectory) ;
+        end ;
+
+     // Load last used settings
+     INIFileName := SettingsDirectory + 'mesocam settings.xml' ;
      LoadSettingsFromXMLFile( INIFileName ) ;
+
+     // Help file
+     Application.HelpFile := ProgDirectory + 'mesocam.chm';
+
 
      Cam1.OpenCamera(CameraType);
 
@@ -765,7 +791,7 @@ begin
      i := YImage*FrameWidth + XImage ;
 
 
-     PixelsToMicronsX := Cam1.BinFactor*CameraPixelSize/Max(LensMagnification,1E-3) ;
+     PixelsToMicronsX := Cam1.BinFactor*MagnifiedCameraPixelSize/sqrt(Cam1.NumPixelShiftFrames) ;
      PixelsToMicronsY := PixelsToMicronsX ;
 
      if (i > 0) and (i < FrameWidth*FrameHeight) then
@@ -974,7 +1000,7 @@ begin
 
      // Scale bitmap to fit into window
      BitMap.Width := DisplayMaxWidth ;
-     HeightWidthRatio := FrameHeight/FrameWidth ;
+     HeightWidthRatio := FrameHeight/Max(FrameWidth,1) ;
      BitMap.Height := Round(BitMap.Width*HeightWidthRatio) ;
      if BitMap.Height > DisplayMaxHeight then
         begin
@@ -984,8 +1010,8 @@ begin
         end;
 
      // Add magnification and limit bitmap to window
-     XScaleToBM := (BitMap.Width*Magnification[iZoom]) / FrameWidth ;
-     YScaleToBM := (BitMap.Width*Magnification[iZoom]) / FrameWidth ;
+     XScaleToBM := (BitMap.Width*Magnification[iZoom]) / Max(FrameWidth,1) ;
+     YScaleToBM := (BitMap.Width*Magnification[iZoom]) / Max(FrameWidth,1) ;
      BitMap.Width := Min(BitMap.Width*Magnification[iZoom],DisplayMaxWidth) ;
      BitMap.Height := Min(BitMap.Height*Magnification[iZoom],DisplayMaxHeight) ;
 
@@ -1361,8 +1387,6 @@ begin
     LiveImagingInProgress := True ;
     ShowCapturedImage := False ;
     ShowCameraImage := True ;
-
-    CCDRegion.Top := 0.0 ;
     StartNewScan ;
 end ;
 
@@ -1428,7 +1452,8 @@ begin
     NumZSectionsAvailable := 0 ;
     NumImagesInFile := 0 ;
     RawImageAvailable := False ;
-    ZStep := edNumPixelsPerZStep.Value*(Cam1.PixelWidth/Cam1.BinFactor) ;
+//    ZStep := edNumPixelsPerZStep.Value*(Cam1.PixelWidth/Cam1.BinFactor) ;
+    ZStep := edNumPixelsPerZStep.Value*MagnifiedCameraPixelSize ;
     edMicronsPerZStep.Value := ZStep ;
     //NumZSections := Round(edNumZSections.Value) ;
 
@@ -1503,8 +1528,8 @@ begin
 
     if not bLiveImage.Enabled then
        begin
-       if (CCDRegion.Height < 0.5) {or (Cam1.ReadoutTime <= 0.1)} then Cam1.BinFactor := 1
-                                                                else Cam1.BinFactor := 4 ;
+       Cam1.BinFactor := Integer(cbLiveBin.Items.Objects[cbLiveBin.ItemIndex]) ;
+       if (CCDRegion.Height < 0.5) {or (Cam1.ReadoutTime <= 0.1)} then Cam1.BinFactor := 1 ;
 
        Cam1.TriggerMode := camFreeRun ;
        Cam1.NumPixelShiftFrames := 1 ;
@@ -1689,8 +1714,8 @@ begin
       if Key = #13 then
          begin
          NumSubPixels := sqrt(Integer(cbCaptureMode.Items.Objects[cbCaptureMode.ItemIndex])) ;
-         edNumPixelsPerZStep.Value := Max(Round((edMicronsPerZStep.Value*NumSubPixels)/PixelWidth),1) ;
-         edMicronsPerZStep.Value := (edNumPixelsPerZStep.Value*PixelWidth)/NumSubPixels ;
+         edNumPixelsPerZStep.Value := Max(Round((edMicronsPerZStep.Value*NumSubPixels)/MagnifiedCameraPixelSize),1);
+         edMicronsPerZStep.Value := (edNumPixelsPerZStep.Value*MagnifiedCameraPixelSize)/NumSubPixels ;
          end;
 end;
 
@@ -1705,7 +1730,7 @@ begin
       if Key = #13 then
          begin
          NumSubPixels := sqrt(Integer(cbCaptureMode.Items.Objects[cbCaptureMode.ItemIndex])) ;
-         edMicronsPerZStep.Value := (edNumPixelsPerZStep.Value*PixelWidth)/NumSubPixels ;
+         edMicronsPerZStep.Value := (edNumPixelsPerZStep.Value*MagnifiedCameraPixelSize)/NumSubPixels ;
          end;
 end;
 
@@ -1919,7 +1944,7 @@ procedure TMainFrm.GetImage ;
 // ---------------------
 var
     i,j,iFrame,nTemp : Integer ;
-    nShifts,x,y,dx,dy,ifrom,ito,Sum,iComp : Integer ;
+    nShifts,x,y,ifrom,ito,iComp : Integer ;
     FrameRate : single ;
     t1 : Integer ;
     pBuf : Pointer ;
@@ -2348,10 +2373,22 @@ var
     NumSubPixels : Double ;
 begin
     NumSubPixels := sqrt(Integer(cbCaptureMode.Items.Objects[cbCaptureMode.ItemIndex])) ;
-    edNumPixelsPerZStep.Value := Max(Round((edMicronsPerZStep.Value*NumSubPixels)/PixelWidth),1) ;
-    edMicronsPerZStep.Value := (edNumPixelsPerZStep.Value*PixelWidth)/NumSubPixels ;
+    edNumPixelsPerZStep.Value := Max(Round((edMicronsPerZStep.Value*NumSubPixels)/MagnifiedCameraPixelSize),1) ;
+    edMicronsPerZStep.Value := (edNumPixelsPerZStep.Value*MagnifiedCameraPixelSize)/NumSubPixels ;
     end;
 
+
+procedure TMainFrm.cbLiveBinChange(Sender: TObject);
+// -------------------------
+// Live binning mode changed
+// -------------------------
+begin
+   if LiveImagingInProgress then
+      begin
+      StopCamera ;
+      ScanRequested := True ;
+      end;
+end;
 
 procedure TMainFrm.cbPaletteChange(Sender: TObject);
 // ------------------------------
@@ -2517,10 +2554,6 @@ begin
          for iSection  := 0 to Max(NumZSectionsAvailable,1)-1 do
              begin
 
-{             meStatus.Lines.Clear ;
-             mestatus.Lines[0] := format('Saving to file %s %d/%d',
-                                  [ImageNames[i],iSection+1,NumZSectionsAvailable]);}
-
              // Load image
              LoadRawImage( RawImagesFileName, iSection*NumPanels + iPanel ) ;
 
@@ -2538,7 +2571,7 @@ begin
                                              NumBitsPerPixel,
                                              HRNumComponentsPerPixel,
                                              nFrames ) then Exit ;
-                ImageFile.XResolution := Cam1.PixelWidth / sqrt(Max(Cam1.NumPixelShiftFrames,1)) ;
+                ImageFile.XResolution := MagnifiedCameraPixelSize / sqrt(Cam1.NumPixelShiftFrames) ;
                 ImageFile.YResolution := ImageFile.XResolution ;
                 ImageFile.ZResolution := ZStep ;
                 ImageFile.SaveFrame32( 1, PImageBuf ) ;
@@ -3071,6 +3104,7 @@ begin
 
     LensMagnification := GetElementDouble( ProtNode, 'LENSMAGNIFICATION', LensMagnification ) ;
     CameraPixelSize := GetElementDouble( ProtNode, 'CAMERAPIXELSIZE', CameraPixelSize ) ;
+    MagnifiedCameraPixelSize := CameraPixelSize / Max(LensMagnification,1E-3) ;
 
     SaveDirectory := GetElementText( ProtNode, 'SAVEDIRECTORY', SaveDirectory ) ;
     ImageJPath := GetElementText( ProtNode, 'IMAGEJPATH', ImageJPath ) ;
@@ -3310,6 +3344,18 @@ begin
     end ;
 
 
+function TMainFrm.GetSpecialFolder(const ASpecialFolderID: Integer): string;
+// --------------------------
+// Get Windows special folder
+// --------------------------
+var
+  vSpecialPath : array[0..MAX_PATH] of Char;
+begin
+
+    SHGetFolderPath( 0, ASpecialFolderID, 0,0,vSpecialPath) ;
+    Result := StrPas(vSpecialPath);
+
+    end;
 
 end.
 

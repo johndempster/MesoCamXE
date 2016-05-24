@@ -429,10 +429,6 @@ object SettingsFrm: TSettingsFrm
     object LightSourceTab: TTabSheet
       Caption = 'Light Source'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object GroupBox1: TGroupBox
         Left = 0
         Top = 3
@@ -907,10 +903,6 @@ object SettingsFrm: TSettingsFrm
     object ZStageTab: TTabSheet
       Caption = 'Z Stage'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object GroupBox2: TGroupBox
         Left = 4
         Top = 8

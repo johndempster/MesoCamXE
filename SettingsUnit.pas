@@ -245,8 +245,9 @@ begin
     ZStage.ZStepTime := edZStepTime.Value ;
 
     MainFrm.SetScanZoomToFullField ;
-    MainFrm.LensMagnification := edLensMagnification.Value ;
+    MainFrm.LensMagnification := Max(edLensMagnification.Value,0.001) ;
     MainFrm.CameraPixelSize := edCameraPixelSize.Value ;
+    MainFrm.MagnifiedCameraPixelSize := MainFrm.CameraPixelSize/MainFrm.LensMagnification ;
 
     // Update camera gain list
     MainFrm.Cam1.GetCameraGainList( MainFrm.cbCameraGain.Items );

@@ -34,9 +34,9 @@ object MainFrm: TMainFrm
   end
   object ControlGrp: TGroupBox
     Left = 8
-    Top = 2
+    Top = 8
     Width = 217
-    Height = 207
+    Height = 242
     Caption = ' Camera '
     TabOrder = 0
     object Label7: TLabel
@@ -54,8 +54,8 @@ object MainFrm: TMainFrm
       WordWrap = True
     end
     object Label8: TLabel
-      Left = 117
-      Top = 84
+      Left = 119
+      Top = 62
       Width = 22
       Height = 13
       Alignment = taRightJustify
@@ -63,7 +63,7 @@ object MainFrm: TMainFrm
     end
     object bCaptureImage: TButton
       Left = 8
-      Top = 36
+      Top = 68
       Width = 101
       Height = 20
       Hint = 'Capture new image(s)'
@@ -81,7 +81,7 @@ object MainFrm: TMainFrm
     end
     object bStopImage: TButton
       Left = 6
-      Top = 86
+      Top = 118
       Width = 101
       Height = 20
       Hint = 'Stop Image Capture'
@@ -99,7 +99,7 @@ object MainFrm: TMainFrm
     end
     object bLiveImage: TButton
       Left = 8
-      Top = 10
+      Top = 16
       Width = 101
       Height = 20
       Hint = 'Display live images from camera'
@@ -117,7 +117,7 @@ object MainFrm: TMainFrm
     end
     object cbCaptureMode: TComboBox
       Left = 8
-      Top = 59
+      Top = 91
       Width = 101
       Height = 21
       Hint = 'Select image superresolution mode (pixel-shifting  cameras only)'
@@ -145,7 +145,7 @@ object MainFrm: TMainFrm
     end
     object CCDAreaGrp: TGroupBox
       Left = 3
-      Top = 112
+      Top = 144
       Width = 105
       Height = 82
       Caption = 'CCD Area '
@@ -206,8 +206,8 @@ object MainFrm: TMainFrm
       end
     end
     object cbCameraGain: TComboBox
-      Left = 113
-      Top = 103
+      Left = 115
+      Top = 81
       Width = 57
       Height = 23
       Hint = 'Camera analog gain'
@@ -223,10 +223,22 @@ object MainFrm: TMainFrm
       TabOrder = 6
       OnChange = cbCameraGainChange
     end
+    object cbLiveBin: TComboBox
+      Left = 8
+      Top = 36
+      Width = 101
+      Height = 21
+      Hint = 'Live image binning mode'
+      Style = csDropDownList
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 7
+      OnChange = cbLiveBinChange
+    end
   end
   object ImageSizeGrp: TGroupBox
     Left = 8
-    Top = 215
+    Top = 256
     Width = 217
     Height = 181
     Caption = ' Image Mode'
@@ -300,8 +312,8 @@ object MainFrm: TMainFrm
         Scale = 1.000000000000000000
         Units = 'um'
         NumberFormat = '%.2f'
-        LoLimit = -100.000000000000000000
-        HiLimit = 100.000000000000000000
+        LoLimit = -1000.000000000000000000
+        HiLimit = 1000.000000000000000000
       end
     end
     object ckSeparateLightSources: TCheckBox
@@ -894,7 +906,7 @@ object MainFrm: TMainFrm
   end
   object DisplayGrp: TGroupBox
     Left = 8
-    Top = 572
+    Top = 590
     Width = 217
     Height = 145
     Caption = ' Display '
@@ -1137,7 +1149,7 @@ object MainFrm: TMainFrm
       Left = 13
       Top = 30
       Width = 201
-      Height = 22
+      Height = 21
       ReadOnly = True
       TabOrder = 1
     end
