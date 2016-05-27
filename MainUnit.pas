@@ -540,7 +540,7 @@ begin
     {$ELSE}
      Caption := Caption + '(64 bit)';
     {$IFEND}
-     Caption := Caption + ' 24/05/16';
+     Caption := Caption + ' 27/05/16';
 
      TempBuf := Nil ;
      DeviceNum := 1 ;

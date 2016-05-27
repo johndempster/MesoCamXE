@@ -5,6 +5,7 @@ unit ZStageUnit;
 // ========================================================================
 // 7/6/12 Supports Prior OptiScan II controller
 // 14.5.14 Supports voltage-controlled lens positioner
+// 27.0.16 Z stage pressure switch protection implemented
 
 interface
 
@@ -44,6 +45,8 @@ type
     procedure MoveToOSII( Position : Double ) ;
     procedure MoveToPZ( Position : Double ) ;
     function GetZScaleFactorUnits : string ;
+    procedure ProScanEnableZStageTTLAction ;
+    procedure WaitforCompletion ;
   public
     { Public declarations }
     ZPosition : Double ;     // Z position (um)
@@ -71,7 +74,7 @@ implementation
 
 {%CLASSGROUP 'System.Classes.TPersistent'}
 
-uses LabIOUnit;
+uses LabIOUnit, mmsystem;
 
 {$R *.dfm}
 
@@ -82,7 +85,9 @@ const
 
     stNone = 0 ;
     stOptiscanII = 1 ;
-    stPiezo = 2 ;
+    stProscanIII = 2 ;
+    stPiezo = 3 ;
+
 
 procedure TZStage.DataModuleCreate(Sender: TObject);
 // ---------------------------------------
@@ -118,6 +123,7 @@ begin
       List.Clear ;
       List.Add('None') ;
       List.Add('Prior Optiscan II') ;
+      List.Add('Prior Proscan III') ;
       List.Add('Piezo (Voltage Controlled)');
       end;
 
@@ -131,7 +137,7 @@ var
 begin
      List.Clear ;
      case FStageType of
-        stOptiscanII : begin
+        stOptiscanII,stProScanIII : begin
           // COM ports
           for i := 1 to 16 do List.Add(format('COM%d',[i]));
           end ;
@@ -159,7 +165,7 @@ begin
     if ComPortOpen then CloseComPort ;
 
     case FStageType of
-        stOptiscanII : begin
+        stOptiscanII,stProScanIII : begin
           OpenComPort ;
           end ;
         stPiezo : begin
@@ -174,7 +180,7 @@ function TZStage.GetZScaleFactorUnits : string ;
 // -------------------------------
 begin
     case FStageType of
-        stOptiscanII : Result := 'steps/um' ;
+        stOptiscanII,stProScanIII : Result := 'steps/um' ;
         stPiezo : Result := 'V/um' ;
         else Result := '' ;
         end;
@@ -196,7 +202,7 @@ procedure TZStage.UpdateZPosition ;
 // ---------------------------
 begin
     case FStageType of
-        stOptiscanII : UpdateZPositionOSII ;
+        stOptiscanII,stProScanIII : UpdateZPositionOSII ;
         stPiezo : UpdateZPositionPZ ;
         end;
     end;
@@ -207,7 +213,7 @@ procedure TZStage.MoveTo( Position : Double ) ;
 // -----------------
 begin
     case FStageType of
-        stOptiscanII : MoveToOSII(  Position ) ;
+        stOptiscanII,stProScanIII : MoveToOSII(  Position ) ;
         stPiezo : MoveToPZ(  Position ) ;
         end;
     end;
@@ -303,6 +309,19 @@ begin
         //ShowMessage( ' Error writing to COM port ' ) ;
         FEnabled := False ;
     end;
+     end ;
+
+
+procedure TZStage.WaitforCompletion ;
+var
+  Status : string ;
+  Timeout : Cardinal ;
+  EndOfLine : Boolean ;
+begin
+   TimeOut := timegettime + 1000 ;
+   repeat
+     Status := ReceiveBytes( EndOfLine ) ;
+     Until EndOfLine or (timegettime > TimeOut) ;
      end ;
 
 
@@ -437,7 +456,7 @@ procedure TZStage.ResetCOMPort ;
 // --------------------------
 begin
     case FStageType of
-        stOptiscanII :
+        stOptiscanII,stProScanIII :
           begin
           if ComPortOpen then
              begin
@@ -457,7 +476,7 @@ begin
 
     FEnabled := Value ;
     case FStageType of
-        stOptiscanII :
+        stOptiscanII,stProScanIII :
           begin
           if FEnabled and (not ComPortOpen) then OpenComPort
           else if (not FEnabled) and ComPortOpen then CloseComPort ;
@@ -507,5 +526,22 @@ begin
             inc(iPort) ;
             end;
     end ;
+
+procedure TZStage.ProScanEnableZStageTTLAction ;
+// ---------------------------------------------------------------
+// Enable action to be taken when TTL hard limit trigger activated
+// ---------------------------------------------------------------
+begin
+     SendCommand('TTDEL,1') ;
+     WaitforCompletion ;
+     SendCommand('TTLTP,1,1') ;       // Enable trigger on input #1 going high
+     WaitforCompletion ;
+     SendCommand('TTLACT,1,31,0,0,0') ; // Move Z axis to zero position
+     WaitforCompletion ;
+     SendCommand('TTLTRG,1') ;         // Enable triggers
+     WaitforCompletion ;
+     end;
+
+
 
 end.
