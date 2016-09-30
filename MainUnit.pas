@@ -10,6 +10,9 @@ unit MainUnit;
 //                Upper exposure time limited to 140ms
 //        10.05.16 Black level offset still present
 //        24.05.16 Settings now saved in C:\Users\Public\Documents\MesoCam
+// V1.5.4 30.9.16 Warning message displayed when program is closed down
+//                SaveAsBIGTIFF flag now correctly loaded from settings file
+//                Exposure time errors fixed (by limiting to 10 us steps)
 
 interface
 
@@ -220,6 +223,7 @@ type
     procedure PageChange(Sender: TObject);
     procedure File1Click(Sender: TObject);
     procedure cbLiveBinChange(Sender: TObject);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
   private
 
     { Private declarations }
@@ -534,13 +538,13 @@ begin
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
-     Caption := 'MesoCam V1.5.3 ';
+     Caption := 'MesoCam V1.5.4 ';
      {$IFDEF WIN32}
      Caption := Caption + '(32 bit)';
     {$ELSE}
      Caption := Caption + '(64 bit)';
     {$IFEND}
-     Caption := Caption + ' 27/05/16';
+     Caption := Caption + ' 30/09/16';
 
      TempBuf := Nil ;
      DeviceNum := 1 ;
@@ -1109,6 +1113,16 @@ begin
 
 end;
 
+
+procedure TMainFrm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+// ----------------------------------------
+// Warn user that program is about to close
+// ----------------------------------------
+begin
+    if MessageDlg( 'Exit Program! Are you Sure? ',
+       mtConfirmation,[mbYes,mbNo], 0 ) = mrYes then CanClose := True
+                                                else CanClose := False ;
+end;
 
 procedure TMainFrm.DisplayROI(
           BitMap : TBitmap
@@ -3260,7 +3274,7 @@ begin
        begin
        if ANSIContainsText(ChildNode.Text,'T') then Value := True
                                                else Value := False ;
-       Result := True ;
+       Result := Value ;
        end ;
 
     end ;
