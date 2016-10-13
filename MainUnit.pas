@@ -13,6 +13,12 @@ unit MainUnit;
 // V1.5.4 30.9.16 Warning message displayed when program is closed down
 //                SaveAsBIGTIFF flag now correctly loaded from settings file
 //                Exposure time errors fixed (by limiting to 10 us steps)
+<<<<<<< HEAD
+// V1.5.4 13.10.16 Exposure time attribute corrected in Vieworks VA-29MC-5M.icd file. Now correctly sets
+//                 exposure time 10 us - 7s. Exposure frame capture rates now faster
+//                 6 x SD contrast range now calculated correctly
+=======
+>>>>>>> origin/master
 
 interface
 
@@ -538,13 +544,21 @@ begin
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
+<<<<<<< HEAD
+     Caption := 'MesoCam V1.5.5 ';
+=======
      Caption := 'MesoCam V1.5.4 ';
+>>>>>>> origin/master
      {$IFDEF WIN32}
      Caption := Caption + '(32 bit)';
     {$ELSE}
      Caption := Caption + '(64 bit)';
     {$IFEND}
+<<<<<<< HEAD
+     Caption := Caption + ' 13/10/16';
+=======
      Caption := Caption + ' 30/09/16';
+>>>>>>> origin/master
 
      TempBuf := Nil ;
      DeviceNum := 1 ;
@@ -1780,7 +1794,7 @@ procedure TMainFrm.CalculateMaxContrast ;
 const
     MaxPoints = 10000 ;
 var
-     i,NumPixels,iStep : Integer ;
+     i,NumPixels,iStep,nPoints : Integer ;
      z,zMean,zSD,zSum : Single ;
      iz,ZMin,ZMax,ZLo,ZHi,ZThreshold : Integer ;
      FrameType : Integer ;
@@ -1814,11 +1828,14 @@ begin
        begin
        // Set contrast range to +/- 3 x standard deviation
        ZSum := 0.0 ;
-       for i := 0 to NumPixels - 1 do
-          begin
+       i := 0 ;
+       nPoints := 0 ;
+       repeat
           ZSum := ZSum + pImBuf^[i] ;
-          end ;
-       ZMean := ZSum / NumPixels ;
+          i := i + iStep ;
+          Inc(nPoints) ;
+       until i >= NumPixels ;
+       ZMean := ZSum / Max(nPoints,1) ;
 
        ZSum := 0.0 ;
        i := 0 ;
@@ -1826,8 +1843,9 @@ begin
           Z :=pImBuf^[i] ;
           ZSum := ZSum + (Z - ZMean)*(Z - ZMean) ;
           i := i + iStep ;
+          Inc(nPoints) ;
        until i >= NumPixels ;
-       ZSD := Sqrt( ZSum / (NumPixels-1) ) ;
+       ZSD := Sqrt( ZSum / Max(nPoints-1,0) ) ;
 
        ZLo := Max( Round(ZMean - 3*ZSD),0) ;
        ZHi := Min( Round(ZMean + 3*ZSD), GreyLevelMax );
