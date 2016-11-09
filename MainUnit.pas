@@ -13,12 +13,10 @@ unit MainUnit;
 // V1.5.4 30.9.16 Warning message displayed when program is closed down
 //                SaveAsBIGTIFF flag now correctly loaded from settings file
 //                Exposure time errors fixed (by limiting to 10 us steps)
-<<<<<<< HEAD
 // V1.5.4 13.10.16 Exposure time attribute corrected in Vieworks VA-29MC-5M.icd file. Now correctly sets
 //                 exposure time 10 us - 7s. Exposure frame capture rates now faster
 //                 6 x SD contrast range now calculated correctly
-=======
->>>>>>> origin/master
+// V1.5.6 09.11/16 Now working with PCIe-1433 card and new camera
 
 interface
 
@@ -544,25 +542,16 @@ begin
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
-<<<<<<< HEAD
-     Caption := 'MesoCam V1.5.5 ';
-=======
-     Caption := 'MesoCam V1.5.4 ';
->>>>>>> origin/master
+     Caption := 'MesoCam V1.5.6 ';
      {$IFDEF WIN32}
      Caption := Caption + '(32 bit)';
     {$ELSE}
      Caption := Caption + '(64 bit)';
     {$IFEND}
-<<<<<<< HEAD
-     Caption := Caption + ' 13/10/16';
-=======
-     Caption := Caption + ' 30/09/16';
->>>>>>> origin/master
+     Caption := Caption + ' 19/11/16';
 
      TempBuf := Nil ;
      DeviceNum := 1 ;
-
      LabIO.NIDAQAPI := NIDAQMX ;
      LabIO.Open ;
 
