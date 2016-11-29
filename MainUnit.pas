@@ -17,6 +17,8 @@ unit MainUnit;
 //                 exposure time 10 us - 7s. Exposure frame capture rates now faster
 //                 6 x SD contrast range now calculated correctly
 // V1.5.6 09.11/16 Now working with PCIe-1433 card and new camera
+// V1.5.7 17.11.16 Pixel Intensity histogram display added
+//                 Lens table added
 
 interface
 
@@ -25,7 +27,8 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ComCtrls, StdCtrls, ValidatedEdit, LabIOUnit, RangeEdit, math,
   ExtCtrls, ImageFile, xmldoc, xmlintf, ActiveX, Vcl.Menus, system.types, strutils, UITypes,
-  SESCam, mmsystem, Vcl.ToolWin, Vcl.Buttons, LightSourceUnit, shellapi,shlobj ;
+  SESCam, mmsystem, Vcl.ToolWin, Vcl.Buttons, LightSourceUnit, shellapi,shlobj,
+  XYPlotDisplay ;
 
 const
     VMax = 10.0 ;
@@ -41,7 +44,8 @@ const
     FalseColourPalette = 1 ;
     MaxZoomFactors = 100 ;
     MaxPanels = 4 ;
-
+    HistogramNumBins = 100 ;
+    MaxLenses = 10 ;
 type
 
  TPaletteType = (palGrey,palGreen,palRed,palBlue,palFalseColor) ;
@@ -176,6 +180,9 @@ type
     Image3: TImage;
     edZStatus: TEdit;
     cbLiveBin: TComboBox;
+    plHistogram: TXYPlotDisplay;
+    Label2: TLabel;
+    cbLens: TComboBox;
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -228,6 +235,7 @@ type
     procedure File1Click(Sender: TObject);
     procedure cbLiveBinChange(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure cbLensChange(Sender: TObject);
   private
 
     { Private declarations }
@@ -239,13 +247,19 @@ type
 
         procedure FixRectangle( var Rect : TRect ) ;
         function GetSpecialFolder(const ASpecialFolderID: Integer): string;
-
+        procedure PlotHistogram ;
   public
     { Public declarations }
     CameraType : Integer ;
 //    PixelWidth : Double ;                 // Camera pixel size (um)
-    LensMagnification : Double ;          // Lens magnification
+
+    RelayLensMagnification : Double ;       // Camera relay lens magnification
+    NumLenses : Integer ;                   // No. lenses in table
+    LensMagnification : Array[0..MaxLenses-1] of Double ;  // Lens magnification
+    LensName : Array[0..MaxLenses-1] of String ;           // Lens name
+    LensSelected : Integer ;                               // Lens # selected for use
     CameraPixelSize : double ;            // Camera pixel size (microns)
+    LiveBinSelected : Integer ;              // Selected live binning option
     MagnifiedCameraPixelSize : double ;             // Image pixel size (microns)
     CameraTriggerOutput : Integer ;       // Camera trigger digital output line
     CameraTriggerActiveHigh : Boolean ;   // TTL high level triggers camera
@@ -372,6 +386,9 @@ type
     SaveAsMultipageTIFF : Boolean ;  // TRUE = save as multi-page TIFF, FALSE=separate files
     ImageJPath : String ;            // Path to Image-J program
 
+
+    Histogram : Array[0..HistogramNumBins-1] of Single ;
+
     MemUsed : Integer ;
     procedure InitialiseImage ;
     procedure SetImagePanels ;
@@ -393,6 +410,7 @@ type
     procedure CalculateMaxContrast ;
 
     procedure SetScanZoomToFullField ;
+    procedure SetLensMenu ;
 
 procedure SaveRawImage(
           FileName : String ;    // File to save to
@@ -542,13 +560,13 @@ begin
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
-     Caption := 'MesoCam V1.5.6 ';
+     Caption := 'MesoCam V1.5.7 ';
      {$IFDEF WIN32}
      Caption := Caption + '(32 bit)';
     {$ELSE}
      Caption := Caption + '(64 bit)';
     {$IFEND}
-     Caption := Caption + ' 19/11/16';
+     Caption := Caption + ' 17/11/16';
 
      TempBuf := Nil ;
      DeviceNum := 1 ;
@@ -590,6 +608,7 @@ begin
      cbLiveBin.Items.AddObject('Live Bin 2x2',TObject(2));
      cbLiveBin.Items.AddObject('Live Bin 1x1',TObject(1));
      cbLiveBin.ItemIndex := 0 ;
+     LiveBinSelected := 0 ;
 
      cbCaptureMode.Clear ;
      cbCaptureMode.Items.AddObject('Standard (X1)',TObject(1));
@@ -638,10 +657,25 @@ begin
      edNumPixelsPerZStep.Value := 1.0 ;
      edNumZSections.Value := 10.0 ;
 
+     NumLenses := 5 ;
+     LensSelected := 0 ;
+     LensMagnification[0] := 4.0 ;
+     LensName[0] := '4X' ;
+     LensMagnification[1] := 10.0 ;
+     LensName[1] := '10X' ;
+     LensMagnification[2] := 20.0 ;
+     LensName[2] := '20X' ;
+     LensMagnification[3] := 40.0 ;
+     LensName[3] := '40X' ;
+     LensMagnification[4] := 60.0 ;
+     LensName[4] := '60X' ;
+     SetLensMenu ;
 
-     LensMagnification := 1.0 ;
+     RelayLensMagnification := 1.0 ;
      CameraPixelSize := 1.0 ;
-     MagnifiedCameraPixelSize := CameraPixelSize / LensMagnification ;
+
+     MagnifiedCameraPixelSize := CameraPixelSize /
+                                 Max(RelayLensMagnification*LensMagnification[LensSelected],1E-3) ;
 
      // Image-J program path
      ImageJPath := 'C:\ImageJ\imagej.exe';
@@ -714,6 +748,25 @@ begin
      Height := Screen.Height - 50 - Top ;
 
      end;
+
+
+procedure TMainFrm.SetLensMenu ;
+var
+  i: Integer;
+// ----------------------------------
+// Update lens menu and selected lens
+// ----------------------------------
+begin
+    cbLens.Clear ;
+    for i := 0 to NumLenses-1 do cbLens.Items.Add( LensName[i] ) ;
+    LensSelected := Min(Max(LensSelected,0),NumLenses-1); ;
+    cbLens.ItemIndex := LensSelected ;
+
+    // Update magnified pixel size
+    MagnifiedCameraPixelSize := CameraPixelSize /
+                                 Max(RelayLensMagnification*LensMagnification[LensSelected],1E-3) ;
+
+    end;
 
 
 procedure TMainFrm.SetScanZoomToFullField ;
@@ -1556,7 +1609,7 @@ begin
        Cam1.BinFactor := 1 ;
        Cam1.TriggerMode := CamExtTrigger ;
        Cam1.NumPixelShiftFrames := Integer(cbCaptureMode.Items.Objects[cbCaptureMode.ItemIndex]) ;
-       if Cam1.NumPixelShiftFrames > 0 then Cam1.TriggerMode := CamExtTrigger
+       if Cam1.NumPixelShiftFrames > 1 then Cam1.TriggerMode := CamExtTrigger
                                        else Cam1.TriggerMode := camFreeRun ;
        end;
     NumFramesRequired := Cam1.NumPixelShiftFrames ;
@@ -1875,6 +1928,85 @@ begin
 end ;
 
 
+procedure TMainFrm.PlotHistogram ;
+// ---------------------------------------------------------
+// Calculate and set display for maximum grey scale contrast
+// ---------------------------------------------------------
+const
+    MaxPoints = 10000 ;
+var
+     i,ix,NumPixels,iStep,nPoints,BinWidth : Integer ;
+     FrameType : Integer ;
+     pImBuf : PIntArray ;
+     XLo,XMid,XHi,YMax : single ;
+begin
+
+    if ShowCameraImage then
+       begin
+       FrameWidth := Cam1.FrameWidth ;
+       FrameHeight := Cam1.FrameHeight ;
+       NumComponentsPerFrame := Cam1.NumComponentsPerFrame ;
+       NumComponentsPerPixel := Cam1.NumComponentsPerPixel ;
+       pImBuf := pLiveImageBuf ;
+       end
+    else
+       begin
+       PimBuf := pImageBuf ;
+       FrameWidth := HRFrameWidth ;
+       FrameHeight := HRFrameHeight ;
+       NumComponentsPerFrame := HRNumComponentsPerFrame ;
+       NumComponentsPerPixel := HRNumComponentsPerPixel ;
+       end;
+
+    NumPixels := FrameWidth*FrameHeight - 4 ;
+    FrameType := 0 ;
+    if NumPixels < 2 then Exit ;
+
+    iStep := Max(NumPixels div MaxPoints,1) ;
+
+    BinWidth := Cam1.GreyLevelMax div HistogramNumBins ;
+    for i := 0 to HistogramNumBins-1 do  Histogram[i] := 0.0 ;
+    i := 0 ;
+    repeat
+       ix := Max(Min(pImBuf^[i] div BinWidth,HistogramNumBins-1),0) ;
+       Histogram[ix] := Histogram[ix] + 1.0 ;
+       i := i + iStep ;
+       until i >= NumPixels ;
+
+    for i := 0 to HistogramNumBins-1 do
+        begin
+        if YMax < Histogram[i] then YMax := Histogram[i] ;
+        end ;
+
+    // Plot new Histogram }
+    plHistogram.xAxisAutoRange := False ;
+    plHistogram.xAxisMin := 0.0 ;
+    plHistogram.xAxisMax := Cam1.GreyLevelMax ;
+    plHistogram.XAxisTick := Cam1.GreyLevelMax ;
+    plHistogram.XAxisLabel := '' ;
+    plHistogram.yAxisAutoRange := False ;
+    plHistogram.yAxisMin := 0.0 ;
+    plHistogram.yAxisMax := YMax ;
+    plHistogram.yAxisTick := YMax ;
+    plHistogram.YAxisLabel := '' ;
+    plHistogram.ScreenFontSize := 8 ;
+
+    // Create Histogram plot
+    plHistogram.CreateHistogram( 0 ) ;
+
+    XLo := 0.0 ;
+    for i := 0 to HistogramNumBins-1 do
+        begin
+        XHi := XLo + BinWidth ;
+        XMid := XLo + BinWidth*0.5 ;
+        plHistogram.AddBin( 0,XLo,XMid,XHi,Histogram[i]) ;
+        XLo := XLo + BinWidth ;
+        end ;
+
+
+end ;
+
+
 procedure TMainFrm.TimerTimer(Sender: TObject);
 // -------------------------
 // Regular timed operations
@@ -1938,6 +2070,8 @@ begin
        ZStage.UpdateZPosition ;
        edZTop.Text := format('%.2f um',[ZStage.ZPosition]) ;
        end;
+
+    PlotHistogram ;
 
     end;
 
@@ -2399,11 +2533,20 @@ begin
     end;
 
 
+procedure TMainFrm.cbLensChange(Sender: TObject);
+// ------------
+// Lens changed
+// ------------
+begin
+    LensSelected := cbLens.ItemIndex ;
+end;
+
 procedure TMainFrm.cbLiveBinChange(Sender: TObject);
 // -------------------------
 // Live binning mode changed
 // -------------------------
 begin
+   LiveBinSelected := cbLiveBin.ItemIndex ;
    if LiveImagingInProgress then
       begin
       StopCamera ;
@@ -2419,7 +2562,6 @@ begin
      UpdateLUT( GreyLevelMax ) ;
      UpdateDisplay := True ;
      end;
-
 
 
 procedure TMainFrm.ckAcquireZStackClick(Sender: TObject);
@@ -2487,11 +2629,10 @@ procedure TMainFrm.mnScanSettingsClick(Sender: TObject);
 // Show Scan Settings dialog
 // --------------------------
 begin
-
      SettingsFrm.Left := MainFrm.Left + 20 ;
      SettingsFrm.Top := MainFrm.Top + 20 ;
      SettingsFrm.ShowModal ;
-
+     SetLensMenu ;
      end;
 
 
@@ -2974,6 +3115,8 @@ begin
     CameraGainIndex := cbCameraGain.ItemIndex ;
     AddElementInt( ProtNode, 'CAMERAGAIN', CameraGainIndex ) ;
 
+    AddElementInt( ProtNode, 'LIVEBINSELECTED', LiveBinSelected ) ;
+
     AddElementInt( ProtNode, 'HRFRAMEWIDTH', HRFrameWidth ) ;
     AddElementBool( ProtNode,'ROIMODE', rbROIMode.Checked ) ;
 
@@ -3010,7 +3153,17 @@ begin
     AddElementDouble( iNode, 'ZSCALEFACTOR', ZStage.ZScaleFactor ) ;
     AddElementDouble( iNode, 'ZSTEPTIME', ZStage.ZStepTime ) ;
 
-    AddElementDouble( ProtNode, 'LENSMAGNIFICATION', LensMagnification ) ;
+    // Lenses in use
+    AddElementInt( ProtNode, 'NUMLENSES', NumLenses ) ;
+    AddElementInt( ProtNode, 'LENSSELECTED', LensSelected ) ;
+    for i := 0 to NumLenses-1 do begin
+        iNode := ProtNode.AddChild( 'LENS' ) ;
+        AddElementInt( iNode, 'NUMBER', i ) ;
+        AddElementText( iNode, 'NAME', LensName[i] ) ;
+        AddElementDouble( iNode, 'MAGNIFICATION', LensMagnification[i] ) ;
+        end;
+
+    AddElementDouble( ProtNode, 'RELAYLENSMAGNIFICATION', RelayLensMagnification ) ;
     AddElementDouble( ProtNode, 'CAMERAPIXELSIZE', CameraPixelSize ) ;
 
     AddElementText( ProtNode, 'SAVEDIRECTORY', SaveDirectory ) ;
@@ -3074,6 +3227,9 @@ begin
     edExposureTime.Value := GetElementDouble( ProtNode, 'EXPOSURETIME', edExposureTime.Value ) ;
     CameraGainIndex := GetElementInt( ProtNode, 'CAMERAGAIN', CameraGainIndex ) ;
 
+    LiveBinSelected := GetElementInt( ProtNode, 'LIVEBINSELECTED', LiveBinSelected ) ;
+    cbLiveBin.ItemIndex := LiveBinSelected ;
+
     HRFrameWidth := GetElementInt( ProtNode, 'HRFRAMEWIDTH', HRFrameWidth ) ;
     rbROIMode.Checked := GetElementBool( ProtNode,'ROIMODE', rbROIMode.Checked ) ;
     rbZoomMode.Checked := not rbROIMode.Checked ;
@@ -3123,9 +3279,29 @@ begin
       Inc(NodeIndex) ;
       end ;
 
-    LensMagnification := GetElementDouble( ProtNode, 'LENSMAGNIFICATION', LensMagnification ) ;
+    // Lenses in use
+    NumLenses := GetElementInt( ProtNode, 'NUMLENSES', NumLenses ) ;
+    NumLenses := Min(Max(NumLenses,1),MaxLenses);
+    LensSelected := GetElementInt( ProtNode, 'LENSSELECTED', LensSelected ) ;
+    NodeIndex := 0 ;
+    While FindXMLNode(ProtNode,'LENS',iNode,NodeIndex) do
+        begin
+        Num := GetElementInt( iNode, 'NUMBER', Num ) ;
+        if (Num >=0) and (Num < MaxLenses ) then
+           begin
+           LensName[Num] := GetElementText( iNode, 'NAME', LensName[Num] ) ;
+           LensMagnification[Num] := GetElementDouble( iNode, 'MAGNIFICATION', LensMagnification[Num] ) ;
+           end ;
+        Inc(NodeIndex);
+        end;
+    SetLensMenu ;
+
+    RelayLensMagnification := GetElementDouble( ProtNode, 'RELAYLENSMAGNIFICATION', RelayLensMagnification ) ;
+    if RelayLensMagnification <= 0.0 then RelayLensMagnification := 1.0 ;
+
     CameraPixelSize := GetElementDouble( ProtNode, 'CAMERAPIXELSIZE', CameraPixelSize ) ;
-    MagnifiedCameraPixelSize := CameraPixelSize / Max(LensMagnification,1E-3) ;
+    MagnifiedCameraPixelSize := CameraPixelSize /
+                                Max(RelayLensMagnification*LensMagnification[LensSelected],1E-3) ;
 
     SaveDirectory := GetElementText( ProtNode, 'SAVEDIRECTORY', SaveDirectory ) ;
     ImageJPath := GetElementText( ProtNode, 'IMAGEJPATH', ImageJPath ) ;

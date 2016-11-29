@@ -1,9 +1,9 @@
 object MainFrm: TMainFrm
   Left = 794
   Top = 357
-  Caption = 'MesoScan V1.5.5 9/11/16'
-  ClientHeight = 817
-  ClientWidth = 940
+  Caption = 'to'
+  ClientHeight = 986
+  ClientWidth = 652
   Color = clBtnFace
   DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
@@ -61,6 +61,14 @@ object MainFrm: TMainFrm
       Height = 13
       Alignment = taRightJustify
       Caption = 'Gain'
+    end
+    object Label2: TLabel
+      Left = 117
+      Top = 110
+      Width = 23
+      Height = 13
+      Alignment = taRightJustify
+      Caption = 'Lens'
     end
     object bCaptureImage: TButton
       Left = 8
@@ -130,8 +138,8 @@ object MainFrm: TMainFrm
     end
     object edExposureTime: TValidatedEdit
       Left = 115
-      Top = 36
-      Width = 57
+      Top = 35
+      Width = 83
       Height = 21
       Hint = 'Exposure time (ms)'
       OnKeyPress = edExposureTimeKeyPress
@@ -209,7 +217,7 @@ object MainFrm: TMainFrm
     object cbCameraGain: TComboBox
       Left = 115
       Top = 81
-      Width = 57
+      Width = 83
       Height = 23
       Hint = 'Camera analog gain'
       Style = csDropDownList
@@ -235,6 +243,24 @@ object MainFrm: TMainFrm
       ShowHint = True
       TabOrder = 7
       OnChange = cbLiveBinChange
+    end
+    object cbLens: TComboBox
+      Left = 114
+      Top = 129
+      Width = 84
+      Height = 23
+      Hint = 'Camera analog gain'
+      Style = csDropDownList
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Arial Narrow'
+      Font.Style = []
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 8
+      OnChange = cbLensChange
     end
   end
   object ImageSizeGrp: TGroupBox
@@ -1025,10 +1051,6 @@ object MainFrm: TMainFrm
       object SlidersTab: TTabSheet
         Caption = 'Sliders'
         ImageIndex = 1
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object Label9: TLabel
           Left = 3
           Top = 4
@@ -1140,19 +1162,60 @@ object MainFrm: TMainFrm
     Left = 8
     Top = 741
     Width = 217
-    Height = 60
+    Height = 220
+    Caption = ' Pixel Intensity Histogram '
     TabOrder = 5
+    object plHistogram: TXYPlotDisplay
+      Left = 8
+      Top = 18
+      Width = 198
+      Height = 141
+      MaxPointsPerLine = 4096
+      XAxisMax = 1.000000000000000000
+      XAxisTick = 0.200000002980232200
+      XAxisLaw = axLinear
+      XAxisLabel = 'X Axis'
+      XAxisAutoRange = False
+      YAxisMax = 1.000000000000000000
+      YAxisTick = 0.200000002980232200
+      YAxisLaw = axLinear
+      YAxisLabel = 'Y Axis'
+      YAxisAutoRange = False
+      YAxisLabelAtTop = False
+      ScreenFontName = 'Arial'
+      ScreenFontSize = 10
+      LineWidth = 1
+      MarkerSize = 6
+      ShowLines = True
+      ShowMarkers = False
+      HistogramFullBorders = False
+      HistogramFillColor = clWhite
+      HistogramFillStyle = bsClear
+      HistogramCumulative = False
+      HistogramPercentage = False
+      PrinterFontSize = 10
+      PrinterFontName = 'Arial'
+      PrinterLineWidth = 1
+      PrinterMarkerSize = 5
+      PrinterLeftMargin = 22
+      PrinterRightMargin = 22
+      PrinterTopMargin = 22
+      PrinterBottomMargin = 22
+      PrinterDisableColor = False
+      MetafileWidth = 500
+      MetafileHeight = 400
+    end
     object edStatus: TEdit
-      Left = 13
-      Top = 3
+      Left = 8
+      Top = 163
       Width = 201
       Height = 21
       ReadOnly = True
       TabOrder = 0
     end
     object edZStatus: TEdit
-      Left = 13
-      Top = 30
+      Left = 8
+      Top = 190
       Width = 201
       Height = 21
       ReadOnly = True
@@ -1189,10 +1252,6 @@ object MainFrm: TMainFrm
     object tbChan1: TTabSheet
       Caption = 'Channel 1'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image1: TImage
         Left = 3
         Top = 3
@@ -1213,10 +1272,6 @@ object MainFrm: TMainFrm
     object tbChan2: TTabSheet
       Caption = 'Channel 2'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image2: TImage
         Left = 3
         Top = 3
@@ -1237,10 +1292,6 @@ object MainFrm: TMainFrm
     object tbChan3: TTabSheet
       Caption = 'tbChan3'
       ImageIndex = 3
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image3: TImage
         Left = -4
         Top = 3

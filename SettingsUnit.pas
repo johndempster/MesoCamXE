@@ -3,13 +3,14 @@ unit SettingsUnit;
 // MesoScan - Scan Settings dialog box
 // ------------------------------------
 // 1-6-12 MinPixelDwellTimeAdded
+// 29.11.16 Lens table added
 
 interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, ValidatedEdit, math,
-  Vcl.ExtCtrls,LabIOUnit,LightSourceUnit, Vcl.ComCtrls ;
+  Vcl.ExtCtrls,LabIOUnit,LightSourceUnit, Vcl.ComCtrls, Vcl.Grids ;
 
 type
   TSettingsFrm = class(TForm)
@@ -51,9 +52,6 @@ type
     edZScaleFactor: TValidatedEdit;
     cbZStageType: TComboBox;
     edZStepTime: TValidatedEdit;
-    CalibrationGrp: TGroupBox;
-    Label2: TLabel;
-    edLensMagnification: TValidatedEdit;
     Label6: TLabel;
     pnLightSource0: TPanel;
     Edit2: TEdit;
@@ -101,12 +99,20 @@ type
     cbCameraTrigger: TComboBox;
     rbCameraTriggerActiveHigh: TRadioButton;
     rbCameraTriggerActiveLow: TRadioButton;
-    Label9: TLabel;
-    edCameraPixelSize: TValidatedEdit;
     GroupBox5: TGroupBox;
     Label25: TLabel;
     edImageJPath: TEdit;
     ckSaveAsMultipageTIFF: TCheckBox;
+    Label9: TLabel;
+    edCameraPixelSize: TValidatedEdit;
+    LensTab: TTabSheet;
+    CalibrationGrp: TGroupBox;
+    Label2: TLabel;
+    Label11: TLabel;
+    edNumLenses: TValidatedEdit;
+    sgLensTable: TStringGrid;
+    edRelayLensMagnification: TValidatedEdit;
+    udNumLenses: TUpDown;
     procedure FormShow(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCancelClick(Sender: TObject);
@@ -115,6 +121,9 @@ type
     procedure cbCameraNamesChange(Sender: TObject);
     procedure cbCameraADCChange(Sender: TObject);
     procedure cbCameraModeChange(Sender: TObject);
+    procedure udNumLensesChangingEx(Sender: TObject; var AllowChange: Boolean;
+      NewValue: Integer; Direction: TUpDownDirection);
+    procedure edNumLensesKeyPress(Sender: TObject; var Key: Char);
   private
     { Private declarations }
     procedure SetLightSourcePanel(
@@ -203,7 +212,20 @@ begin
     edZScaleFactor.Value := ZStage.ZScaleFactor ;
     edZStepTime.Value := ZStage.ZStepTime ;
 
-    edLensMagnification.Value := MainFrm.LensMagnification ;
+    edNumLenses.Value := MainFrm.NumLenses ;
+    sgLensTable.RowCount := MainFrm.NumLenses+1 ;
+    sgLensTable.Cells[0,0] := ' Name  ' ;
+    sgLensTable.ColWidths[0] := 90 ; //sgLensTable.Canvas.TextWidth(sgLensTable.Cells[0,0]);
+    sgLensTable.Cells[1,0] := ' Magnification  ' ;
+    sgLensTable.ColWidths[1] := 90 ;//sgLensTable.Canvas.TextWidth(sgLensTable.Cells[1,0]);
+
+    for I := 0 to MainFrm.NumLenses-1 do
+        begin
+        sgLensTable.Cells[0,i+1] := MainFrm.LensName[i] ;
+        sgLensTable.Cells[1,i+1] := format('%.4g',[MainFrm.LensMagnification[i]]);
+        end;
+
+    edRelayLensMagnification.Value := MainFrm.RelayLensMagnification ;
     edCameraPixelSize.Value := MainFrm.CameraPixelSize ;
 
     edImageJPath.Text := MainFrm.ImageJPath ;
@@ -225,6 +247,8 @@ procedure TSettingsFrm.bOKClick(Sender: TObject);
 // --------------------------
 // Update program settings
 // --------------------------
+var
+  i,Code : Integer ;
 begin
 
     // Light source
@@ -245,9 +269,17 @@ begin
     ZStage.ZStepTime := edZStepTime.Value ;
 
     MainFrm.SetScanZoomToFullField ;
-    MainFrm.LensMagnification := Max(edLensMagnification.Value,0.001) ;
+    MainFrm.NumLenses := Round(edNumLenses.Value);
+    MainFrm.RelayLensMagnification := Max(edRelayLensMagnification.Value,0.001) ;
+    for I := 0 to MainFrm.NumLenses-1 do
+        begin
+        MainFrm.LensName[i] := sgLensTable.Cells[0,i+1] ;
+        Val(sgLensTable.Cells[1,i+1],MainFrm.LensMagnification[i],Code) ;
+        end;
+
     MainFrm.CameraPixelSize := edCameraPixelSize.Value ;
-    MainFrm.MagnifiedCameraPixelSize := MainFrm.CameraPixelSize/MainFrm.LensMagnification ;
+    MainFrm.MagnifiedCameraPixelSize := MainFrm.CameraPixelSize/
+                                        (MainFrm.RelayLensMagnification) ;
 
     // Update camera gain list
     MainFrm.Cam1.GetCameraGainList( MainFrm.cbCameraGain.Items );
@@ -310,6 +342,11 @@ begin
 end;
 
 
+procedure TSettingsFrm.edNumLensesKeyPress(Sender: TObject; var Key: Char);
+begin
+    if Key = #13 then sgLensTable.RowCount := Round(edNumLenses.Value) + 1 ;
+end;
+
 procedure TSettingsFrm.SetLightSourcePanel(
           Num : Integer ;
           Panel : TPanel ) ;
@@ -335,6 +372,20 @@ begin
           TValidatedEdit(Panel.Controls[i]).Value := LightSource.MaxLevel[Num] ;
 
 end;
+
+
+
+procedure TSettingsFrm.udNumLensesChangingEx(Sender: TObject;
+  var AllowChange: Boolean; NewValue: Integer; Direction: TUpDownDirection);
+begin
+     case Direction of
+          updUp : edNumLenses.Value := edNumLenses.Value + 1.0 ;
+          updDown : edNumLenses.Value := edNumLenses.Value - 1.0 ;
+     end;
+     sgLensTable.RowCount := Round(edNumLenses.Value) + 1 ;
+end;
+
+
 
 procedure TSettingsFrm.GetLightSourcePanel(
           Num : Integer ;
