@@ -53,7 +53,7 @@ object SettingsFrm: TSettingsFrm
     Top = 8
     Width = 486
     Height = 425
-    ActivePage = CameraTab
+    ActivePage = ZStageTab
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
@@ -954,8 +954,6 @@ object SettingsFrm: TSettingsFrm
       HelpKeyword = 'Lenses'
       Caption = 'Lenses'
       ImageIndex = 3
-      ExplicitLeft = 0
-      ExplicitTop = 28
       object CalibrationGrp: TGroupBox
         Left = 8
         Top = 3
@@ -964,9 +962,9 @@ object SettingsFrm: TSettingsFrm
         Caption = ' Lens Table '
         TabOrder = 0
         object Label2: TLabel
-          Left = 72
+          Left = 86
           Top = 16
-          Width = 90
+          Width = 76
           Height = 14
           Alignment = taRightJustify
           Caption = 'No. of Lenses'

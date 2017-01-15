@@ -8,7 +8,8 @@ uses
   SettingsUnit in 'SettingsUnit.pas' {SettingsFrm},
   ZStageUnit in 'ZStageUnit.pas' {ZStage: TDataModule},
   LightSourceUnit in 'LightSourceUnit.pas' {LightSource: TDataModule},
-  SetCCDReadoutUnit in 'SetCCDReadoutUnit.pas' {SetCCDReadoutFrm};
+  SetCCDReadoutUnit in 'SetCCDReadoutUnit.pas' {SetCCDReadoutFrm},
+  about in 'about.pas' {AboutBox};
 
 {$R *.res}
 
@@ -19,5 +20,6 @@ begin
   Application.CreateForm(TSettingsFrm, SettingsFrm);
   Application.CreateForm(TZStage, ZStage);
   Application.CreateForm(TLightSource, LightSource);
+  Application.CreateForm(TAboutBox, AboutBox);
   Application.Run;
 end.

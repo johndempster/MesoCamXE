@@ -3,7 +3,7 @@ object MainFrm: TMainFrm
   Top = 357
   Caption = 'to'
   ClientHeight = 986
-  ClientWidth = 652
+  ClientWidth = 651
   Color = clBtnFace
   DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
@@ -13,6 +13,7 @@ object MainFrm: TMainFrm
   Font.Style = []
   Menu = MainMenu1
   OldCreateOrder = False
+  Position = poDesigned
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
@@ -37,12 +38,12 @@ object MainFrm: TMainFrm
     Left = 8
     Top = 8
     Width = 217
-    Height = 242
+    Height = 233
     Caption = ' Camera '
     TabOrder = 0
     object Label7: TLabel
       Left = 115
-      Top = 16
+      Top = 23
       Width = 83
       Height = 14
       Caption = 'Exposure Time'
@@ -55,20 +56,33 @@ object MainFrm: TMainFrm
       WordWrap = True
     end
     object Label8: TLabel
-      Left = 119
-      Top = 62
-      Width = 22
-      Height = 13
+      Left = 115
+      Top = 65
+      Width = 24
+      Height = 14
       Alignment = taRightJustify
       Caption = 'Gain'
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
     end
     object Label2: TLabel
-      Left = 117
-      Top = 110
-      Width = 23
-      Height = 13
+      Tag = 112
+      Left = 115
+      Top = 112
+      Width = 28
+      Height = 14
       Alignment = taRightJustify
       Caption = 'Lens'
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
     end
     object bCaptureImage: TButton
       Left = 8
@@ -138,7 +152,7 @@ object MainFrm: TMainFrm
     end
     object edExposureTime: TValidatedEdit
       Left = 115
-      Top = 35
+      Top = 39
       Width = 83
       Height = 21
       Hint = 'Exposure time (ms)'
@@ -234,7 +248,7 @@ object MainFrm: TMainFrm
     end
     object cbLiveBin: TComboBox
       Left = 8
-      Top = 36
+      Top = 39
       Width = 101
       Height = 21
       Hint = 'Live image binning mode'
@@ -245,7 +259,7 @@ object MainFrm: TMainFrm
       OnChange = cbLiveBinChange
     end
     object cbLens: TComboBox
-      Left = 114
+      Left = 115
       Top = 129
       Width = 84
       Height = 23
@@ -265,7 +279,7 @@ object MainFrm: TMainFrm
   end
   object ImageSizeGrp: TGroupBox
     Left = 8
-    Top = 256
+    Top = 248
     Width = 217
     Height = 181
     Caption = ' Image Mode'
@@ -386,32 +400,57 @@ object MainFrm: TMainFrm
   end
   object ZStageGrp: TGroupBox
     Left = 8
-    Top = 363
+    Top = 435
     Width = 217
-    Height = 75
-    Caption = 'Z Position '
+    Height = 117
+    Caption = ' Stage Position '
     TabOrder = 2
-    object edZTop: TValidatedEdit
-      Left = 12
-      Top = 17
-      Width = 192
-      Height = 21
-      Hint = 'Stage position on Z axis'
-      ShowHint = True
-      Text = ' 0.00 um'
-      Scale = 1.000000000000000000
-      Units = 'um'
-      NumberFormat = '%.2f'
-      LoLimit = -10.000000000000000000
-      HiLimit = 10.000000000000000000
+    object lbX: TLabel
+      Left = 80
+      Top = 44
+      Width = 15
+      Height = 15
+      Caption = 'X='
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
     end
-    object edGotoZPosition: TValidatedEdit
-      Left = 103
-      Top = 42
-      Width = 102
+    object lbY: TLabel
+      Left = 80
+      Top = 68
+      Width = 14
+      Height = 15
+      Caption = 'Y='
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object lbZ: TLabel
+      Left = 80
+      Top = 90
+      Width = 14
+      Height = 15
+      Caption = 'Z='
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object edGotoXPosition: TValidatedEdit
+      Left = 100
+      Top = 44
+      Width = 110
       Height = 21
       Hint = 'Z axis position to move to'
-      OnKeyPress = edGotoZPositionKeyPress
+      OnKeyPress = edGotoXPositionKeyPress
       ShowHint = True
       Text = ' 0.00 um'
       Scale = 1.000000000000000000
@@ -421,9 +460,9 @@ object MainFrm: TMainFrm
       HiLimit = 1000000.000000000000000000
     end
     object bGotoZPosition: TButton
-      Left = 16
-      Top = 44
-      Width = 81
+      Left = 8
+      Top = 42
+      Width = 66
       Height = 17
       Hint = 'Move stage to specified Z axis position'
       Caption = 'Go To'
@@ -435,13 +474,51 @@ object MainFrm: TMainFrm
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 2
+      TabOrder = 1
       OnClick = bGotoZPositionClick
+    end
+    object edGotoYPosition: TValidatedEdit
+      Left = 100
+      Top = 67
+      Width = 110
+      Height = 21
+      Hint = 'Z axis position to move to'
+      OnKeyPress = edGotoXPositionKeyPress
+      ShowHint = True
+      Text = ' 0.00 um'
+      Scale = 1.000000000000000000
+      Units = 'um'
+      NumberFormat = '%.2f'
+      LoLimit = -1000000.000000000000000000
+      HiLimit = 1000000.000000000000000000
+    end
+    object edGotoZPosition: TValidatedEdit
+      Left = 100
+      Top = 90
+      Width = 110
+      Height = 21
+      Hint = 'Z axis position to move to'
+      OnKeyPress = edGotoXPositionKeyPress
+      ShowHint = True
+      Text = ' 0.00 um'
+      Scale = 1.000000000000000000
+      Units = 'um'
+      NumberFormat = '%.2f'
+      LoLimit = -1000000.000000000000000000
+      HiLimit = 1000000.000000000000000000
+    end
+    object edXYZPosition: TEdit
+      Left = 8
+      Top = 17
+      Width = 200
+      Height = 21
+      ReadOnly = True
+      TabOrder = 4
     end
   end
   object LightSourceGrp: TGroupBox
     Left = 8
-    Top = 444
+    Top = 10
     Width = 217
     Height = 174
     Caption = ' Light Source '
@@ -933,7 +1010,7 @@ object MainFrm: TMainFrm
   end
   object DisplayGrp: TGroupBox
     Left = 8
-    Top = 590
+    Top = 614
     Width = 217
     Height = 145
     Caption = ' Display '
@@ -1051,6 +1128,10 @@ object MainFrm: TMainFrm
       object SlidersTab: TTabSheet
         Caption = 'Sliders'
         ImageIndex = 1
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label9: TLabel
           Left = 3
           Top = 4
@@ -1160,13 +1241,13 @@ object MainFrm: TMainFrm
   end
   object StatusGrp: TGroupBox
     Left = 8
-    Top = 741
+    Top = 765
     Width = 217
-    Height = 220
+    Height = 237
     Caption = ' Pixel Intensity Histogram '
     TabOrder = 5
     object plHistogram: TXYPlotDisplay
-      Left = 8
+      Left = 3
       Top = 18
       Width = 198
       Height = 141
@@ -1197,25 +1278,25 @@ object MainFrm: TMainFrm
       PrinterFontName = 'Arial'
       PrinterLineWidth = 1
       PrinterMarkerSize = 5
-      PrinterLeftMargin = 22
-      PrinterRightMargin = 22
-      PrinterTopMargin = 22
-      PrinterBottomMargin = 22
+      PrinterLeftMargin = 17
+      PrinterRightMargin = 17
+      PrinterTopMargin = 17
+      PrinterBottomMargin = 17
       PrinterDisableColor = False
       MetafileWidth = 500
       MetafileHeight = 400
     end
     object edStatus: TEdit
-      Left = 8
-      Top = 163
+      Left = 13
+      Top = 179
       Width = 201
       Height = 21
       ReadOnly = True
       TabOrder = 0
     end
     object edZStatus: TEdit
-      Left = 8
-      Top = 190
+      Left = 13
+      Top = 206
       Width = 201
       Height = 21
       ReadOnly = True
@@ -1252,6 +1333,10 @@ object MainFrm: TMainFrm
     object tbChan1: TTabSheet
       Caption = 'Channel 1'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image1: TImage
         Left = 3
         Top = 3
@@ -1272,6 +1357,10 @@ object MainFrm: TMainFrm
     object tbChan2: TTabSheet
       Caption = 'Channel 2'
       ImageIndex = 2
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image2: TImage
         Left = 3
         Top = 3
@@ -1292,6 +1381,10 @@ object MainFrm: TMainFrm
     object tbChan3: TTabSheet
       Caption = 'tbChan3'
       ImageIndex = 3
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image3: TImage
         Left = -4
         Top = 3
@@ -1422,6 +1515,16 @@ object MainFrm: TMainFrm
       object mnScanSettings: TMenuItem
         Caption = '&Camera/Microscope Settings'
         OnClick = mnScanSettingsClick
+      end
+    end
+    object mnHelp: TMenuItem
+      Caption = '&Help'
+      object mnContents: TMenuItem
+        Caption = '&Contents'
+      end
+      object mnABout: TMenuItem
+        Caption = '&About'
+        OnClick = mnABoutClick
       end
     end
   end

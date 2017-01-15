@@ -28,23 +28,23 @@ uses
   Dialogs, ComCtrls, StdCtrls, ValidatedEdit, LabIOUnit, RangeEdit, math,
   ExtCtrls, ImageFile, xmldoc, xmlintf, ActiveX, Vcl.Menus, system.types, strutils, UITypes,
   SESCam, mmsystem, Vcl.ToolWin, Vcl.Buttons, LightSourceUnit, shellapi,shlobj,
-  XYPlotDisplay ;
+  XYPlotDisplay, About ;
 
 const
     VMax = 10.0 ;
     MaxFrameType = 2 ;
     GreyScalePalette = 0 ;
     LUTSize = $10000 ;
-    iLUTGrey = 0 ;
+ {   iLUTGrey = 0 ;
     iLUTRed = 1 ;
     iLUTGreen = 2 ;
     iLUTBlue = 3 ;
-    iLUTFalseColour = 4 ;
+    iLUTFalseColour = 4 ;}
     GreyLevelLimit = $FFFF ;
     FalseColourPalette = 1 ;
-    MaxZoomFactors = 100 ;
     MaxPanels = 4 ;
-    HistogramNumBins = 100 ;
+
+    MaxHistogramBins = 128 ;
     MaxLenses = 10 ;
 type
 
@@ -82,8 +82,7 @@ type
     Label1: TLabel;
     edMicronsPerZStep: TValidatedEdit;
     ZStageGrp: TGroupBox;
-    edZTop: TValidatedEdit;
-    edGotoZPosition: TValidatedEdit;
+    edGotoXPosition: TValidatedEdit;
     bGotoZPosition: TButton;
     LightSourceGrp: TGroupBox;
     DisplayGrp: TGroupBox;
@@ -183,6 +182,15 @@ type
     plHistogram: TXYPlotDisplay;
     Label2: TLabel;
     cbLens: TComboBox;
+    mnHelp: TMenuItem;
+    mnContents: TMenuItem;
+    mnABout: TMenuItem;
+    lbX: TLabel;
+    lbY: TLabel;
+    edGotoYPosition: TValidatedEdit;
+    lbZ: TLabel;
+    edGotoZPosition: TValidatedEdit;
+    edXYZPosition: TEdit;
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -212,7 +220,7 @@ type
     procedure scZSectionChange(Sender: TObject);
     procedure edNumPixelsPerZStepKeyPress(Sender: TObject; var Key: Char);
     procedure edMicronsPerZStepKeyPress(Sender: TObject; var Key: Char);
-    procedure edGotoZPositionKeyPress(Sender: TObject; var Key: Char);
+    procedure edGotoXPositionKeyPress(Sender: TObject; var Key: Char);
     procedure Image0DblClick(Sender: TObject);
     procedure sbContrastChange(Sender: TObject);
     procedure bLiveImageClick(Sender: TObject);
@@ -236,6 +244,7 @@ type
     procedure cbLiveBinChange(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure cbLensChange(Sender: TObject);
+    procedure mnABoutClick(Sender: TObject);
   private
 
     { Private declarations }
@@ -250,6 +259,7 @@ type
         procedure PlotHistogram ;
   public
     { Public declarations }
+    ProgramName : string ;                  // Program name & version
     CameraType : Integer ;
 //    PixelWidth : Double ;                 // Camera pixel size (um)
 
@@ -386,8 +396,8 @@ type
     SaveAsMultipageTIFF : Boolean ;  // TRUE = save as multi-page TIFF, FALSE=separate files
     ImageJPath : String ;            // Path to Image-J program
 
-
-    Histogram : Array[0..HistogramNumBins-1] of Single ;
+    HistogramNumBins : Integer ;
+    Histogram : Array[0..MaxHistogramBins-1] of Single ;
 
     MemUsed : Integer ;
     procedure InitialiseImage ;
@@ -411,6 +421,7 @@ type
 
     procedure SetScanZoomToFullField ;
     procedure SetLensMenu ;
+    procedure ClearImageBuffers ;
 
 procedure SaveRawImage(
           FileName : String ;    // File to save to
@@ -527,7 +538,7 @@ implementation
 //uses LogUnit;
 
 
-uses SettingsUnit, ZStageUnit, SetCCDReadoutUnit;
+uses SettingsUnit, ZStageUnit, SetCCDReadoutUnit ;
 
 {$R *.dfm}
 
@@ -560,13 +571,14 @@ begin
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
-     Caption := 'MesoCam V1.5.7 ';
+     ProgramName := 'MesoCam V1.5.7 ';
      {$IFDEF WIN32}
-     Caption := Caption + '(32 bit)';
+     ProgramName := ProgramName + '(32 bit)';
     {$ELSE}
-     Caption := Caption + '(64 bit)';
+     ProgramName := ProgramName + '(64 bit)';
     {$IFEND}
-     Caption := Caption + ' 17/11/16';
+     ProgramName := ProgramName + ' 17/11/16';
+     Caption := ProgramName ;
 
      TempBuf := Nil ;
      DeviceNum := 1 ;
@@ -623,7 +635,7 @@ begin
      // Intensity display palette
      cbPalette.Clear ;
      cbPalette.Items.AddObject(' Grey scale', TObject(palGrey)) ;
-     cbPalette.Items.AddObject(' False colour', TObject(palFalseColor)) ;
+//     cbPalette.Items.AddObject(' False colour', TObject(palFalseColor)) ;
      cbPalette.Items.AddObject(' Red scale', TObject(palRed)) ;
      cbPalette.Items.AddObject(' Green scale', TObject(palGreen)) ;
      cbPalette.Items.AddObject(' Blue scale', TObject(palBlue)) ;
@@ -710,21 +722,11 @@ begin
      ScanRequested := False ;
      ScanningInProgress := False ;
 
-    // (re)allocate image buffer
-    NumPix := FrameWidth*FrameHeight*Max(NumComponentsPerPixel,1) ;
-    if PImageBuf <> Nil then FreeMem(PImageBuf) ;
-    PImageBuf := GetMemory( Int64(NumPix)*Sizeof(integer)) ;
-    for i := 0 to NumPix-1 do pImageBuf^[i] := 0 ;
-
-    if PLiveImageBuf <> Nil then FreeMem(PLiveImageBuf) ;
-    PLiveImageBuf := GetMemory( Int64(NumPix)*SizeOf(Integer)) ;
-
     SetImagePanels ;
     InitialiseImage ;
     MouseUpCursor := crCross ;
 
     SetScanZoomToFullField ;
-
 
     iDev := LabIO.Resource[CameraTriggerOutput].Device ;
     iChan := LabIO.Resource[CameraTriggerOutput].StartChannel ;
@@ -749,13 +751,33 @@ begin
 
      end;
 
+procedure TMainFrm.ClearImageBuffers ;
+// ------------------
+// Free image buffers
+// ------------------
+begin
+
+  if pLiveImageBuf <> Nil then begin
+     FreeMem(pLiveImageBuf) ;
+     pLiveImageBuf := Nil ;
+  end;
+
+  if pImageBuf <> Nil then begin
+     FreeMem(pImageBuf) ;
+     pImageBuf := Nil ;
+  end;
+
+  pDisplayBuf := Nil ;
+
+end;
+
 
 procedure TMainFrm.SetLensMenu ;
-var
-  i: Integer;
 // ----------------------------------
 // Update lens menu and selected lens
 // ----------------------------------
+var
+  i: Integer;
 begin
     cbLens.Clear ;
     for i := 0 to NumLenses-1 do cbLens.Items.Add( LensName[i] ) ;
@@ -980,7 +1002,8 @@ var
 begin
 
     if rbZoomMode.Checked and
-       (CursorPos.X = MouseDownAt.X) and (CursorPos.Y = MouseDownAt.Y) then
+       (CursorPos.X = MouseDownAt.X) and
+       (CursorPos.Y = MouseDownAt.Y) then
        begin
        MagnificationOld := Magnification[iZoom] ;
        if Button = mbLeft then
@@ -1374,9 +1397,10 @@ begin
         GreyScale := DisplayGreyMax / (GreyHi - GreyLo)
      else GreyScale := 1.0 ;
 
-     case cbPalette.ItemIndex of
 
-          iLUTGrey :
+     case TPaletteType(cbPalette.Items.Objects[cbPalette.ItemIndex]) of
+
+          palGrey :
               begin
                  for i := 0 to High(RedLUT) do
                  begin
@@ -1387,7 +1411,7 @@ begin
                  end ;
               end;
 
-          iLUTRed :
+          palRed :
              begin
              for i := 0 to High(RedLUT) do
                  begin
@@ -1398,7 +1422,7 @@ begin
                  end ;
              end;
 
-          iLUTGreen :
+          palGreen :
              begin
              for i := 0 to High(RedLUT) do
                  begin
@@ -1409,7 +1433,7 @@ begin
                  end ;
              end;
 
-          iLUTBlue :
+          palBlue :
              begin
              for i := 0 to High(RedLUT) do
                  begin
@@ -1626,7 +1650,7 @@ begin
     Cam1.GetFrameBufferPointer( pFrameBuf ) ;
     Cam1.AmpGain := cbCameraGain.ItemIndex ;
 
-    if Cam1.NumComponentsPerFrame <> NumComponentsPerFrame then
+    if (Cam1.NumComponentsPerFrame <> NumComponentsPerFrame) or (pLiveImageBuf = Nil) then
        begin
        if pLiveImageBuf <> Nil then FreeMem(pLiveImageBuf);
        NumComponentsPerFrame := Cam1.NumComponentsPerFrame ;
@@ -1766,11 +1790,11 @@ begin
 
     end;
 
-procedure TMainFrm.edGotoZPositionKeyPress(Sender: TObject; var Key: Char);
+procedure TMainFrm.edGotoXPositionKeyPress(Sender: TObject; var Key: Char);
 begin
     if Key = #13 then
        begin
-       ZStage.MoveTo( edGoToZPosition.Value ) ;
+       ZStage.MoveTo( edGoToXPosition.Value, edGoToYPosition.Value, edGoToZPosition.Value ) ;
        end;
     end;
 
@@ -1810,7 +1834,7 @@ procedure TMainFrm.bGotoZPositionClick(Sender: TObject);
 // Go to specified Z position
 // --------------------------
 begin
-    ZStage.MoveTo( edGoToZPosition.Value ) ;
+    ZStage.MoveTo( edGoToXPosition.Value,edGoToYPosition.Value,edGoToZPosition.Value ) ;
 end;
 
 
@@ -1941,22 +1965,7 @@ var
      XLo,XMid,XHi,YMax : single ;
 begin
 
-    if ShowCameraImage then
-       begin
-       FrameWidth := Cam1.FrameWidth ;
-       FrameHeight := Cam1.FrameHeight ;
-       NumComponentsPerFrame := Cam1.NumComponentsPerFrame ;
-       NumComponentsPerPixel := Cam1.NumComponentsPerPixel ;
-       pImBuf := pLiveImageBuf ;
-       end
-    else
-       begin
-       PimBuf := pImageBuf ;
-       FrameWidth := HRFrameWidth ;
-       FrameHeight := HRFrameHeight ;
-       NumComponentsPerFrame := HRNumComponentsPerFrame ;
-       NumComponentsPerPixel := HRNumComponentsPerPixel ;
-       end;
+    if pDisplayBuf = Nil then Exit ;
 
     NumPixels := FrameWidth*FrameHeight - 4 ;
     FrameType := 0 ;
@@ -1964,11 +1973,13 @@ begin
 
     iStep := Max(NumPixels div MaxPoints,1) ;
 
-    BinWidth := Cam1.GreyLevelMax div HistogramNumBins ;
+    BinWidth := (Cam1.GreyLevelMax+1) div MaxHistogramBins ;
+    HistogramNumBins := Min(Cam1.GreyLevelMax div BinWidth,MaxHistogramBins) ;
+
     for i := 0 to HistogramNumBins-1 do  Histogram[i] := 0.0 ;
     i := 0 ;
     repeat
-       ix := Max(Min(pImBuf^[i] div BinWidth,HistogramNumBins-1),0) ;
+       ix := Max(Min(pDisplayBuf^[i] div BinWidth,HistogramNumBins-1),0) ;
        Histogram[ix] := Histogram[ix] + 1.0 ;
        i := i + iStep ;
        until i >= NumPixels ;
@@ -1981,8 +1992,8 @@ begin
     // Plot new Histogram }
     plHistogram.xAxisAutoRange := False ;
     plHistogram.xAxisMin := 0.0 ;
-    plHistogram.xAxisMax := Cam1.GreyLevelMax ;
-    plHistogram.XAxisTick := Cam1.GreyLevelMax ;
+    plHistogram.xAxisMax := BinWidth*(HistogramNumBins+1) ;
+    plHistogram.XAxisTick := plHistogram.xAxisMax ;
     plHistogram.XAxisLabel := '' ;
     plHistogram.yAxisAutoRange := False ;
     plHistogram.yAxisMin := 0.0 ;
@@ -2065,11 +2076,9 @@ begin
 
     GetImage ;
 
-    if ZStage.Enabled then
-       begin
-       ZStage.UpdateZPosition ;
-       edZTop.Text := format('%.2f um',[ZStage.ZPosition]) ;
-       end;
+    ZStage.UpdateZPosition ;
+    edXYZPosition.Text := format('X=%.2f, Y=%.2f,Z=%.2f um',
+                   [ZStage.XPosition,ZStage.YPosition,ZStage.ZPosition]) ;
 
     PlotHistogram ;
 
@@ -2367,7 +2376,7 @@ begin
          if NumZSectionsAvailable < Round(edNumZSections.Value) then
             begin
             // Increment Z position to next section
-            ZStage.MoveTo( ZStage.ZPosition + ZStep );
+            ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStage.ZPosition + ZStep );
             ScanRequested := True ;
             end ;
          end ;
@@ -2485,7 +2494,7 @@ begin
     // Move Z stage back to starting position
     if ckAcquireZStack.Checked then
        begin
-       ZStage.MoveTo( ZStartingPosition );
+       ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStartingPosition );
        scZSection.Position := 0 ;
        end;
 
@@ -2539,6 +2548,9 @@ procedure TMainFrm.cbLensChange(Sender: TObject);
 // ------------
 begin
     LensSelected := cbLens.ItemIndex ;
+    // Update magnified pixel size
+    MagnifiedCameraPixelSize := CameraPixelSize /
+                                Max(RelayLensMagnification*LensMagnification[LensSelected],1E-3) ;
 end;
 
 procedure TMainFrm.cbLiveBinChange(Sender: TObject);
@@ -2616,6 +2628,14 @@ begin
     SetImagePanels ;
     end;
 
+procedure TMainFrm.mnABoutClick(Sender: TObject);
+// --------------
+// Show about box
+// --------------
+begin
+    AboutBox.ShowModal;
+    end;
+
 procedure TMainFrm.mnExitClick(Sender: TObject);
 // ------------
 // Stop program
@@ -2633,6 +2653,7 @@ begin
      SettingsFrm.Top := MainFrm.Top + 20 ;
      SettingsFrm.ShowModal ;
      SetLensMenu ;
+     ClearImageBuffers ;
      end;
 
 
@@ -3147,7 +3168,6 @@ begin
     // Z stage
     iNode := ProtNode.AddChild( 'ZSTAGE' ) ;
     AddElementInt( iNode, 'STAGETYPE', ZStage.StageType ) ;
-    AddElementBool( iNode, 'ENABLED', ZStage.Enabled ) ;
     AddElementInt( iNode, 'CONTROLPORT', ZStage.ControlPort ) ;
     AddElementInt( iNode, 'BAUDRATE', ZStage.BaudRate ) ;
     AddElementDouble( iNode, 'ZSCALEFACTOR', ZStage.ZScaleFactor ) ;
@@ -3271,7 +3291,6 @@ begin
     While FindXMLNode(ProtNode,'ZSTAGE',iNode,NodeIndex) do
       begin
       ZStage.StageType := GetElementInt( iNode, 'STAGETYPE', Round(ZStage.StageType) ) ;
-      ZStage.Enabled := GetElementBool( iNode, 'ENABLED', ZStage.Enabled ) ;
       ZStage.ControlPort := GetElementInt( iNode, 'CONTROLPORT', Round(ZStage.ControlPort) ) ;
       ZStage.BaudRate := GetElementInt( iNode, 'BAUDRATE', Round(ZStage.BaudRate)  ) ;
       ZStage.ZScaleFactor := GetElementDouble( iNode, 'ZSCALEFACTOR', ZStage.ZScaleFactor ) ;

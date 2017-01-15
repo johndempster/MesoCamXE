@@ -6,6 +6,7 @@ unit ZStageUnit;
 // 7/6/12 Supports Prior OptiScan II controller
 // 14.5.14 Supports voltage-controlled lens positioner
 // 27.0.16 Z stage pressure switch protection implemented
+// 11.02.17 .Enabled removed, XPosition, YPosition added
 
 interface
 
@@ -19,7 +20,6 @@ type
   private
     { Private declarations }
     FStageType : Integer ;    // Type of stage
-    FEnabled : Boolean ;      // Z stage Enabled/disabled flag
     ComHandle : THandle ;     // Com port handle
     ComPortOpen : Boolean ;   // Com port open flag
     FControlPort : DWord ;    // Control port number
@@ -28,41 +28,53 @@ type
     Status : String ;         // Z stage status report
     MoveToRequest : Boolean ;   // Go to requested flag
     MoveToPosition : Double ;   // Position (um) to go to
+    NewXPosition : Double ;   // New X position (requested)
+    NewYPosition : Double ;   // New Y position (requested)
+    NewZPosition : Double ;   // New Z position (requested)
     OverLapStructure : POVERLAPPED ;
 
     procedure OpenCOMPort ;
     procedure CloseCOMPort ;
     procedure ResetCOMPort ;
-    procedure SendCommand( const Line : string ) ;
+    function SendCommand( const Line : string ) : Boolean ;
     function ReceiveBytes( var EndOfLine : Boolean ) : string ;
     procedure SetControlPort( Value : DWord ) ;
     procedure SetBaudRate( Value : DWord ) ;
-    procedure SetEnabled( Value : Boolean ) ;
     procedure SetStageType( Value : Integer ) ;
 
     procedure UpdateZPositionOSII ;
     procedure UpdateZPositionPZ ;
-    procedure MoveToOSII( Position : Double ) ;
+    procedure MoveToOSII( X : Double ; // New X pos.
+                          Y : Double ; // NEw Y pos.
+                          Z : Double  // New Z pos.
+                          ) ;
+
     procedure MoveToPZ( Position : Double ) ;
     function GetZScaleFactorUnits : string ;
     procedure ProScanEnableZStageTTLAction ;
     procedure WaitforCompletion ;
   public
     { Public declarations }
+    XPosition : Double ;     // X position (um)
+    XScaleFactor : Double ;  // X step scaling factor
+    YPosition : Double ;     // Y position (um)
+    YScaleFactor : Double ;  // Y step scaling factor
     ZPosition : Double ;     // Z position (um)
     ZScaleFactor : Double ;  // Z step scaling factor
     ZStepTime : Double ;     // Time to perform Z step (s)
     procedure Open ;
     procedure Close ;
     procedure UpdateZPosition ;
-    procedure MoveTo( Position : Double ) ;
+    procedure MoveTo( X : Double ; // New X pos.
+                      Y : Double ; // NEw Y pos.
+                      Z : Double  // New Z pos.
+                      ) ;
     procedure GetZStageTypes( List : TStrings ) ;
     procedure GetControlPorts( List : TStrings ) ;
 
   published
     Property ControlPort : DWORD read FControlPort write SetControlPort ;
     Property BaudRate : DWORD read FBaudRate write SetBaudRate ;
-    Property Enabled : Boolean read FEnabled write SetEnabled ;
     Property StageType : Integer read FStageType write SetStageType ;
     Property ZScaleFactorUnits : string read GetZScaleFactorUnits ;
   end;
@@ -95,12 +107,15 @@ procedure TZStage.DataModuleCreate(Sender: TObject);
 // ---------------------------------------
 begin
     FStageType := stNone ;
-    FEnabled := False ;
     ComPortOpen := False ;
     FControlPort := 0 ;
     FBaudRate := 9600 ;
     Status := '' ;
     ControlState := csIdle ;
+    XPosition := 0.0 ;
+    XscaleFactor := 1.0 ;
+    YPosition := 0.0 ;
+    XscaleFactor := 1.0 ;
     ZPosition := 0.0 ;
     ZscaleFactor := 1.0 ;
     MoveToRequest := False ;
@@ -207,14 +222,17 @@ begin
         end;
     end;
 
-procedure TZStage.MoveTo( Position : Double ) ;
-// -----------------
+procedure TZStage.MoveTo( X : Double ; // New X pos.
+                          Y : Double ; // New Y pos.
+                          Z : Double   // New Z pos.
+                          ) ;
+
 // Go to Z position
 // -----------------
 begin
     case FStageType of
-        stOptiscanII,stProScanIII : MoveToOSII(  Position ) ;
-        stPiezo : MoveToPZ(  Position ) ;
+        stOptiscanII,stProScanIII : MoveToOSII(  X,Y,Z ) ;
+        stPiezo : MoveToPZ( Z ) ;
         end;
     end;
 
@@ -279,9 +297,9 @@ begin
      ComPortOpen := False ;
      end ;
 
-procedure TZStage.SendCommand(
+function TZStage.SendCommand(
           const Line : string   { Text to be sent to Com port }
-          ) ;
+          ) : Boolean ;
 { --------------------------------------
   Write a line of ASCII text to Com port
   --------------------------------------}
@@ -293,22 +311,21 @@ var
    OK : Boolean ;
 begin
 
-     if not FEnabled then Exit ;
-
      { Copy command line to be sent to xMit buffer and and a CR character }
      nC := Length(Line) ;
      for i := 1 to nC do xBuf[i-1] := ANSIChar(Line[i]) ;
      xBuf[nC] := #13 ;
      Inc(nC) ;
-//     xBuf[nC] := chr(10) ;
-//     Inc(nC) ;
 
     Overlapped := Nil ;
     OK := WriteFile( ComHandle, xBuf, nC, nWritten, Overlapped ) ;
-    if (not OK) or (nWRitten <> nC) then begin
-        //ShowMessage( ' Error writing to COM port ' ) ;
-        FEnabled := False ;
-    end;
+    if (not OK) or (nWRitten <> nC) then
+        begin
+ //      ShowMessage( ' Error writing to COM port ' ) ;
+        Result := False ;
+        end
+     else Result := True ;
+
      end ;
 
 
@@ -338,8 +355,6 @@ var
    PComState : PComStat ;
    NumBytesRead,ComError,NumRead : DWORD ;
 begin
-
-     if not FEnabled then Exit ;
 
      PComState := @ComState ;
      Line := '' ;
@@ -371,6 +386,9 @@ procedure TZStage.UpdateZPositionOSII ;
 // ----------------------------------------
 var
     EndOfLine : Boolean ;
+    OK : Boolean ;
+    i,iNum : Integer ;
+    c,s : string ;
 begin
 
     case ControlState of
@@ -380,23 +398,49 @@ begin
           if MoveToRequest then
              begin
              // Go to required position
-             SendCommand(format('U %d',[Round((MoveToPosition-ZPosition)*ZScaleFactor)])) ;
-             ControlState := csWaitingForCompletion ;
+        //     OK := SendCommand(format('U %d',[Round((MoveToPosition-ZPosition)*ZScaleFactor)])) ;
+             OK := SendCommand( format('P %d,%d,%d',
+                   [XPosition*XScaleFactor,
+                    YPosition*YScaleFactor,
+                    ZPosition*ZScaleFactor]));
+             if OK then ControlState := csWaitingForCompletion ;
              MoveToRequest := False ;
              end
           else
              begin
-             // Request stage position
-             SendCommand( 'PZ' ) ;
-             ControlState := csWaitingForPosition ;
+             // Request stage X,Y,Z position
+             OK := SendCommand( 'P' ) ;
+             if OK then ControlState := csWaitingForPosition ;
              end ;
           end;
 
         csWaitingForPosition :
           begin
+          XScaleFactor := Max(XScaleFactor,1E-3) ;
+          YScaleFactor := Max(YScaleFactor,1E-3) ;
+          ZScaleFactor := Max(ZScaleFactor,1E-3) ;
           Status := Status + ReceiveBytes( EndOfLine ) ;
           if EndOfLine then
              begin
+             i := 1 ;
+             s := '' ;
+             iNum := 0 ;
+             while i <= Length(Status) do
+                   begin
+                   c := Status[i] ;
+                   if (c = ',') or (i = Length(Status)) then
+                      begin
+                      case iNum of
+                          0 : XPosition := StrToInt64(s)/XScaleFactor ;
+                          1 : YPosition := StrToInt64(s)/YScaleFactor ;
+                          2 : XPosition := StrToInt64(s)/XScaleFactor ;
+                          end ;
+                      Inc(INum) ;
+                      s := '' ;
+                      end
+                   else s := s + Status[i] ;
+                   Inc(i) ;
+                   end;
              ZScaleFactor := Max(ZScaleFactor,1E-3) ;
              ZPosition := StrToInt64(Status)/ZScaleFactor ;
              Status := '' ;
@@ -419,12 +463,18 @@ begin
 end;
 
 
-procedure TZStage.MoveToOSII( Position : Double ) ;
+procedure TZStage.MoveToOSII( X : Double ; // New X pos.
+                              Y : Double ; // New Y pos.
+                              Z : Double   // New Z pos.
+                              ) ;
 // ------------------------------
 // Go to Z position (Optoscan II)
 // ------------------------------
 begin
-    MoveToPosition := Position ;
+//    MoveToPosition := Position ;
+    NewXPosition := X ;
+    NewYPosition := Y ;
+    NewYPosition := Z ;
     MoveToRequest := True ;
 end;
 
@@ -467,23 +517,6 @@ begin
         end;
     end;
 
-
-procedure TZStage.SetEnabled( Value : Boolean ) ;
-// ------------------------------
-// Enable/disable Z stage control
-//-------------------------------
-begin
-
-    FEnabled := Value ;
-    case FStageType of
-        stOptiscanII,stProScanIII :
-          begin
-          if FEnabled and (not ComPortOpen) then OpenComPort
-          else if (not FEnabled) and ComPortOpen then CloseComPort ;
-          end;
-    end ;
-
-    end;
 
 procedure TZStage.SetStageType( Value : Integer ) ;
 // ------------------------------

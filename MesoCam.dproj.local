@@ -9,8 +9,8 @@
     <Transaction>2012/04/24 13:35:07.000.003,C:\Users\cecs06\Documents\RAD Studio\Projects\MesoScan\SettingsUnit.pas=C:\Users\cecs06\Documents\RAD Studio\Projects\MesoScan\Unit1.pas</Transaction>
     <Transaction>2012/04/24 13:35:07.000.003,C:\Users\cecs06\Documents\RAD Studio\Projects\MesoScan\SettingsUnit.dfm=C:\Users\cecs06\Documents\RAD Studio\Projects\MesoScan\Unit1.dfm</Transaction>
     <Transaction>2012/06/07 09:03:59.000.486,=C:\Users\cecs06\Documents\Delphi Projects\MesoScan\Unit1.pas</Transaction>
-    <Transaction>2012/06/07 09:04:43.000.244,C:\Users\cecs06\Documents\Delphi Projects\MesoScan\Unit1.pas=C:\Users\cecs06\Documents\Delphi Projects\MesoScan\ZStageUnit.pas</Transaction>
     <Transaction>2012/06/07 09:04:43.000.244,C:\Users\cecs06\Documents\Delphi Projects\MesoScan\Unit1.dfm=C:\Users\cecs06\Documents\Delphi Projects\MesoScan\ZStageUnit.dfm</Transaction>
+    <Transaction>2012/06/07 09:04:43.000.244,C:\Users\cecs06\Documents\Delphi Projects\MesoScan\Unit1.pas=C:\Users\cecs06\Documents\Delphi Projects\MesoScan\ZStageUnit.pas</Transaction>
     <Transaction>2012/06/15 15:53:22.000.519,C:\Users\cecs06\Documents\RAD Studio\Projects\MesoScan\ScanImageUnit.pas=</Transaction>
     <Transaction>2014/08/06 16:25:12.000.825,C:\Users\cecs06\Documents\RAD Studio\Projects\MesoCamXE\MesoCam.dproj=C:\Users\cecs06\Documents\RAD Studio\Projects\MesoCamXE\MesoScan.dproj</Transaction>
     <Transaction>2015/08/03 13:26:53.000.562,C:\Users\cecs06\Documents\RAD Studio\Projects\MesoCamXE\nidaqlib.pas=</Transaction>
@@ -19,6 +19,7 @@
     <Transaction>2015/08/03 15:25:12.000.391,C:\Users\cecs06\Documents\RAD Studio\Projects\MesoCamXE\LightSourceUnit.dfm=C:\Users\cecs06\Documents\RAD Studio\Projects\MesoCamXE\Unit1.dfm</Transaction>
     <Transaction>2015/08/03 15:25:12.000.391,C:\Users\cecs06\Documents\RAD Studio\Projects\MesoCamXE\LightSourceUnit.pas=C:\Users\cecs06\Documents\RAD Studio\Projects\MesoCamXE\Unit1.pas</Transaction>
     <Transaction>2015/12/08 15:16:13.000.865,=C:\Users\cecs06\Documents\RAD Studio\Projects\MesoCamXE\SetCCDReadoutUnit.pas</Transaction>
+    <Transaction>2016/12/02 14:11:13.000.081,=C:\Users\John\Documents\Embarcadero\Studio\Projects\MesoCamXE\about.pas</Transaction>
   </Transactions>
 	<ProjectSortOrder AutoSort="0" SortType="0">
     <File Path="LabIOUnit.pas"/>
@@ -34,5 +35,7 @@
     <File Path="LightSourceUnit.dfm"/>
     <File Path="SetCCDReadoutUnit.pas"/>
     <File Path="SetCCDReadoutUnit.dfm"/>
+    <File Path="about.pas"/>
+    <File Path="about.dfm"/>
   </ProjectSortOrder>
 </BorlandProject>
