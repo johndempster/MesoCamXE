@@ -7,6 +7,7 @@ unit ZStageUnit;
 // 14.5.14 Supports voltage-controlled lens positioner
 // 27.0.16 Z stage pressure switch protection implemented
 // 11.02.17 .Enabled removed, XPosition, YPosition added
+// 16.01.17 ZStage.XScaleFactor and ZStage.YScaleFactor added
 
 interface
 
@@ -50,7 +51,7 @@ type
                           ) ;
 
     procedure MoveToPZ( Position : Double ) ;
-    function GetZScaleFactorUnits : string ;
+    function GetScaleFactorUnits : string ;
     procedure ProScanEnableZStageTTLAction ;
     procedure WaitforCompletion ;
   public
@@ -76,7 +77,7 @@ type
     Property ControlPort : DWORD read FControlPort write SetControlPort ;
     Property BaudRate : DWORD read FBaudRate write SetBaudRate ;
     Property StageType : Integer read FStageType write SetStageType ;
-    Property ZScaleFactorUnits : string read GetZScaleFactorUnits ;
+    Property ScaleFactorUnits : string read GetScaleFactorUnits ;
   end;
 
 var
@@ -115,11 +116,13 @@ begin
     XPosition := 0.0 ;
     XscaleFactor := 1.0 ;
     YPosition := 0.0 ;
-    XscaleFactor := 1.0 ;
+    YScaleFactor := 1.0 ;
     ZPosition := 0.0 ;
-    ZscaleFactor := 1.0 ;
+    ZScaleFactor := 1.0 ;
+    NewXPosition := 0.0 ;
+    NewYPosition := 0.0 ;
+    NewZPosition := 0.0 ;
     MoveToRequest := False ;
-    MoveToPosition := 0.0 ;
     end;
 
 procedure TZStage.DataModuleDestroy(Sender: TObject);
@@ -189,7 +192,7 @@ begin
         end;
     end;
 
-function TZStage.GetZScaleFactorUnits : string ;
+function TZStage.GetScaleFactorUnits : string ;
 // -------------------------------
 // Return units for Z scale factor
 // -------------------------------
@@ -226,9 +229,9 @@ procedure TZStage.MoveTo( X : Double ; // New X pos.
                           Y : Double ; // New Y pos.
                           Z : Double   // New Z pos.
                           ) ;
-
+// ----------------
 // Go to Z position
-// -----------------
+// ----------------
 begin
     case FStageType of
         stOptiscanII,stProScanIII : MoveToOSII(  X,Y,Z ) ;
@@ -398,11 +401,10 @@ begin
           if MoveToRequest then
              begin
              // Go to required position
-        //     OK := SendCommand(format('U %d',[Round((MoveToPosition-ZPosition)*ZScaleFactor)])) ;
-             OK := SendCommand( format('P %d,%d,%d',
-                   [XPosition*XScaleFactor,
-                    YPosition*YScaleFactor,
-                    ZPosition*ZScaleFactor]));
+             OK := SendCommand( format('G %d,%d,%d',
+                   [Round(NewXPosition*XScaleFactor),
+                    Round(NewYPosition*YScaleFactor),
+                    Round(NewZPosition*ZScaleFactor)]));
              if OK then ControlState := csWaitingForCompletion ;
              MoveToRequest := False ;
              end
@@ -416,9 +418,9 @@ begin
 
         csWaitingForPosition :
           begin
-          XScaleFactor := Max(XScaleFactor,1E-3) ;
-          YScaleFactor := Max(YScaleFactor,1E-3) ;
-          ZScaleFactor := Max(ZScaleFactor,1E-3) ;
+          XScaleFactor := Max(XScaleFactor,1E-4) ;
+          YScaleFactor := Max(YScaleFactor,1E-4) ;
+          ZScaleFactor := Max(ZScaleFactor,1E-4) ;
           Status := Status + ReceiveBytes( EndOfLine ) ;
           if EndOfLine then
              begin
@@ -430,10 +432,11 @@ begin
                    c := Status[i] ;
                    if (c = ',') or (i = Length(Status)) then
                       begin
+                      if c <> ',' then s := s + Status[i] ;
                       case iNum of
                           0 : XPosition := StrToInt64(s)/XScaleFactor ;
                           1 : YPosition := StrToInt64(s)/YScaleFactor ;
-                          2 : XPosition := StrToInt64(s)/XScaleFactor ;
+                          2 : ZPosition := StrToInt64(s)/ZScaleFactor ;
                           end ;
                       Inc(INum) ;
                       s := '' ;
@@ -441,8 +444,6 @@ begin
                    else s := s + Status[i] ;
                    Inc(i) ;
                    end;
-             ZScaleFactor := Max(ZScaleFactor,1E-3) ;
-             ZPosition := StrToInt64(Status)/ZScaleFactor ;
              Status := '' ;
              ControlState := csIdle ;
              end;
@@ -471,10 +472,9 @@ procedure TZStage.MoveToOSII( X : Double ; // New X pos.
 // Go to Z position (Optoscan II)
 // ------------------------------
 begin
-//    MoveToPosition := Position ;
     NewXPosition := X ;
     NewYPosition := Y ;
-    NewYPosition := Z ;
+    NewZPosition := Z ;
     MoveToRequest := True ;
 end;
 

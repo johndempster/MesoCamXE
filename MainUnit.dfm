@@ -1,5 +1,5 @@
 object MainFrm: TMainFrm
-  Left = 794
+  Left = 122
   Top = 357
   Caption = 'to'
   ClientHeight = 986
@@ -37,7 +37,7 @@ object MainFrm: TMainFrm
   object ControlGrp: TGroupBox
     Left = 8
     Top = 8
-    Width = 217
+    Width = 240
     Height = 233
     Caption = ' Camera '
     TabOrder = 0
@@ -280,7 +280,7 @@ object MainFrm: TMainFrm
   object ImageSizeGrp: TGroupBox
     Left = 8
     Top = 248
-    Width = 217
+    Width = 240
     Height = 181
     Caption = ' Image Mode'
     TabOrder = 1
@@ -401,13 +401,13 @@ object MainFrm: TMainFrm
   object ZStageGrp: TGroupBox
     Left = 8
     Top = 435
-    Width = 217
+    Width = 240
     Height = 117
     Caption = ' Stage Position '
     TabOrder = 2
     object lbX: TLabel
-      Left = 80
-      Top = 44
+      Left = 104
+      Top = 49
       Width = 15
       Height = 15
       Caption = 'X='
@@ -419,8 +419,8 @@ object MainFrm: TMainFrm
       ParentFont = False
     end
     object lbY: TLabel
-      Left = 80
-      Top = 68
+      Left = 104
+      Top = 71
       Width = 14
       Height = 15
       Caption = 'Y='
@@ -432,8 +432,8 @@ object MainFrm: TMainFrm
       ParentFont = False
     end
     object lbZ: TLabel
-      Left = 80
-      Top = 90
+      Left = 104
+      Top = 93
       Width = 14
       Height = 15
       Caption = 'Z='
@@ -445,8 +445,8 @@ object MainFrm: TMainFrm
       ParentFont = False
     end
     object edGotoXPosition: TValidatedEdit
-      Left = 100
-      Top = 44
+      Left = 122
+      Top = 47
       Width = 110
       Height = 21
       Hint = 'Z axis position to move to'
@@ -460,8 +460,8 @@ object MainFrm: TMainFrm
       HiLimit = 1000000.000000000000000000
     end
     object bGotoZPosition: TButton
-      Left = 8
-      Top = 42
+      Left = 30
+      Top = 47
       Width = 66
       Height = 17
       Hint = 'Move stage to specified Z axis position'
@@ -478,8 +478,8 @@ object MainFrm: TMainFrm
       OnClick = bGotoZPositionClick
     end
     object edGotoYPosition: TValidatedEdit
-      Left = 100
-      Top = 67
+      Left = 122
+      Top = 70
       Width = 110
       Height = 21
       Hint = 'Z axis position to move to'
@@ -493,8 +493,8 @@ object MainFrm: TMainFrm
       HiLimit = 1000000.000000000000000000
     end
     object edGotoZPosition: TValidatedEdit
-      Left = 100
-      Top = 90
+      Left = 122
+      Top = 93
       Width = 110
       Height = 21
       Hint = 'Z axis position to move to'
@@ -510,8 +510,14 @@ object MainFrm: TMainFrm
     object edXYZPosition: TEdit
       Left = 8
       Top = 17
-      Width = 200
-      Height = 21
+      Width = 224
+      Height = 23
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
       ReadOnly = True
       TabOrder = 4
     end
@@ -1011,7 +1017,7 @@ object MainFrm: TMainFrm
   object DisplayGrp: TGroupBox
     Left = 8
     Top = 614
-    Width = 217
+    Width = 240
     Height = 145
     Caption = ' Display '
     TabOrder = 4
@@ -1128,10 +1134,6 @@ object MainFrm: TMainFrm
       object SlidersTab: TTabSheet
         Caption = 'Sliders'
         ImageIndex = 1
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object Label9: TLabel
           Left = 3
           Top = 4
@@ -1242,14 +1244,14 @@ object MainFrm: TMainFrm
   object StatusGrp: TGroupBox
     Left = 8
     Top = 765
-    Width = 217
+    Width = 240
     Height = 237
     Caption = ' Pixel Intensity Histogram '
     TabOrder = 5
     object plHistogram: TXYPlotDisplay
-      Left = 3
+      Left = 8
       Top = 18
-      Width = 198
+      Width = 222
       Height = 141
       MaxPointsPerLine = 4096
       XAxisMax = 1.000000000000000000
@@ -1278,10 +1280,10 @@ object MainFrm: TMainFrm
       PrinterFontName = 'Arial'
       PrinterLineWidth = 1
       PrinterMarkerSize = 5
-      PrinterLeftMargin = 17
-      PrinterRightMargin = 17
-      PrinterTopMargin = 17
-      PrinterBottomMargin = 17
+      PrinterLeftMargin = 16
+      PrinterRightMargin = 16
+      PrinterTopMargin = 16
+      PrinterBottomMargin = 16
       PrinterDisableColor = False
       MetafileWidth = 500
       MetafileHeight = 400
@@ -1304,7 +1306,7 @@ object MainFrm: TMainFrm
     end
   end
   object Page: TPageControl
-    Left = 231
+    Left = 254
     Top = 8
     Width = 583
     Height = 257
@@ -1333,10 +1335,6 @@ object MainFrm: TMainFrm
     object tbChan1: TTabSheet
       Caption = 'Channel 1'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image1: TImage
         Left = 3
         Top = 3
@@ -1357,10 +1355,6 @@ object MainFrm: TMainFrm
     object tbChan2: TTabSheet
       Caption = 'Channel 2'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image2: TImage
         Left = 3
         Top = 3
@@ -1381,10 +1375,6 @@ object MainFrm: TMainFrm
     object tbChan3: TTabSheet
       Caption = 'tbChan3'
       ImageIndex = 3
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image3: TImage
         Left = -4
         Top = 3
@@ -1436,7 +1426,7 @@ object MainFrm: TMainFrm
     Height = 31
     TabOrder = 8
     object rbZoomMode: TRadioButton
-      Left = 8
+      Left = 20
       Top = 4
       Width = 87
       Height = 24
@@ -1476,7 +1466,7 @@ object MainFrm: TMainFrm
     Enabled = False
     Interval = 60
     OnTimer = TimerTimer
-    Left = 232
+    Left = 288
     Top = 392
   end
   object ImageFile: TImageFile
@@ -1484,15 +1474,15 @@ object MainFrm: TMainFrm
     YResolution = 1.000000000000000000
     ZResolution = 1.000000000000000000
     TResolution = 1.000000000000000000
-    Left = 248
-    Top = 432
+    Left = 264
+    Top = 320
   end
   object SaveDialog: TSaveDialog
     Left = 304
     Top = 440
   end
   object MainMenu1: TMainMenu
-    Left = 240
+    Left = 296
     Top = 496
     object File1: TMenuItem
       Caption = 'File'

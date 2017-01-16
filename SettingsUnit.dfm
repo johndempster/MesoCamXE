@@ -53,7 +53,7 @@ object SettingsFrm: TSettingsFrm
     Top = 8
     Width = 486
     Height = 425
-    ActivePage = ZStageTab
+    ActivePage = CameraTab
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
@@ -874,10 +874,10 @@ object SettingsFrm: TSettingsFrm
       Caption = 'Z Stage'
       ImageIndex = 2
       object GroupBox2: TGroupBox
-        Left = 4
-        Top = 8
+        Left = 3
+        Top = 3
         Width = 229
-        Height = 122
+        Height = 217
         Caption = ' Z position Control'
         TabOrder = 0
         object Label8: TLabel
@@ -890,7 +890,7 @@ object SettingsFrm: TSettingsFrm
         end
         object Label10: TLabel
           Left = 46
-          Top = 66
+          Top = 122
           Width = 65
           Height = 13
           Alignment = taRightJustify
@@ -898,11 +898,27 @@ object SettingsFrm: TSettingsFrm
         end
         object Label13: TLabel
           Left = 58
-          Top = 93
+          Top = 149
           Width = 53
           Height = 13
           Alignment = taRightJustify
           Caption = 'Z step time'
+        end
+        object Label12: TLabel
+          Left = 46
+          Top = 69
+          Width = 65
+          Height = 13
+          Alignment = taRightJustify
+          Caption = 'X scale factor'
+        end
+        object Label14: TLabel
+          Left = 46
+          Top = 96
+          Width = 65
+          Height = 13
+          Alignment = taRightJustify
+          Caption = 'Y scale factor'
         end
         object cbZStagePort: TComboBox
           Left = 118
@@ -914,7 +930,7 @@ object SettingsFrm: TSettingsFrm
         end
         object edZScaleFactor: TValidatedEdit
           Left = 118
-          Top = 66
+          Top = 122
           Width = 94
           Height = 21
           Text = ' 1 steps/um'
@@ -936,13 +952,39 @@ object SettingsFrm: TSettingsFrm
         end
         object edZStepTime: TValidatedEdit
           Left = 118
-          Top = 93
+          Top = 149
           Width = 94
           Height = 21
           Text = ' 100 ms'
           Value = 0.100000001490116100
           Scale = 1000.000000000000000000
           Units = 'ms'
+          NumberFormat = '%.4g'
+          LoLimit = -1.000000015047466E30
+          HiLimit = 1000000.000000000000000000
+        end
+        object edXScalefactor: TValidatedEdit
+          Left = 118
+          Top = 69
+          Width = 94
+          Height = 21
+          Text = ' 1 steps/um'
+          Value = 1.000000000000000000
+          Scale = 1.000000000000000000
+          Units = 'steps/um'
+          NumberFormat = '%.4g'
+          LoLimit = -1.000000015047466E30
+          HiLimit = 1000000.000000000000000000
+        end
+        object edYScaleFactor: TValidatedEdit
+          Left = 117
+          Top = 96
+          Width = 94
+          Height = 21
+          Text = ' 1 steps/um'
+          Value = 1.000000000000000000
+          Scale = 1.000000000000000000
+          Units = 'steps/um'
           NumberFormat = '%.4g'
           LoLimit = -1.000000015047466E30
           HiLimit = 1000000.000000000000000000
@@ -1009,7 +1051,7 @@ object SettingsFrm: TSettingsFrm
           HiLimit = 10.000000000000000000
         end
         object sgLensTable: TStringGrid
-          Left = 3
+          Left = 8
           Top = 40
           Width = 217
           Height = 273

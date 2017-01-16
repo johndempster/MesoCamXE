@@ -19,6 +19,8 @@ unit MainUnit;
 // V1.5.6 09.11/16 Now working with PCIe-1433 card and new camera
 // V1.5.7 17.11.16 Pixel Intensity histogram display added
 //                 Lens table added
+// V1.5.8 16.01.17 Z stage now working and XY axes now supported
+//                 Pixel intensity histogram added and lens magnification table
 
 interface
 
@@ -571,13 +573,13 @@ begin
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
-     ProgramName := 'MesoCam V1.5.7 ';
+     ProgramName := 'MesoCam V1.5.8 ';
      {$IFDEF WIN32}
      ProgramName := ProgramName + '(32 bit)';
     {$ELSE}
      ProgramName := ProgramName + '(64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 17/11/16';
+     ProgramName := ProgramName + ' 16/1/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -2077,7 +2079,7 @@ begin
     GetImage ;
 
     ZStage.UpdateZPosition ;
-    edXYZPosition.Text := format('X=%.2f, Y=%.2f,Z=%.2f um',
+    edXYZPosition.Text := format('X=%.2f, Y=%.2f, Z=%.2f um',
                    [ZStage.XPosition,ZStage.YPosition,ZStage.ZPosition]) ;
 
     PlotHistogram ;
@@ -3170,6 +3172,8 @@ begin
     AddElementInt( iNode, 'STAGETYPE', ZStage.StageType ) ;
     AddElementInt( iNode, 'CONTROLPORT', ZStage.ControlPort ) ;
     AddElementInt( iNode, 'BAUDRATE', ZStage.BaudRate ) ;
+    AddElementDouble( iNode, 'XSCALEFACTOR', ZStage.XScaleFactor ) ;
+    AddElementDouble( iNode, 'YSCALEFACTOR', ZStage.YScaleFactor ) ;
     AddElementDouble( iNode, 'ZSCALEFACTOR', ZStage.ZScaleFactor ) ;
     AddElementDouble( iNode, 'ZSTEPTIME', ZStage.ZStepTime ) ;
 
@@ -3293,6 +3297,8 @@ begin
       ZStage.StageType := GetElementInt( iNode, 'STAGETYPE', Round(ZStage.StageType) ) ;
       ZStage.ControlPort := GetElementInt( iNode, 'CONTROLPORT', Round(ZStage.ControlPort) ) ;
       ZStage.BaudRate := GetElementInt( iNode, 'BAUDRATE', Round(ZStage.BaudRate)  ) ;
+      ZStage.XScaleFactor := GetElementDouble( iNode, 'XSCALEFACTOR', ZStage.XScaleFactor ) ;
+      ZStage.YScaleFactor := GetElementDouble( iNode, 'YSCALEFACTOR', ZStage.YScaleFactor ) ;
       ZStage.ZScaleFactor := GetElementDouble( iNode, 'ZSCALEFACTOR', ZStage.ZScaleFactor ) ;
       ZStage.ZStepTime := GetElementDouble( iNode, 'ZSTEPTIME', ZStage.ZStepTime ) ;
       Inc(NodeIndex) ;

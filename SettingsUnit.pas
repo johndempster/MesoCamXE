@@ -4,6 +4,7 @@ unit SettingsUnit;
 // ------------------------------------
 // 1-6-12 MinPixelDwellTimeAdded
 // 29.11.16 Lens table added
+// 16.01.17 ZStage.XScaleFactor and ZStage.YScaleFactor added
 
 interface
 
@@ -113,6 +114,10 @@ type
     sgLensTable: TStringGrid;
     edRelayLensMagnification: TValidatedEdit;
     udNumLenses: TUpDown;
+    edXScalefactor: TValidatedEdit;
+    Label12: TLabel;
+    edYScaleFactor: TValidatedEdit;
+    Label14: TLabel;
     procedure FormShow(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCancelClick(Sender: TObject);
@@ -208,7 +213,11 @@ begin
     SetLightSourcePanel( 6, pnLightSource6 ) ;
     SetLightSourcePanel( 7, pnLightSource7 ) ;
 
-    edZScaleFactor.Units := ZStage.ZScaleFactorUnits ;
+    edXScaleFactor.Units := ZStage.ScaleFactorUnits ;
+    edXScaleFactor.Value := ZStage.XScaleFactor ;
+    edYScaleFactor.Units := ZStage.ScaleFactorUnits ;
+    edYScaleFactor.Value := ZStage.YScaleFactor ;
+    edZScaleFactor.Units := ZStage.ScaleFactorUnits ;
     edZScaleFactor.Value := ZStage.ZScaleFactor ;
     edZStepTime.Value := ZStage.ZStepTime ;
 
@@ -265,6 +274,8 @@ begin
     MainFrm.CameraTriggerActiveHigh := rbCameraTriggerActiveHigh.Checked ;
 
     ZStage.ControlPort := cbZStagePort.ItemIndex ;
+    ZStage.XScaleFactor := edXScaleFactor.Value ;
+    ZStage.YScaleFactor := edYScaleFactor.Value ;
     ZStage.ZScaleFactor := edZScaleFactor.Value ;
     ZStage.ZStepTime := edZStepTime.Value ;
 
@@ -336,7 +347,7 @@ begin
     ZStage.GetControlPorts(cbZStagePort.Items);
     cbZStagePort.ItemIndex := Min(Max(ZStage.ControlPort,0),cbZStagePort.Items.Count-1) ;
 
-    edZScaleFactor.Units := ZStage.ZScaleFactorUnits ;
+    edZScaleFactor.Units := ZStage.ScaleFactorUnits ;
     edZScaleFactor.Value := ZStage.ZScaleFactor ;
 
 end;
