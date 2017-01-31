@@ -3,7 +3,7 @@ object MainFrm: TMainFrm
   Top = 357
   Caption = 'to'
   ClientHeight = 986
-  ClientWidth = 651
+  ClientWidth = 906
   Color = clBtnFace
   DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
@@ -38,12 +38,12 @@ object MainFrm: TMainFrm
     Left = 8
     Top = 8
     Width = 240
-    Height = 233
-    Caption = ' Camera '
+    Height = 217
+    Caption = ' Image Capture  '
     TabOrder = 0
     object Label7: TLabel
-      Left = 115
-      Top = 23
+      Left = 145
+      Top = 9
       Width = 83
       Height = 14
       Caption = 'Exposure Time'
@@ -56,8 +56,8 @@ object MainFrm: TMainFrm
       WordWrap = True
     end
     object Label8: TLabel
-      Left = 115
-      Top = 65
+      Left = 144
+      Top = 52
       Width = 24
       Height = 14
       Alignment = taRightJustify
@@ -71,8 +71,8 @@ object MainFrm: TMainFrm
     end
     object Label2: TLabel
       Tag = 112
-      Left = 115
-      Top = 112
+      Left = 144
+      Top = 99
       Width = 28
       Height = 14
       Alignment = taRightJustify
@@ -151,8 +151,8 @@ object MainFrm: TMainFrm
       OnChange = cbCaptureModeChange
     end
     object edExposureTime: TValidatedEdit
-      Left = 115
-      Top = 39
+      Left = 145
+      Top = 25
       Width = 83
       Height = 21
       Hint = 'Exposure time (ms)'
@@ -167,17 +167,17 @@ object MainFrm: TMainFrm
       HiLimit = 7.000000000000000000
     end
     object CCDAreaGrp: TGroupBox
-      Left = 3
+      Left = 8
       Top = 144
-      Width = 105
-      Height = 82
-      Caption = 'CCD Area '
+      Width = 224
+      Height = 65
+      Caption = 'CCD Capture Area '
       TabOrder = 5
       object bFullFrame: TButton
-        Left = 6
+        Left = 8
         Top = 16
         Width = 89
-        Height = 17
+        Height = 18
         Hint = 'Set CCD readout area to whole of CCD'
         Caption = 'Full CCD area'
         Font.Charset = ANSI_CHARSET
@@ -192,10 +192,10 @@ object MainFrm: TMainFrm
         OnClick = bFullFrameClick
       end
       object bSelectedRegion: TButton
-        Left = 6
+        Left = 8
         Top = 36
         Width = 89
-        Height = 17
+        Height = 18
         Hint = 'Set CCD readout area to rectangle indicated on display '
         Caption = 'Use R.O.I.'
         Font.Charset = ANSI_CHARSET
@@ -210,8 +210,8 @@ object MainFrm: TMainFrm
         OnClick = bSelectedRegionClick
       end
       object bEnterCCDArea: TButton
-        Left = 6
-        Top = 56
+        Left = 101
+        Top = 16
         Width = 89
         Height = 17
         Hint = 'Specify coordinates of CCD readout area'
@@ -229,8 +229,8 @@ object MainFrm: TMainFrm
       end
     end
     object cbCameraGain: TComboBox
-      Left = 115
-      Top = 81
+      Left = 144
+      Top = 68
       Width = 83
       Height = 23
       Hint = 'Camera analog gain'
@@ -259,8 +259,8 @@ object MainFrm: TMainFrm
       OnChange = cbLiveBinChange
     end
     object cbLens: TComboBox
-      Left = 115
-      Top = 129
+      Left = 144
+      Top = 116
       Width = 84
       Height = 23
       Hint = 'Camera analog gain'
@@ -279,45 +279,47 @@ object MainFrm: TMainFrm
   end
   object ImageSizeGrp: TGroupBox
     Left = 8
-    Top = 248
+    Top = 231
     Width = 240
     Height = 181
     Caption = ' Image Mode'
     TabOrder = 1
     object ZStackGrp: TGroupBox
       Left = 8
-      Top = 58
-      Width = 200
-      Height = 92
+      Top = 94
+      Width = 222
+      Height = 50
       TabOrder = 0
       object Label5: TLabel
-        Left = 56
-        Top = 10
-        Width = 59
-        Height = 13
-        Alignment = taRightJustify
-        Caption = 'No. sections'
+        Left = 8
+        Top = 3
+        Width = 68
+        Height = 14
+        Caption = 'No. Sections'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Arial'
+        Font.Style = [fsBold]
+        ParentFont = False
       end
       object Label6: TLabel
-        Left = 4
-        Top = 36
-        Width = 111
-        Height = 13
-        Alignment = taRightJustify
-        Caption = 'Section spacing (pixels)'
-      end
-      object Label1: TLabel
-        Left = 16
-        Top = 62
-        Width = 99
-        Height = 13
-        Alignment = taRightJustify
-        Caption = 'Section spacing (um)'
+        Left = 83
+        Top = 3
+        Width = 61
+        Height = 14
+        Caption = 'Z Step Size'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Arial'
+        Font.Style = [fsBold]
+        ParentFont = False
       end
       object edNumZSections: TValidatedEdit
-        Left = 121
-        Top = 10
-        Width = 70
+        Left = 8
+        Top = 20
+        Width = 50
         Height = 21
         Hint = 'No. of sections in Z stack'
         ShowHint = True
@@ -329,23 +331,24 @@ object MainFrm: TMainFrm
         HiLimit = 20000.000000000000000000
       end
       object edNumPixelsPerZStep: TValidatedEdit
-        Left = 121
-        Top = 36
-        Width = 70
+        Left = 83
+        Top = 20
+        Width = 65
         Height = 21
         Hint = 'Z increment between sections'
         OnKeyPress = edNumPixelsPerZStepKeyPress
-        Text = ' 1 '
+        Text = ' 1 pixels'
         Value = 1.000000000000000000
         Scale = 1.000000000000000000
+        Units = 'pixels'
         NumberFormat = '%.0f'
         LoLimit = -100.000000000000000000
         HiLimit = 100.000000000000000000
       end
       object edMicronsPerZStep: TValidatedEdit
-        Left = 121
-        Top = 62
-        Width = 70
+        Left = 154
+        Top = 20
+        Width = 65
         Height = 21
         Hint = 'Z position increment between sections'
         OnKeyPress = edMicronsPerZStepKeyPress
@@ -379,7 +382,7 @@ object MainFrm: TMainFrm
     end
     object ckAcquireZStack: TCheckBox
       Left = 8
-      Top = 35
+      Top = 32
       Width = 193
       Height = 17
       Hint = 
@@ -396,6 +399,89 @@ object MainFrm: TMainFrm
       ShowHint = True
       TabOrder = 2
       OnClick = ckAcquireZStackClick
+    end
+    object ckAcquireTimeLapseSeries: TCheckBox
+      Left = 8
+      Top = 48
+      Width = 193
+      Height = 17
+      Hint = 'Check to a acquire a series of images at timed intervals'
+      Caption = 'Acquire Time Lapse Series'
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 3
+      OnClick = ckAcquireTimeLapseSeriesClick
+    end
+    object TimeLapseGrp: TGroupBox
+      Left = 8
+      Top = 127
+      Width = 222
+      Height = 50
+      TabOrder = 4
+      object Label3: TLabel
+        Left = 14
+        Top = 3
+        Width = 55
+        Height = 14
+        Alignment = taRightJustify
+        Caption = 'No. points'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Arial'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object Label4: TLabel
+        Left = 83
+        Top = 3
+        Width = 77
+        Height = 14
+        Alignment = taRightJustify
+        Caption = 'At Intervals of'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Arial'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object edNumTimeLapsePoints: TValidatedEdit
+        Left = 14
+        Top = 19
+        Width = 57
+        Height = 21
+        Hint = 'No. of images to be captured in time series'
+        ShowHint = True
+        Text = ' 1 '
+        Value = 1.000000000000000000
+        Scale = 1.000000000000000000
+        NumberFormat = '%.0f'
+        LoLimit = 1.000000000000000000
+        HiLimit = 30000.000000000000000000
+      end
+      object edTimeLapseInterval: TValidatedEdit
+        Left = 83
+        Top = 19
+        Width = 72
+        Height = 21
+        Hint = 'Time interval between images'
+        OnKeyPress = edNumPixelsPerZStepKeyPress
+        ShowHint = True
+        Text = ' 1 s'
+        Value = 1.000000000000000000
+        Scale = 1.000000000000000000
+        Units = 's'
+        NumberFormat = '%.0f'
+        LoLimit = 0.001000000047497451
+        HiLimit = 1000000.000000000000000000
+      end
     end
   end
   object ZStageGrp: TGroupBox
@@ -524,15 +610,15 @@ object MainFrm: TMainFrm
   end
   object LightSourceGrp: TGroupBox
     Left = 8
-    Top = 10
-    Width = 217
+    Top = 558
+    Width = 240
     Height = 174
     Caption = ' Light Source '
     TabOrder = 3
     object pnLightSource0: TPanel
-      Left = 8
-      Top = 19
-      Width = 200
+      Left = 3
+      Top = 24
+      Width = 225
       Height = 26
       BevelOuter = bvNone
       TabOrder = 0
@@ -550,16 +636,16 @@ object MainFrm: TMainFrm
         Tag = 1
         Left = 34
         Top = 0
-        Width = 55
+        Width = 60
         Height = 21
         ReadOnly = True
         TabOrder = 1
       end
       object TrackBar1: TTrackBar
         Tag = 2
-        Left = 88
+        Left = 96
         Top = 0
-        Width = 60
+        Width = 80
         Height = 25
         Max = 100
         Position = 100
@@ -570,9 +656,9 @@ object MainFrm: TMainFrm
       end
       object ValidatedEdit1: TValidatedEdit
         Tag = 3
-        Left = 150
+        Left = 180
         Top = 0
-        Width = 44
+        Width = 46
         Height = 21
         OnKeyPress = ValidatedEdit1KeyPress
         Text = ' 2 %'
@@ -585,9 +671,9 @@ object MainFrm: TMainFrm
       end
     end
     object pnLightSource1: TPanel
-      Left = 8
-      Top = 46
-      Width = 200
+      Left = 3
+      Top = 51
+      Width = 225
       Height = 26
       BevelOuter = bvNone
       TabOrder = 1
@@ -613,16 +699,16 @@ object MainFrm: TMainFrm
         Tag = 1
         Left = 34
         Top = 0
-        Width = 55
+        Width = 60
         Height = 21
         ReadOnly = True
         TabOrder = 1
       end
       object TrackBar2: TTrackBar
         Tag = 2
-        Left = 88
+        Left = 96
         Top = 0
-        Width = 60
+        Width = 80
         Height = 25
         Max = 100
         Position = 100
@@ -633,9 +719,9 @@ object MainFrm: TMainFrm
       end
       object ValidatedEdit2: TValidatedEdit
         Tag = 3
-        Left = 150
+        Left = 180
         Top = 0
-        Width = 44
+        Width = 46
         Height = 21
         OnKeyPress = ValidatedEdit1KeyPress
         Text = ' 2 %'
@@ -648,9 +734,9 @@ object MainFrm: TMainFrm
       end
     end
     object pnLightSource2: TPanel
-      Left = 8
-      Top = 73
-      Width = 200
+      Left = 3
+      Top = 78
+      Width = 225
       Height = 26
       BevelOuter = bvNone
       TabOrder = 2
@@ -676,16 +762,16 @@ object MainFrm: TMainFrm
         Tag = 1
         Left = 34
         Top = 0
-        Width = 55
+        Width = 60
         Height = 21
         ReadOnly = True
         TabOrder = 1
       end
       object TrackBar3: TTrackBar
         Tag = 2
-        Left = 88
+        Left = 96
         Top = 0
-        Width = 60
+        Width = 80
         Height = 25
         Max = 100
         Position = 100
@@ -696,9 +782,9 @@ object MainFrm: TMainFrm
       end
       object ValidatedEdit3: TValidatedEdit
         Tag = 3
-        Left = 150
+        Left = 180
         Top = 0
-        Width = 44
+        Width = 46
         Height = 21
         OnKeyPress = ValidatedEdit1KeyPress
         Text = ' 2 %'
@@ -711,9 +797,9 @@ object MainFrm: TMainFrm
       end
     end
     object pnLightSource3: TPanel
-      Left = 8
-      Top = 96
-      Width = 200
+      Left = 3
+      Top = 101
+      Width = 225
       Height = 26
       BevelOuter = bvNone
       TabOrder = 3
@@ -739,16 +825,16 @@ object MainFrm: TMainFrm
         Tag = 1
         Left = 34
         Top = 0
-        Width = 55
+        Width = 60
         Height = 21
         ReadOnly = True
         TabOrder = 1
       end
       object TrackBar4: TTrackBar
         Tag = 2
-        Left = 88
+        Left = 96
         Top = 0
-        Width = 60
+        Width = 80
         Height = 25
         Max = 100
         Position = 100
@@ -759,9 +845,9 @@ object MainFrm: TMainFrm
       end
       object ValidatedEdit4: TValidatedEdit
         Tag = 3
-        Left = 150
+        Left = 180
         Top = 0
-        Width = 44
+        Width = 46
         Height = 21
         OnKeyPress = ValidatedEdit1KeyPress
         Text = ' 2 %'
@@ -774,9 +860,9 @@ object MainFrm: TMainFrm
       end
     end
     object pnLightSource4: TPanel
-      Left = 8
-      Top = 123
-      Width = 200
+      Left = 3
+      Top = 128
+      Width = 225
       Height = 26
       BevelOuter = bvNone
       TabOrder = 4
@@ -799,16 +885,16 @@ object MainFrm: TMainFrm
         Tag = 1
         Left = 34
         Top = 0
-        Width = 55
+        Width = 60
         Height = 21
         ReadOnly = True
         TabOrder = 1
       end
       object TrackBar5: TTrackBar
         Tag = 2
-        Left = 84
+        Left = 96
         Top = 0
-        Width = 60
+        Width = 80
         Height = 25
         Max = 100
         Position = 100
@@ -819,9 +905,9 @@ object MainFrm: TMainFrm
       end
       object ValidatedEdit5: TValidatedEdit
         Tag = 3
-        Left = 150
+        Left = 180
         Top = 0
-        Width = 44
+        Width = 46
         Height = 21
         OnKeyPress = ValidatedEdit1KeyPress
         Text = ' 2 %'
@@ -834,9 +920,9 @@ object MainFrm: TMainFrm
       end
     end
     object pnLightSource5: TPanel
-      Left = 8
-      Top = 150
-      Width = 200
+      Left = 3
+      Top = 155
+      Width = 225
       Height = 26
       BevelOuter = bvNone
       TabOrder = 5
@@ -859,16 +945,16 @@ object MainFrm: TMainFrm
         Tag = 1
         Left = 34
         Top = 0
-        Width = 55
+        Width = 60
         Height = 21
         ReadOnly = True
         TabOrder = 1
       end
       object TrackBar6: TTrackBar
         Tag = 2
-        Left = 88
+        Left = 96
         Top = 0
-        Width = 60
+        Width = 80
         Height = 25
         Max = 100
         Position = 100
@@ -879,9 +965,9 @@ object MainFrm: TMainFrm
       end
       object ValidatedEdit6: TValidatedEdit
         Tag = 3
-        Left = 150
+        Left = 180
         Top = 0
-        Width = 44
+        Width = 46
         Height = 21
         OnKeyPress = ValidatedEdit1KeyPress
         Text = ' 2 %'
@@ -1018,19 +1104,19 @@ object MainFrm: TMainFrm
     Left = 8
     Top = 614
     Width = 240
-    Height = 145
+    Height = 142
     Caption = ' Display '
     TabOrder = 4
     object Splitter1: TSplitter
       Left = 2
       Top = 15
-      Height = 128
+      Height = 125
       ExplicitHeight = 176
     end
     object cbPalette: TComboBox
       Left = 11
       Top = 15
-      Width = 193
+      Width = 216
       Height = 21
       Hint = 'Display colour palette'
       Style = csDropDownList
@@ -1040,10 +1126,10 @@ object MainFrm: TMainFrm
       OnChange = cbPaletteChange
     end
     object ContrastPage: TPageControl
-      Left = 10
+      Left = 11
       Top = 42
-      Width = 196
-      Height = 95
+      Width = 220
+      Height = 87
       ActivePage = RangeTab
       MultiLine = True
       TabOrder = 1
@@ -1051,7 +1137,7 @@ object MainFrm: TMainFrm
         Caption = 'Display Contrast'
         object bFullScale: TButton
           Left = 1
-          Top = 3
+          Top = 4
           Width = 71
           Height = 17
           Hint = 'Set display intensity range to cover full camera range'
@@ -1098,8 +1184,8 @@ object MainFrm: TMainFrm
           NumberFormat = '%.f - %.f'
         end
         object ckContrast6SDOnly: TCheckBox
-          Left = 100
-          Top = 46
+          Left = 143
+          Top = 4
           Width = 68
           Height = 17
           Hint = 
@@ -1117,10 +1203,10 @@ object MainFrm: TMainFrm
           TabOrder = 3
         end
         object ckAutoOptimise: TCheckBox
-          Left = 2
-          Top = 46
-          Width = 92
-          Height = 17
+          Left = 143
+          Top = 22
+          Width = 66
+          Height = 29
           Caption = 'Auto adjust'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1129,6 +1215,7 @@ object MainFrm: TMainFrm
           Font.Style = [fsBold]
           ParentFont = False
           TabOrder = 4
+          WordWrap = True
         end
       end
       object SlidersTab: TTabSheet
@@ -1245,7 +1332,7 @@ object MainFrm: TMainFrm
     Left = 8
     Top = 765
     Width = 240
-    Height = 237
+    Height = 195
     Caption = ' Pixel Intensity Histogram '
     TabOrder = 5
     object plHistogram: TXYPlotDisplay
@@ -1280,29 +1367,21 @@ object MainFrm: TMainFrm
       PrinterFontName = 'Arial'
       PrinterLineWidth = 1
       PrinterMarkerSize = 5
-      PrinterLeftMargin = 16
-      PrinterRightMargin = 16
-      PrinterTopMargin = 16
-      PrinterBottomMargin = 16
+      PrinterLeftMargin = 12
+      PrinterRightMargin = 12
+      PrinterTopMargin = 12
+      PrinterBottomMargin = 12
       PrinterDisableColor = False
       MetafileWidth = 500
       MetafileHeight = 400
     end
     object edStatus: TEdit
-      Left = 13
-      Top = 179
-      Width = 201
+      Left = 8
+      Top = 165
+      Width = 220
       Height = 21
       ReadOnly = True
       TabOrder = 0
-    end
-    object edZStatus: TEdit
-      Left = 13
-      Top = 206
-      Width = 201
-      Height = 21
-      ReadOnly = True
-      TabOrder = 1
     end
   end
   object Page: TPageControl
@@ -1394,7 +1473,7 @@ object MainFrm: TMainFrm
     end
   end
   object ZSectionPanel: TPanel
-    Left = 592
+    Left = 588
     Top = 267
     Width = 218
     Height = 22
@@ -1409,10 +1488,23 @@ object MainFrm: TMainFrm
       Height = 13
       Caption = 'xxxx'
     end
-    object scZSection: TScrollBar
+    object Label1: TLabel
       Left = 0
       Top = 0
-      Width = 147
+      Width = 10
+      Height = 14
+      Caption = 'Z:'
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object scZSection: TScrollBar
+      Left = 20
+      Top = 0
+      Width = 130
       Height = 15
       PageSize = 0
       TabOrder = 0
@@ -1420,7 +1512,7 @@ object MainFrm: TMainFrm
     end
   end
   object DisplayModeGrp: TGroupBox
-    Left = 234
+    Left = 254
     Top = 271
     Width = 177
     Height = 31
@@ -1460,6 +1552,45 @@ object MainFrm: TMainFrm
       ParentShowHint = False
       ShowHint = True
       TabOrder = 1
+    end
+  end
+  object TSectionPanel: TPanel
+    Left = 564
+    Top = 324
+    Width = 218
+    Height = 22
+    BevelOuter = bvNone
+    DoubleBuffered = False
+    ParentDoubleBuffered = False
+    TabOrder = 9
+    object lbTSection: TLabel
+      Left = 153
+      Top = 0
+      Width = 20
+      Height = 13
+      Caption = 'xxxx'
+    end
+    object Label15: TLabel
+      Left = 0
+      Top = 0
+      Width = 9
+      Height = 14
+      Caption = 'T:'
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object scTSection: TScrollBar
+      Left = 20
+      Top = 0
+      Width = 130
+      Height = 15
+      PageSize = 0
+      TabOrder = 0
+      OnChange = scTSectionChange
     end
   end
   object Timer: TTimer

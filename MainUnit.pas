@@ -21,6 +21,7 @@ unit MainUnit;
 //                 Lens table added
 // V1.5.8 16.01.17 Z stage now working and XY axes now supported
 //                 Pixel intensity histogram added and lens magnification table
+// V1.5.9 20.01.17 Time series option added
 
 interface
 
@@ -59,7 +60,6 @@ type
     Bottom : Double ;
     Width : Double ;
     Height : Double ;
-
     end ;
 
 
@@ -81,7 +81,6 @@ type
     Label6: TLabel;
     edNumZSections: TValidatedEdit;
     edNumPixelsPerZStep: TValidatedEdit;
-    Label1: TLabel;
     edMicronsPerZStep: TValidatedEdit;
     ZStageGrp: TGroupBox;
     edGotoXPosition: TValidatedEdit;
@@ -179,7 +178,6 @@ type
     ckAcquireZStack: TCheckBox;
     tbChan3: TTabSheet;
     Image3: TImage;
-    edZStatus: TEdit;
     cbLiveBin: TComboBox;
     plHistogram: TXYPlotDisplay;
     Label2: TLabel;
@@ -193,6 +191,17 @@ type
     lbZ: TLabel;
     edGotoZPosition: TValidatedEdit;
     edXYZPosition: TEdit;
+    ckAcquireTimeLapseSeries: TCheckBox;
+    TimeLapseGrp: TGroupBox;
+    Label3: TLabel;
+    Label4: TLabel;
+    edNumTimeLapsePoints: TValidatedEdit;
+    edTimeLapseInterval: TValidatedEdit;
+    TSectionPanel: TPanel;
+    lbTSection: TLabel;
+    scTSection: TScrollBar;
+    Label1: TLabel;
+    Label15: TLabel;
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -247,6 +256,8 @@ type
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure cbLensChange(Sender: TObject);
     procedure mnABoutClick(Sender: TObject);
+    procedure ckAcquireTimeLapseSeriesClick(Sender: TObject);
+    procedure scTSectionChange(Sender: TObject);
   private
 
     { Private declarations }
@@ -298,6 +309,9 @@ type
     PulseCounter : Integer ;
     NextCameraTrigger : Integer ;
 
+    TimeLapseNumPoints : Integer ;    // No. points in time lapse series
+    TimeLapseInterval : Double ;      // Interval between time lapse images
+
     BufSize : Integer ;
     XCentre : Double ;
     XWidth : Double ;
@@ -338,9 +352,12 @@ type
     // Z axis control
     ZSection : Integer ;                // Current Z Section being acquired
     ZStep : Double ;                  // Spacing between Z Sections (microns)
- //   NumZSections : Integer ;            // No. of Sections in Z stack
     NumZSectionsAvailable : Integer ;   // No. of Sections in Z stack
     NumLinesPerZStep : Integer ;      // No. lines per Z step in XZ mode
+
+    TSection : Integer ;                // Current time lapse Section being acquired
+    NumTSectionsAvailable : Integer ;   // No. of time lapse sections available
+
     XZLine : Integer ;                // XZ mode line counter
     XZAverageLine : Integer ;         // XZ mode averaged line counter
     XZLineAverageStart : Integer ;    // XZ mode start averaging at line
@@ -384,6 +401,9 @@ type
     NumPanels : Integer ;                         // No. of display panels in use
 
     ScanRequested : Boolean ;
+    ScanRequestedAfterInterval : Boolean ;
+    ScanStartAt : Cardinal ;                       // Time to acquire next image (time lapse mode)
+
     ScanningInProgress : Boolean ;
 
     INIFileName : String ;
@@ -573,13 +593,13 @@ begin
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
-     ProgramName := 'MesoCam V1.5.8 ';
+     ProgramName := 'MesoCam V1.5.9 ';
      {$IFDEF WIN32}
      ProgramName := ProgramName + '(32 bit)';
     {$ELSE}
      ProgramName := ProgramName + '(64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 16/1/17';
+     ProgramName := ProgramName + ' 20/1/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -600,6 +620,9 @@ begin
                                   else EmptyFlag := 32000 ;
 
      NumLinesPerZStep := 1 ;
+
+    TimeLapseNumPoints := 100 ;
+    TimeLapseInterval := 10.0 ;
 
      XZLine := 0 ;
      XZAverageLine := 0 ;
@@ -722,6 +745,7 @@ begin
 
      UpdateDisplay := False ;
      ScanRequested := False ;
+     ScanRequestedAfterInterval := False ;
      ScanningInProgress := False ;
 
     SetImagePanels ;
@@ -1374,6 +1398,17 @@ begin
         end
      else ZSectionPanel.Visible := False ;
 
+     // Show T section slider bar
+     if (NumTSectionsAvailable > 1) and (not bStopImage.Enabled)  then
+        begin
+        TSectionPanel.Visible := True ;
+        if ZSectionPanel.Visible then TSectionPanel.Left := ZSectionPanel.Left + ZSectionPanel.Width + 5
+                                 else  TSectionPanel.Left := ZSectionPanel.Left ;
+        lbTSection.Caption := format('T %d/%d',[TSection+1,NumTSectionsAvailable]) ;
+        end
+     else TSectionPanel.Visible := False ;
+
+
      FreeMem(XMap) ;
      FreeMem(YMap) ;
 
@@ -1536,6 +1571,7 @@ begin
        end;
 
     ScanRequested := True ;
+    ScanStartAt := timegettime ;      // Start time.
 
     FixRectangle( SelectedRectBM ) ;
 
@@ -2061,14 +2097,17 @@ begin
         end;
 
     // Re-start image acquisition
+
+    if ScanRequestedAfterInterval and (timegettime > ScanStartAt) then ScanRequested := True ;
+
     if ScanRequested then
        begin
        ScanRequested := False ;
-    //   StartCamera ;
+       ScanRequestedAfterInterval := False ;
        StartCamera ;
        NextCameraTrigger := timegettime + 2000 ;
        UpdateImage ;
-    end ;
+       end ;
 
     if UpdateDisplay then
        begin ;
@@ -2116,6 +2155,7 @@ var
     pBuf : Pointer ;
     xshift : array[0..8] of Integer ;
     yshift : array[0..8] of Integer ;
+    s : string ;
 begin
 
     if GetImageInProgress then Exit ;
@@ -2174,27 +2214,22 @@ begin
     if LiveImagingInProgress then
        begin
        edStatus.Text := format('Live: Frame %2d/%2d (%5.2f FPS)',[Cam1.FrameCount mod Cam1.NumFramesInBuffer,Cam1.NumFramesInBuffer,FrameRate]);
-       edZStatus.Text := '' ;
        end
     else
        begin
-
+       s := '' ;
+       if ckAcquireTimeLapseSeries.Checked then
+          s := s + format('T:%d/%d, ',[NumTSectionsAvailable+1,Round(edNumTimeLapsePoints.Value)]);
        if ckAcquireZStack.Checked then
-          begin
-          edStatus.Text := format('Capture: Frame %2d/%2d',[Cam1.FrameCount,Cam1.NumPixelShiftFrames]);
-          edZStatus.Text := format('Z Section: %2d/%2d',[NumZSectionsAvailable+1,Round(edNumZSections.Value)]);
-          end
-       else
-          begin
-          edStatus.Text := format('Capture: Frame %2d/%2d',[Cam1.FrameCount,Cam1.NumPixelShiftFrames]);
-          edZStatus.Text := '' ;
-          end ;
-       end ;
+          s := s + format('Z:%d/%d, ',[NumZSectionsAvailable+1,Round(edNumZSections.Value)]);
+       s := s + format(' F:%d/%d',[Cam1.FrameCount,Cam1.NumPixelShiftFrames]);
+       edStatus.Text := s ;
+       end;
 
     if (not bCaptureImage.Enabled) and (Cam1.FrameCount >= NumFramesRequired) then
        begin
 
-       edStatus.Text := 'Capture: Processing' ;
+       edStatus.Text := s + ' Processing' ;
        Application.ProcessMessages ;
 
        Cam1.StopCapture ;
@@ -2354,14 +2389,14 @@ begin
          end ;  }
 
       // Save to raw image file
-       edStatus.Text := 'Capture: Saving' ;
+       edStatus.Text :=' Saving' ;
        Application.ProcessMessages ;
        Inc(NumImagesInFile) ;
        SaveRawImage( RawImagesFileName, NumImagesInFile-1 ) ;
 
        InitialiseImage ;
 
-       edStatus.Text := 'Capture: Done' ;
+       edStatus.Text := s ;
 
        // Light source control
        // (Image capture request is made if not at end of light source list)
@@ -2383,7 +2418,21 @@ begin
             end ;
          end ;
 
-       if not ScanRequested then
+       // Time lapse control
+       if (not ScanRequested) and ckAcquireTimeLapseSeries.Checked then
+          begin
+          scTSection.Max := NumTSectionsAvailable ;
+          scTSection.Position := NumTSectionsAvailable ;
+          Inc(NumTSectionsAvailable) ;
+          lbTSection.Caption := Format('%d/%d',[NumTSectionsAvailable,Round(edNumTimeLapsePoints.Value)]);
+          if NumTSectionsAvailable < Round(edNumTimeLapsePoints.Value) then
+             begin
+             ScanRequestedAfterInterval := True ;
+             ScanStartAt := ScanStartAt + Round(1000*edTimeLapseInterval.Value) ;
+             end;
+          end ;
+
+       if (not ScanRequested) and (not ScanRequestedAfterInterval) then
          begin
          // All images captured - stop
          ShowCameraImage := False ;
@@ -2578,12 +2627,20 @@ begin
      end;
 
 
+procedure TMainFrm.ckAcquireTimeLapseSeriesClick(Sender: TObject);
+// -----------------------------------------
+// Acquire time lapse series setting changed
+// -----------------------------------------
+begin
+    resize ;
+    end;
+
+
 procedure TMainFrm.ckAcquireZStackClick(Sender: TObject);
 // -------------------------------
 // Acquire Z stack setting changed
 // -------------------------------
 begin
-    ZStackGrp.Visible := ckAcquireZStack.Checked ;
     resize ;
     end;
 
@@ -2853,6 +2910,8 @@ begin
 
   ZSectionPanel.Top := Page.Top + Page.Height + 2 ;
   ZSectionPanel.Left := Page.Left + Page.Width - ZSectionPanel.Width ;
+  TSectionPanel.Top := ZSectionPanel.Top ;
+  TSectionPanel.Left := ZSectionPanel.Left - TSectionPanel.Width - 5 ;
 
   DisplayModeGrp.Left := Page.Left ;
   DisplayModeGrp.Top := ZSectionPanel.Top ;
@@ -2864,11 +2923,27 @@ begin
 
   SetImagePanels ;
 
-  // Image type group
-  if ZStackGrp.Visible then begin
-     ImageSizeGrp.ClientHeight := ZStackGrp.Top + ZStackGrp.Height + 5 ;
+  // Image series options
+
+  ImageSizeGrp.ClientHeight := ckAcquireZStack.Top +
+                               ckAcquireTimeLapseSeries.Height + 25 ;
+  ckAcquireTimeLapseSeries.Top := ckAcquireZStack.Top + ckAcquireZStack.Height + 1 ;
+  if ckAcquireZStack.Checked then begin
+     ZStackGrp.Visible := True ;
+     ZStackGrp.Top := ckAcquireZStack.Top + ckAcquireZStack.Height + 2 ;
+     ckAcquireTimeLapseSeries.Top := ckAcquireTimeLapseSeries.Top
+                                     + ZStackGrp.Height + 2 ;
+     ImageSizeGrp.ClientHeight := ImageSizeGrp.ClientHeight + ZStackGrp.Height ;
      end
-  else ImageSizeGrp.ClientHeight := ZStackGrp.Top ;
+  else ZStackGrp.Visible := False ;
+
+  TimeLapseGrp.Top := ckAcquireTimeLapseSeries.Top + ckAcquireTimeLapseSeries.Height + 2 ;
+  if ckAcquireTimeLapseSeries.Checked then begin
+     TimeLapseGrp.Visible := True ;
+     ImageSizeGrp.ClientHeight := ImageSizeGrp.ClientHeight + TimeLapseGrp.Height ;
+     end
+  else TimeLapseGrp.Visible := False ;
+
 
   // Set light source panels
   iTop := 16 ;
@@ -2991,13 +3066,28 @@ begin
      end;
 
 
+procedure TMainFrm.scTSectionChange(Sender: TObject);
+// ---------------
+// T Section changed
+// ---------------
+begin
+     TSection := scTSection.Position ;
+     LoadRawImage( RawImagesFileName, TSection*Max(NumZSectionsAvailable,1)*LightSource.NumList +
+                                      (ZSection*LightSource.NumList)
+                                      + Page.TabIndex ) ;
+     UpdateDisplay := True ;
+     end;
+
+
 procedure TMainFrm.scZSectionChange(Sender: TObject);
 // ---------------
 // Z Section changed
 // ---------------
 begin
      ZSection := scZSection.Position ;
-     LoadRawImage( RawImagesFileName, (ZSection*LightSource.NumList) + Page.TabIndex ) ;
+     LoadRawImage( RawImagesFileName, TSection*Max(NumZSectionsAvailable,1)*LightSource.NumList +
+                                      (ZSection*LightSource.NumList)
+                                      + Page.TabIndex ) ;
      UpdateDisplay := True ;
      end;
 
@@ -3177,6 +3267,11 @@ begin
     AddElementDouble( iNode, 'ZSCALEFACTOR', ZStage.ZScaleFactor ) ;
     AddElementDouble( iNode, 'ZSTEPTIME', ZStage.ZStepTime ) ;
 
+    // Time lapse
+    iNode := ProtNode.AddChild( 'TIMELAPSE' ) ;
+    AddElementInt( iNode, 'NUMPOINTS', Round(edNumTimeLapsePoints.Value) ) ;
+    AddElementDouble( iNode, 'TIMEINTERVAL', edTimeLapseInterval.Value ) ;
+
     // Lenses in use
     AddElementInt( ProtNode, 'NUMLENSES', NumLenses ) ;
     AddElementInt( ProtNode, 'LENSSELECTED', LensSelected ) ;
@@ -3303,6 +3398,15 @@ begin
       ZStage.ZStepTime := GetElementDouble( iNode, 'ZSTEPTIME', ZStage.ZStepTime ) ;
       Inc(NodeIndex) ;
       end ;
+
+    // Time lapse
+    NodeIndex := 0 ;
+    While FindXMLNode(ProtNode,'TIMELAPSE',iNode,NodeIndex) do
+      begin
+      edNumTimeLapsePoints.Value := GetElementInt( iNode, 'NUMPOINTS', Round(edNumTimeLapsePoints.Value) ) ;
+      edTimeLapseInterval.Value := GetElementDouble( iNode, 'TIMEINTERVAL', edTimeLapseInterval.Value ) ;
+      Inc(NodeIndex) ;
+      end;
 
     // Lenses in use
     NumLenses := GetElementInt( ProtNode, 'NUMLENSES', NumLenses ) ;
