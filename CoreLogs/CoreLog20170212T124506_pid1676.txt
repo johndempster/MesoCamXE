@@ -1,0 +1,11 @@
+2017-02-12T12:45:06.182812 tid7076 [IFO,LogManager] Enabled primary log file C:\Users\John\Documents\Embarcadero\Studio\Projects\MesoCamXE\CoreLogs\CoreLog20170212T124506_pid1676.txt
+2017-02-12T12:45:06.182812 tid7076 [IFO,App] User: John
+2017-02-12T12:45:06.183812 tid7076 [IFO,App] Host: littlebox1
+2017-02-12T12:45:06.183812 tid7076 [IFO,App] MM Studio version: 1.4.22
+2017-02-12T12:45:06.183812 tid7076 [IFO,App] MMCore version 8.1.0
+2017-02-12T12:45:06.183812 tid7076 [IFO,App] Device API version 65, Module API version 10
+2017-02-12T12:45:06.183812 tid7076 [IFO,App] Operating System: Windows 7 (amd64) 6.1
+2017-02-12T12:45:06.183812 tid7076 [IFO,App] JVM: Java HotSpot(TM) 64-Bit Server VM, version 1.6.0_31, 64-bit
+2017-02-12T12:45:22.204729 tid7076 [IFO,Core] Did unload all devices
+2017-02-12T12:45:22.204729 tid7076 [IFO,Core] System reset
+2017-02-12T12:45:22.204729 tid7076 [IFO,Core] Core session ended

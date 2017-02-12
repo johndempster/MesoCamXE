@@ -86,7 +86,7 @@ object MainFrm: TMainFrm
     end
     object bCaptureImage: TButton
       Left = 8
-      Top = 68
+      Top = 66
       Width = 101
       Height = 20
       Hint = 'Capture new image(s)'
@@ -622,7 +622,7 @@ object MainFrm: TMainFrm
       Height = 26
       BevelOuter = bvNone
       TabOrder = 0
-      object ckLightSourceOn: TCheckBox
+      object ckLightSourceOn0: TCheckBox
         Left = 0
         Top = 0
         Width = 33
@@ -630,7 +630,7 @@ object MainFrm: TMainFrm
         Hint = 'Turn Light Source 0 On/Off'
         Caption = 'On'
         TabOrder = 0
-        OnClick = ckLightSourceOnClick
+        OnClick = ckLightSourceOn0Click
       end
       object edName: TEdit
         Tag = 1
@@ -677,7 +677,7 @@ object MainFrm: TMainFrm
       Height = 26
       BevelOuter = bvNone
       TabOrder = 1
-      object CheckBox1: TCheckBox
+      object ckLightSourceOn1: TCheckBox
         Left = 0
         Top = 0
         Width = 33
@@ -693,7 +693,7 @@ object MainFrm: TMainFrm
         ParentShowHint = False
         ShowHint = True
         TabOrder = 0
-        OnClick = ckLightSourceOnClick
+        OnClick = ckLightSourceOn0Click
       end
       object Edit1: TEdit
         Tag = 1
@@ -740,7 +740,7 @@ object MainFrm: TMainFrm
       Height = 26
       BevelOuter = bvNone
       TabOrder = 2
-      object CheckBox2: TCheckBox
+      object ckLightSourceOn2: TCheckBox
         Left = 0
         Top = 0
         Width = 33
@@ -756,7 +756,7 @@ object MainFrm: TMainFrm
         ParentShowHint = False
         ShowHint = True
         TabOrder = 0
-        OnClick = ckLightSourceOnClick
+        OnClick = ckLightSourceOn0Click
       end
       object Edit2: TEdit
         Tag = 1
@@ -803,7 +803,7 @@ object MainFrm: TMainFrm
       Height = 26
       BevelOuter = bvNone
       TabOrder = 3
-      object CheckBox3: TCheckBox
+      object ckLightSourceOn3: TCheckBox
         Left = 0
         Top = 0
         Width = 33
@@ -819,7 +819,7 @@ object MainFrm: TMainFrm
         ParentShowHint = False
         ShowHint = True
         TabOrder = 0
-        OnClick = ckLightSourceOnClick
+        OnClick = ckLightSourceOn0Click
       end
       object Edit3: TEdit
         Tag = 1
@@ -866,7 +866,7 @@ object MainFrm: TMainFrm
       Height = 26
       BevelOuter = bvNone
       TabOrder = 4
-      object CheckBox4: TCheckBox
+      object ckLightSourceOn4: TCheckBox
         Left = 0
         Top = 0
         Width = 33
@@ -879,7 +879,7 @@ object MainFrm: TMainFrm
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 0
-        OnClick = ckLightSourceOnClick
+        OnClick = ckLightSourceOn0Click
       end
       object Edit4: TEdit
         Tag = 1
@@ -926,7 +926,7 @@ object MainFrm: TMainFrm
       Height = 26
       BevelOuter = bvNone
       TabOrder = 5
-      object CheckBox5: TCheckBox
+      object ckLightSourceOn5: TCheckBox
         Left = 0
         Top = 0
         Width = 33
@@ -939,7 +939,7 @@ object MainFrm: TMainFrm
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 0
-        OnClick = ckLightSourceOnClick
+        OnClick = ckLightSourceOn0Click
       end
       object Edit5: TEdit
         Tag = 1
@@ -986,7 +986,7 @@ object MainFrm: TMainFrm
       Height = 26
       BevelOuter = bvNone
       TabOrder = 6
-      object CheckBox6: TCheckBox
+      object ckLightSourceOn6: TCheckBox
         Left = 0
         Top = 0
         Width = 33
@@ -999,7 +999,7 @@ object MainFrm: TMainFrm
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 0
-        OnClick = ckLightSourceOnClick
+        OnClick = ckLightSourceOn0Click
       end
       object Edit6: TEdit
         Tag = 1
@@ -1046,7 +1046,7 @@ object MainFrm: TMainFrm
       Height = 26
       BevelOuter = bvNone
       TabOrder = 7
-      object CheckBox7: TCheckBox
+      object ckLightSourceOn7: TCheckBox
         Left = 0
         Top = 0
         Width = 33
@@ -1059,7 +1059,7 @@ object MainFrm: TMainFrm
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 0
-        OnClick = ckLightSourceOnClick
+        OnClick = ckLightSourceOn0Click
       end
       object Edit7: TEdit
         Tag = 1
@@ -1221,6 +1221,10 @@ object MainFrm: TMainFrm
       object SlidersTab: TTabSheet
         Caption = 'Sliders'
         ImageIndex = 1
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label9: TLabel
           Left = 3
           Top = 4
@@ -1367,10 +1371,10 @@ object MainFrm: TMainFrm
       PrinterFontName = 'Arial'
       PrinterLineWidth = 1
       PrinterMarkerSize = 5
-      PrinterLeftMargin = 12
-      PrinterRightMargin = 12
-      PrinterTopMargin = 12
-      PrinterBottomMargin = 12
+      PrinterLeftMargin = 4
+      PrinterRightMargin = 4
+      PrinterTopMargin = 4
+      PrinterBottomMargin = 4
       PrinterDisableColor = False
       MetafileWidth = 500
       MetafileHeight = 400
@@ -1414,6 +1418,10 @@ object MainFrm: TMainFrm
     object tbChan1: TTabSheet
       Caption = 'Channel 1'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image1: TImage
         Left = 3
         Top = 3
@@ -1434,6 +1442,10 @@ object MainFrm: TMainFrm
     object tbChan2: TTabSheet
       Caption = 'Channel 2'
       ImageIndex = 2
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image2: TImage
         Left = 3
         Top = 3
@@ -1454,6 +1466,10 @@ object MainFrm: TMainFrm
     object tbChan3: TTabSheet
       Caption = 'tbChan3'
       ImageIndex = 3
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image3: TImage
         Left = -4
         Top = 3
@@ -1518,7 +1534,7 @@ object MainFrm: TMainFrm
     Height = 31
     TabOrder = 8
     object rbZoomMode: TRadioButton
-      Left = 20
+      Left = 8
       Top = 4
       Width = 87
       Height = 24

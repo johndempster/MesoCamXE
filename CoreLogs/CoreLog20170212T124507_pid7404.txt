@@ -1,0 +1,85 @@
+2017-02-12T12:45:07.549890 tid1268 [IFO,LogManager] Enabled primary log file C:\Users\John\Documents\Embarcadero\Studio\Projects\MesoCamXE\CoreLogs\CoreLog20170212T124507_pid7404.txt
+2017-02-12T12:45:07.549890 tid1268 [IFO,App] User: John
+2017-02-12T12:45:07.553891 tid1268 [IFO,App] Host: littlebox1
+2017-02-12T12:45:07.553891 tid1268 [IFO,App] MM Studio version: 1.4.22
+2017-02-12T12:45:07.554891 tid1268 [IFO,App] MMCore version 8.1.0
+2017-02-12T12:45:07.554891 tid1268 [IFO,App] Device API version 65, Module API version 10
+2017-02-12T12:45:07.554891 tid1268 [IFO,App] Operating System: Windows 7 (amd64) 6.1
+2017-02-12T12:45:07.554891 tid1268 [IFO,App] JVM: Java HotSpot(TM) 64-Bit Server VM, version 1.6.0_31, 64-bit
+2017-02-12T12:45:15.235330 tid1268 [IFO,App] Finished waiting for plugins to load
+2017-02-12T12:45:15.270332 tid1268 [IFO,Core] Did unload all devices
+2017-02-12T12:45:15.306334 tid1268 [IFO,Core] Did load device DHub from DemoCamera; label = DHub
+2017-02-12T12:45:15.306334 tid1268 [IFO,Core] Did load device DWheel from DemoCamera; label = Dichroic
+2017-02-12T12:45:15.306334 tid1268 [IFO,Core] Did load device DWheel from DemoCamera; label = Emission
+2017-02-12T12:45:15.306334 tid1268 [IFO,Core] Did load device DWheel from DemoCamera; label = Excitation
+2017-02-12T12:45:15.306334 tid1268 [IFO,Core] Did load device DObjective from DemoCamera; label = Objective
+2017-02-12T12:45:15.307334 tid1268 [IFO,Core] Did load device DStage from DemoCamera; label = Z
+2017-02-12T12:45:15.307334 tid1268 [IFO,Core] Did load device DLightPath from DemoCamera; label = Path
+2017-02-12T12:45:15.307334 tid1268 [IFO,Core] Did load device DXYStage from DemoCamera; label = XY
+2017-02-12T12:45:15.307334 tid1268 [IFO,Core] Did load device DShutter from DemoCamera; label = Shutter
+2017-02-12T12:45:15.307334 tid1268 [IFO,Core] Did load device DAutoFocus from DemoCamera; label = Autofocus
+2017-02-12T12:45:15.503345 tid1268 [IFO,Core] Did load device ThorCam from ThorlabsUSBCamera; label = ThorCam
+2017-02-12T12:45:15.503345 tid1268 [IFO,Core] Will initialize 11 devices
+2017-02-12T12:45:15.503345 tid1268 [IFO,Core] Will initialize device DHub
+2017-02-12T12:45:15.503345 tid1268 [IFO,Core] Did initialize device DHub
+2017-02-12T12:45:15.503345 tid1268 [IFO,Core] Will initialize device Dichroic
+2017-02-12T12:45:15.503345 tid1268 [IFO,Core] Did initialize device Dichroic
+2017-02-12T12:45:15.503345 tid1268 [IFO,Core] Will initialize device Emission
+2017-02-12T12:45:15.503345 tid1268 [IFO,Core] Did initialize device Emission
+2017-02-12T12:45:15.503345 tid1268 [IFO,Core] Will initialize device Excitation
+2017-02-12T12:45:15.503345 tid1268 [IFO,Core] Did initialize device Excitation
+2017-02-12T12:45:15.503345 tid1268 [IFO,Core] Will initialize device Objective
+2017-02-12T12:45:15.503345 tid1268 [IFO,Core] Did initialize device Objective
+2017-02-12T12:45:15.503345 tid1268 [IFO,Core] Will initialize device Z
+2017-02-12T12:45:15.505346 tid1268 [IFO,Core] Did initialize device Z
+2017-02-12T12:45:15.505346 tid1268 [IFO,Core] Will initialize device Path
+2017-02-12T12:45:15.505346 tid1268 [IFO,Core] Did initialize device Path
+2017-02-12T12:45:15.505346 tid1268 [IFO,Core] Will initialize device XY
+2017-02-12T12:45:15.505346 tid1268 [IFO,Core] Did initialize device XY
+2017-02-12T12:45:15.505346 tid1268 [IFO,Core] Default xy stage set to XY
+2017-02-12T12:45:15.505346 tid1268 [IFO,Core] Will initialize device Shutter
+2017-02-12T12:45:15.505346 tid1268 [IFO,Core] Did initialize device Shutter
+2017-02-12T12:45:15.505346 tid1268 [IFO,Core] Default shutter set to Shutter
+2017-02-12T12:45:15.505346 tid1268 [IFO,Core] Will initialize device Autofocus
+2017-02-12T12:45:15.505346 tid1268 [IFO,Core] Did initialize device Autofocus
+2017-02-12T12:45:15.505346 tid1268 [IFO,Core] Default autofocus set to Autofocus
+2017-02-12T12:45:15.505346 tid1268 [IFO,Core] Will initialize device ThorCam
+2017-02-12T12:45:15.506346 tid1268 [ERR,Core:dev:ThorCam] Error in device "ThorCam": Invalid property value:  (3)
+2017-02-12T12:45:15.508346 tid1268 [IFO,Core] Unloading all devices after failure to load system configuration
+2017-02-12T12:45:15.508346 tid1268 [ERR,Core] Attempt to log message from unregistered device: Camera failed to stop live video.
+2017-02-12T12:45:15.508346 tid1268 [IFO,Core] Did unload all devices
+2017-02-12T12:45:15.508346 tid1268 [IFO,Core] Now rethrowing original error from system configuration loading
+2017-02-12T12:45:15.511346 tid1268 [IFO,App] Failed to load hardware configuation
+                                   [       ] java.lang.Exception: Line 35: Property,Core,Initialize,1
+                                   [       ] Error in device "ThorCam": Invalid property value:  (3)
+                                   [       ] 
+                                   [       ]  in Thread[AWT-EventQueue-0,6,main]
+                                   [       ]   at mmcorej.MMCoreJJNI.CMMCore_loadSystemConfiguration(Native Method)
+                                   [       ]   at mmcorej.CMMCore.loadSystemConfiguration(CMMCore.java:322)
+                                   [       ]   at org.micromanager.MMStudio.loadSystemConfiguration(MMStudio.java:1723)
+                                   [       ]   at org.micromanager.MMStudio.initializationSequence(MMStudio.java:480)
+                                   [       ]   at org.micromanager.MMStudio.<init>(MMStudio.java:374)
+                                   [       ]   at MMStudioPlugin$1.run(MMStudioPlugin.java:76)
+                                   [       ]   at java.awt.event.InvocationEvent.dispatch(Unknown Source)
+                                   [       ]   at java.awt.EventQueue.dispatchEventImpl(Unknown Source)
+                                   [       ]   at java.awt.EventQueue.access$000(Unknown Source)
+                                   [       ]   at java.awt.EventQueue$1.run(Unknown Source)
+                                   [       ]   at java.awt.EventQueue$1.run(Unknown Source)
+                                   [       ]   at java.security.AccessController.doPrivileged(Native Method)
+                                   [       ]   at java.security.AccessControlContext$1.doIntersectionPrivilege(Unknown Source)
+                                   [       ]   at java.awt.EventQueue.dispatchEvent(Unknown Source)
+                                   [       ]   at java.awt.EventDispatchThread.pumpOneEventForFilters(Unknown Source)
+                                   [       ]   at java.awt.EventDispatchThread.pumpEventsForFilter(Unknown Source)
+                                   [       ]   at java.awt.EventDispatchThread.pumpEventsForHierarchy(Unknown Source)
+                                   [       ]   at java.awt.EventDispatchThread.pumpEvents(Unknown Source)
+                                   [       ]   at java.awt.EventDispatchThread.pumpEvents(Unknown Source)
+                                   [       ]   at java.awt.EventDispatchThread.run(Unknown Source)
+2017-02-12T12:45:17.258446 tid1268 [IFO,App] Updating GUI; config pad = true; from cache = false
+2017-02-12T12:45:17.260446 tid1268 [IFO,Core] Did update system state cache
+2017-02-12T12:45:17.260446 tid1268 [IFO,App] Finished updating GUI
+2017-02-12T12:45:17.265446 tid1268 [IFO,App] Startup script file (C:\Users\John\Documents\Embarcadero\Studio\Projects\MesoCamXE\MMStartup.bsh) not present.
+2017-02-12T12:45:17.452457 tid1268 [IFO,App] Rebuilding config group table
+2017-02-12T12:45:17.453457 tid1268 [IFO,App] Finished rebuilding config group table
+2017-02-12T12:45:18.892539 tid1268 [IFO,Core] Did unload all devices
+2017-02-12T12:45:18.892539 tid1268 [IFO,Core] System reset
+2017-02-12T12:45:18.892539 tid1268 [IFO,Core] Core session ended
