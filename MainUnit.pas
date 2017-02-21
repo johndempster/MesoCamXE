@@ -21,7 +21,7 @@ unit MainUnit;
 //                 Lens table added
 // V1.5.8 16.01.17 Z stage now working and XY axes now supported
 //                 Pixel intensity histogram added and lens magnification table
-// V1.5.9 12.02.17 Time series option added
+// V1.5.9 21.02.17 Time series option added
 
 interface
 
@@ -413,7 +413,7 @@ type
     SettingsDirectory : String ;
     RawImagesFileName : String ;
     iImage : Integer ;
-    NumImagesInFile : Integer ;        // Num images in file
+    NumImagesInRawFile : Integer ;        // Num images in file
 
     UnsavedRawImage : Boolean ;    // TRUE indicates raw images file contains an unsaved hi res. image
     SaveAsMultipageTIFF : Boolean ;  // TRUE = save as multi-page TIFF, FALSE=separate files
@@ -603,7 +603,7 @@ begin
     {$ELSE}
      ProgramName := ProgramName + '(64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 12/2/17';
+     ProgramName := ProgramName + ' 21/2/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -1608,12 +1608,10 @@ begin
     TSection := 0 ;
     NumZSectionsAvailable := 0 ;
     NumTSectionsAvailable := 0 ;
-    NumImagesInFile := 0 ;
+    NumImagesInRawFile := 0 ;
     RawImageAvailable := False ;
-//    ZStep := edNumPixelsPerZStep.Value*(Cam1.PixelWidth/Cam1.BinFactor) ;
     ZStep := edNumPixelsPerZStep.Value*MagnifiedCameraPixelSize ;
     edMicronsPerZStep.Value := ZStep ;
-    //NumZSections := Round(edNumZSections.Value) ;
 
     // Initialise light source used in SeparateLightSources mode
     SelectNextLightSource(true) ;
@@ -2412,8 +2410,8 @@ begin
       // Save to raw image file
        edStatus.Text :=' Saving' ;
        Application.ProcessMessages ;
-       Inc(NumImagesInFile) ;
-       SaveRawImage( RawImagesFileName, NumImagesInFile-1 ) ;
+       Inc(NumImagesInRawFile) ;
+       SaveRawImage( RawImagesFileName, NumImagesInRawFile-1 ) ;
 
        InitialiseImage ;
 
@@ -2443,6 +2441,8 @@ begin
        // Time lapse control
        if (not ScanRequested) and ckAcquireTimeLapseSeries.Checked then
           begin
+
+          outputdebugstring(pchar(format('%d',[NumTSectionsAvailable])));
           Inc(NumTSectionsAvailable) ;
           scTSection.Max := NumTSectionsAvailable-1 ;
           scTSection.Position := NumTSectionsAvailable-1 ;
@@ -3197,17 +3197,7 @@ begin
       if not FileExists(FileName) then FileHandle := FileCreate( FileName )
                                   else FileHandle := FileOpen( FileName, fmOpenWrite ) ;
 
-      NumImagesInFile := Max(NumImagesInFile,iImage+1) ;
-
-      FileWrite( FileHandle, NumImagesInFile, Sizeof(NumImagesInFile)) ;
-      FileWrite( FileHandle, NumZSectionsAvailable, Sizeof(NumZSectionsAvailable)) ;
-      FileWrite( FileHandle, NumTSectionsAvailable, Sizeof(NumTSectionsAvailable)) ;
-      FileWrite( FileHandle, HRFrameWidth, Sizeof(HRFrameWidth)) ;
-      FileWrite( FileHandle, HRFrameHeight, Sizeof(HRFrameHeight)) ;
-      FileWrite( FileHandle, HRNumComponentsPerFrame, Sizeof(HRNumComponentsPerFrame)) ;
-      FileWrite( FileHandle, NumBitsPerPixel, Sizeof(NumBitsPerPixel)) ;
-
-      FileWrite( FileHandle, ZStep, Sizeof(ZStep)) ;
+      NumImagesInRawFile := Max(NumImagesInRawFile,iImage+1) ;
 
       FilePointer := FileSeek( FileHandle, 0, 1 ) ;
       FilePointer := FilePointer + Int64(iImage)*NumBytes ;
@@ -3239,15 +3229,6 @@ begin
       if not RawImageAvailable then Exit ;
 
       FileHandle := FileOpen( FileName, fmOpenRead ) ;
-
-      FileRead( FileHandle, NumImagesInFile, Sizeof(NumImagesInFile)) ;
-      FileRead( FileHandle, NumZSectionsAvailable, Sizeof(NumZSectionsAvailable)) ;
-      FileRead( FileHandle, NumTSectionsAvailable, Sizeof(NumTSectionsAvailable)) ;
-      FileRead( FileHandle, HRFrameWidth, Sizeof(HRFrameWidth)) ;
-      FileRead( FileHandle, HRFrameHeight, Sizeof(HRFrameHeight)) ;
-      FileRead( FileHandle, HRNumComponentsPerFrame, Sizeof(HRNumComponentsPerFrame)) ;
-      FileRead( FileHandle, NumBitsPerPixel, Sizeof(NumBitsPerPixel)) ;
-      FileRead( FileHandle, ZStep, Sizeof(ZStep)) ;
 
       NumBytes := HRNumComponentsPerFrame*2 ;
       pBufW := GetMemory( NumBytes ) ;
@@ -3319,6 +3300,8 @@ begin
     AddElementInt( ProtNode, 'HRFRAMEWIDTH', HRFrameWidth ) ;
     AddElementInt( ProtNode, 'HRFRAMEHEIGHT', HRFrameHeight ) ;
     AddElementInt( ProtNode, 'HRNUMCOMPONENTSPERPIXEL', HRNumComponentsPerPixel ) ;
+    AddElementInt( ProtNode, 'NUMBITSPERPIXEL', NumBitsPerPixel ) ;
+    AddElementInt( ProtNode, 'NUMIMAGESINRAWFILE', NumImagesInRawFile ) ;
 
     AddElementBool( ProtNode,'ROIMODE', rbROIMode.Checked ) ;
 
@@ -3334,6 +3317,7 @@ begin
     iNode := ProtNode.AddChild( 'ZSTACK' ) ;
     AddElementInt( iNode, 'NUMZSECTIONS', Round(edNUMZSections.Value) ) ;
     AddElementInt( iNode, 'NUMPIXELSPERZSTEP', Round(edNumPixelsPerZStep.Value) ) ;
+    AddElementDouble( iNode, 'ZSTEP', ZStep ) ;
 
     // Light sources
 
@@ -3454,14 +3438,14 @@ begin
     HRFrameHeight := GetElementInt( ProtNode, 'HRFRAMEHEIGHT', HRFrameHeight ) ;
     HRNumComponentsPerPixel := GetElementInt( ProtNode, 'HRNUMCOMPONENTSPERPIXEL', HRNumComponentsPerPixel ) ;
     HRNumComponentsPerFrame := HRNumComponentsPerPixel*HRFrameHeight*HRFrameWidth ;
+    NumBitsPerPixel := GetElementInt( ProtNode, 'NUMBITSPERPIXEL', NumBitsPerPixel ) ;
+    NumImagesInRawFile := GetElementInt( ProtNode, 'NUMIMAGESINRAWFILE', NumImagesInRawFile ) ;
 
     rbROIMode.Checked := GetElementBool( ProtNode,'ROIMODE', rbROIMode.Checked ) ;
     rbZoomMode.Checked := not rbROIMode.Checked ;
 
     cbPalette.ItemIndex := GetElementInt( ProtNode, 'PALETTE', cbPalette.ItemIndex ) ;
     PaletteType := TPaletteType(cbPalette.Items.Objects[cbPalette.ItemIndex]) ;
-
-//    LaserIntensity := GetElementDouble( ProtNode, 'LASERINTENSITY', LaserIntensity ) ;
 
     CameraTriggerOutput := GetElementInt( ProtNode, 'CAMERATRIGGEROUTPUT', CameraTriggerOutput ) ;
     CameraTriggerActiveHigh := GetElementBool( ProtNode, 'CAMERATRIGGERACTIVEHIGH', CameraTriggerActiveHigh ) ;
@@ -3471,6 +3455,7 @@ begin
        begin
        edNUMZSections.Value := GetElementInt( iNode, 'NUMZSECTIONS', Round(edNUMZSections.Value) ) ;
        edNumPixelsPerZStep.Value := GetElementInt( iNode, 'NUMPIXELSPERZSTEP', Round(edNumPixelsPerZStep.Value) ) ;
+       ZStep := GetElementDouble( iNode, 'ZSTEP', ZStep ) ;
        Inc(NodeIndex) ;
        end ;
 
