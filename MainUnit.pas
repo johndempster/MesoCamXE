@@ -22,6 +22,8 @@ unit MainUnit;
 // V1.5.8 16.01.17 Z stage now working and XY axes now supported
 //                 Pixel intensity histogram added and lens magnification table
 // V1.5.9 21.02.17 Time series option added
+// V1.5.9 22.02.17 Z step no longer forced to be multiple of pixel size
+//                 Working on incorrect first image in pixel shift sequence.
 
 interface
 
@@ -359,10 +361,6 @@ type
     NumTSectionsAvailable : Integer ;   // No. of time lapse sections available
     NumPanelsAvailable : Integer ;   // No. of image panels available
 
-//    XZLine : Integer ;                // XZ mode line counter
-//    XZAverageLine : Integer ;         // XZ mode averaged line counter
-//    XZLineAverageStart : Integer ;    // XZ mode start averaging at line
-//    XZLineAverageEnd : Integer ;    // XZ mode end averaging at line
     ZStartingPosition : Double ;      // Z position at start of scanning
     EmptyFlag : Integer ;
     UpdateDisplay : Boolean ;
@@ -603,7 +601,7 @@ begin
     {$ELSE}
      ProgramName := ProgramName + '(64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 21/2/17';
+     ProgramName := ProgramName + ' 22/2/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -683,8 +681,6 @@ begin
      SaveDialog.Filter := ' TIFF (*.tif)|*.tif' ;
      SaveDialog.FilterIndex := 3 ;
      SaveDirectory := '' ;
-
-//     SnapNum := 1 ;
 
      FrameWidth := Cam1.FrameWidthMax ;
      FrameHeight := Cam1.FrameHeightMax ;
@@ -1024,6 +1020,7 @@ begin
  //      UpdateDisplay := True ;
      end ;
 
+
 procedure TMainFrm.FixRectangle( var Rect : TRect ) ;
 // -----------------------------------------------------
 // Ensure top/left is above/to the right of bottom/right
@@ -1039,6 +1036,7 @@ begin
     Rect.Bottom := Max(RTemp.Top,RTemp.Bottom) ;
 
     end;
+
 
 procedure TMainFrm.Image0MouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
@@ -1582,6 +1580,7 @@ begin
      if LiveImagingInProgress then ScanRequested := True ;
 end;
 
+
 procedure TMainFrm.StartNewScan ;
 // ----------------------------------
 // Start new image capture sequence
@@ -1610,8 +1609,7 @@ begin
     NumTSectionsAvailable := 0 ;
     NumImagesInRawFile := 0 ;
     RawImageAvailable := False ;
-    ZStep := edNumPixelsPerZStep.Value*MagnifiedCameraPixelSize ;
-    edMicronsPerZStep.Value := ZStep ;
+    ZStep := edMicronsPerZStep.Value ;
 
     // Initialise light source used in SeparateLightSources mode
     SelectNextLightSource(true) ;
@@ -1870,8 +1868,7 @@ begin
       if Key = #13 then
          begin
          NumSubPixels := sqrt(Integer(cbCaptureMode.Items.Objects[cbCaptureMode.ItemIndex])) ;
-         edNumPixelsPerZStep.Value := Max(Round((edMicronsPerZStep.Value*NumSubPixels)/MagnifiedCameraPixelSize),1);
-         edMicronsPerZStep.Value := (edNumPixelsPerZStep.Value*MagnifiedCameraPixelSize)/NumSubPixels ;
+         edNumPixelsPerZStep.Value := (edMicronsPerZStep.Value*NumSubPixels)/MagnifiedCameraPixelSize;
          end;
 end;
 
@@ -2136,6 +2133,7 @@ begin
        begin ;
        UpdateImage ;
        UpdateDisplay := False ;
+       PlotHistogram ;
        end ;
 
     GetImage ;
@@ -2144,7 +2142,6 @@ begin
     edXYZPosition.Text := format('X=%.2f, Y=%.2f, Z=%.2f um',
                    [ZStage.XPosition,ZStage.YPosition,ZStage.ZPosition]) ;
 
-    PlotHistogram ;
 
     end;
 
@@ -2195,9 +2192,10 @@ begin
     if Cam1.FrameCount > 0 then
        begin
        MostRecentFrame := (Cam1.FrameCount-1) mod Cam1.NumFramesInBuffer ;
- //     if  NumFramesAcquired <> Cam1.FrameCount then Cam1.SoftwareTriggerCapture ;//CameraTriggerBit := 1 ;
        NumFramesAcquired := Cam1.FrameCount ;
        end;
+
+    outputdebugstring(pchar(format('%d %d %d',[Cam1.FrameCount,MostRecentFrame,LastFrameDisplayed])));
 
     if MostRecentFrame <> LastFrameDisplayed then
        begin
@@ -2249,12 +2247,13 @@ begin
        edStatus.Text := s ;
        end;
 
-    if (not bCaptureImage.Enabled) and (Cam1.FrameCount >= NumFramesRequired) then
+    if (not bCaptureImage.Enabled) and (Cam1.FrameCount > NumFramesRequired) then
        begin
 
        edStatus.Text := s + ' Processing' ;
        Application.ProcessMessages ;
 
+       // Stop camera
        Cam1.StopCapture ;
        nTemp := Cam1.NumPixelShiftFrames ;
        Cam1.NumPixelShiftFrames := 1 ;
@@ -2268,6 +2267,8 @@ begin
 
        if PImageBuf <> Nil then FreeMem(PImageBuf) ;
        PImageBuf := GetMemory( Int64(HRNumComponentsPerFrame)*SizeOf(Integer)) ;
+       for i := 0 to HRNumComponentsPerFrame-1 do PImageBuf^[i] := 0 ;
+
 
        // Copy to display buffer
        case Cam1.NumPixelShiftFrames of
@@ -2618,8 +2619,7 @@ var
     NumSubPixels : Double ;
 begin
     NumSubPixels := sqrt(Integer(cbCaptureMode.Items.Objects[cbCaptureMode.ItemIndex])) ;
-    edNumPixelsPerZStep.Value := Max(Round((edMicronsPerZStep.Value*NumSubPixels)/MagnifiedCameraPixelSize),1) ;
-    edMicronsPerZStep.Value := (edNumPixelsPerZStep.Value*MagnifiedCameraPixelSize)/NumSubPixels ;
+    edNumPixelsPerZStep.Value := (edMicronsPerZStep.Value*NumSubPixels)/MagnifiedCameraPixelSize ;
     end;
 
 
@@ -3316,7 +3316,8 @@ begin
     // Z stack
     iNode := ProtNode.AddChild( 'ZSTACK' ) ;
     AddElementInt( iNode, 'NUMZSECTIONS', Round(edNUMZSections.Value) ) ;
-    AddElementInt( iNode, 'NUMPIXELSPERZSTEP', Round(edNumPixelsPerZStep.Value) ) ;
+    AddElementDouble( iNode, 'NUMPIXELSPERZSTEP', Round(edNumPixelsPerZStep.Value) ) ;
+    AddElementDouble( iNode, 'MICRONSPERZSTEP', Round(edMicronsPerZStep.Value) ) ;
     AddElementDouble( iNode, 'ZSTEP', ZStep ) ;
 
     // Light sources
@@ -3440,6 +3441,7 @@ begin
     HRNumComponentsPerFrame := HRNumComponentsPerPixel*HRFrameHeight*HRFrameWidth ;
     NumBitsPerPixel := GetElementInt( ProtNode, 'NUMBITSPERPIXEL', NumBitsPerPixel ) ;
     NumImagesInRawFile := GetElementInt( ProtNode, 'NUMIMAGESINRAWFILE', NumImagesInRawFile ) ;
+    NumImagesInRawFile := 0 ;
 
     rbROIMode.Checked := GetElementBool( ProtNode,'ROIMODE', rbROIMode.Checked ) ;
     rbZoomMode.Checked := not rbROIMode.Checked ;
@@ -3454,7 +3456,8 @@ begin
     While FindXMLNode(ProtNode,'ZSTACK',iNode,NodeIndex) do
        begin
        edNUMZSections.Value := GetElementInt( iNode, 'NUMZSECTIONS', Round(edNUMZSections.Value) ) ;
-       edNumPixelsPerZStep.Value := GetElementInt( iNode, 'NUMPIXELSPERZSTEP', Round(edNumPixelsPerZStep.Value) ) ;
+       edNumPixelsPerZStep.Value := GetElementDouble( iNode, 'NUMPIXELSPERZSTEP', edNumPixelsPerZStep.Value ) ;
+       edMicronsPerZStep.Value := GetElementDouble( iNode, 'MICRONSPERZSTEP', edMicronsPerZStep.Value ) ;
        ZStep := GetElementDouble( iNode, 'ZSTEP', ZStep ) ;
        Inc(NodeIndex) ;
        end ;
