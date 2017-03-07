@@ -33,7 +33,7 @@ uses
   Dialogs, ComCtrls, StdCtrls, ValidatedEdit, LabIOUnit, RangeEdit, math,
   ExtCtrls, ImageFile, xmldoc, xmlintf, ActiveX, Vcl.Menus, system.types, strutils, UITypes,
   SESCam, mmsystem, Vcl.ToolWin, Vcl.Buttons, LightSourceUnit, shellapi,shlobj,
-  XYPlotDisplay, About ;
+  XYPlotDisplay, About, VCL.HTMLHelpViewer ;
 
 const
     VMax = 10.0 ;
@@ -260,6 +260,7 @@ type
     procedure mnABoutClick(Sender: TObject);
     procedure ckAcquireTimeLapseSeriesClick(Sender: TObject);
     procedure scTSectionChange(Sender: TObject);
+    procedure mnContentsClick(Sender: TObject);
   private
 
     { Private declarations }
@@ -732,7 +733,6 @@ begin
 
      // Help file
      Application.HelpFile := ProgDirectory + 'mesocam.chm';
-
 
      Cam1.OpenCamera(CameraType);
 
@@ -2727,6 +2727,15 @@ procedure TMainFrm.mnABoutClick(Sender: TObject);
 begin
     AboutBox.ShowModal;
     end;
+
+procedure TMainFrm.mnContentsClick(Sender: TObject);
+// ---------------------
+// Display help contents
+// ---------------------
+begin
+     application.helpcontext( 10 ) ;
+     end;
+
 
 procedure TMainFrm.mnExitClick(Sender: TObject);
 // ------------
