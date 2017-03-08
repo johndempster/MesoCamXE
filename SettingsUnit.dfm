@@ -3,28 +3,32 @@ object SettingsFrm: TSettingsFrm
   Top = 0
   BorderStyle = bsDialog
   Caption = 'Camera/System Settings '
-  ClientHeight = 470
-  ClientWidth = 510
+  ClientHeight = 636
+  ClientWidth = 691
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -11
+  Font.Height = -15
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
   Position = poMainFormCenter
   OnShow = FormShow
-  PixelsPerInch = 96
-  TextHeight = 13
+  PixelsPerInch = 130
+  TextHeight = 18
   object bOK: TButton
-    Left = 8
-    Top = 439
-    Width = 64
-    Height = 24
+    Left = 11
+    Top = 594
+    Width = 87
+    Height = 33
+    Margins.Left = 4
+    Margins.Top = 4
+    Margins.Right = 4
+    Margins.Bottom = 4
     Caption = 'OK'
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
-    Font.Height = -12
+    Font.Height = -16
     Font.Name = 'Arial'
     Font.Style = [fsBold]
     ModalResult = 1
@@ -33,14 +37,18 @@ object SettingsFrm: TSettingsFrm
     OnClick = bOKClick
   end
   object bCancel: TButton
-    Left = 77
-    Top = 439
-    Width = 70
-    Height = 19
+    Left = 104
+    Top = 594
+    Width = 95
+    Height = 26
+    Margins.Left = 4
+    Margins.Top = 4
+    Margins.Right = 4
+    Margins.Bottom = 4
     Caption = 'Cancel'
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
-    Font.Height = -11
+    Font.Height = -15
     Font.Name = 'Arial'
     Font.Style = [fsBold]
     ModalResult = 2
@@ -49,103 +57,151 @@ object SettingsFrm: TSettingsFrm
     OnClick = bCancelClick
   end
   object Page: TPageControl
-    Left = 8
-    Top = 8
-    Width = 486
-    Height = 425
+    Left = 11
+    Top = 11
+    Width = 658
+    Height = 575
+    Margins.Left = 4
+    Margins.Top = 4
+    Margins.Right = 4
+    Margins.Bottom = 4
     ActivePage = CameraTab
     TabOrder = 2
     object CameraTab: TTabSheet
+      Margins.Left = 4
+      Margins.Top = 4
+      Margins.Right = 4
+      Margins.Bottom = 4
       Caption = 'Camera'
       object GroupBox4: TGroupBox
-        Left = 8
-        Top = 3
-        Width = 220
-        Height = 390
+        Left = 11
+        Top = 4
+        Width = 298
+        Height = 528
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
         Caption = ' Camera '
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
-        Font.Height = -11
+        Font.Height = -15
         Font.Name = 'Arial'
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 0
         object Label41: TLabel
-          Left = 20
-          Top = 334
-          Width = 90
-          Height = 14
+          Left = 32
+          Top = 452
+          Width = 117
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taRightJustify
           Caption = 'Tempr. Set Point'
         end
         object Label9: TLabel
-          Left = 25
-          Top = 308
-          Width = 98
-          Height = 14
+          Left = 39
+          Top = 417
+          Width = 128
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taRightJustify
           Caption = 'Camera Pixel Size'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -15
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object cbCamera: TComboBox
-          Left = 8
-          Top = 16
-          Width = 204
-          Height = 22
+          Left = 11
+          Top = 22
+          Width = 276
+          Height = 26
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           TabOrder = 0
           Text = 'cbCamera'
           OnChange = cbCameraChange
         end
         object ModePanel: TPanel
-          Left = 8
-          Top = 39
-          Width = 205
-          Height = 43
+          Left = 11
+          Top = 53
+          Width = 277
+          Height = 58
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 1
           object lbCameraMode: TLabel
-            Left = -1
-            Top = 3
-            Width = 31
-            Height = 14
+            Left = 1
+            Top = 4
+            Width = 40
+            Height = 18
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Alignment = taRightJustify
             Caption = 'Mode'
           end
           object cbCameraMode: TComboBox
             Left = 0
-            Top = 19
-            Width = 204
-            Height = 22
+            Top = 26
+            Width = 276
+            Height = 26
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Style = csDropDownList
             TabOrder = 0
             OnChange = cbCameraModeChange
           end
         end
         object ComPanel: TPanel
-          Left = 8
-          Top = 121
-          Width = 205
-          Height = 30
+          Left = 11
+          Top = 164
+          Width = 277
+          Height = 40
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 2
           object lbComPort: TLabel
-            Left = 50
-            Top = 3
-            Width = 52
-            Height = 14
+            Left = 68
+            Top = 4
+            Width = 70
+            Height = 18
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Alignment = taRightJustify
             Caption = 'COM Port'
           end
           object cbCameraPort: TComboBox
-            Left = 110
-            Top = 3
-            Width = 94
-            Height = 22
+            Left = 149
+            Top = 4
+            Width = 127
+            Height = 26
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             TabOrder = 0
             Text = 'cbCameraGain'
             Items.Strings = (
@@ -156,34 +212,50 @@ object SettingsFrm: TSettingsFrm
           end
         end
         object ReadoutSpeedPanel: TPanel
-          Left = 8
-          Top = 92
-          Width = 205
-          Height = 29
+          Left = 11
+          Top = 125
+          Width = 277
+          Height = 39
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 3
           object Label1: TLabel
-            Left = 19
-            Top = 3
-            Width = 83
-            Height = 14
+            Left = 28
+            Top = 4
+            Width = 110
+            Height = 18
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Alignment = taRightJustify
             Caption = 'Readout Speed'
           end
           object cbReadoutSpeed: TComboBox
-            Left = 108
-            Top = 2
-            Width = 94
-            Height = 22
+            Left = 146
+            Top = 3
+            Width = 128
+            Height = 26
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Style = csDropDownList
             TabOrder = 0
           end
         end
         object edTemperatureSetPoint: TValidatedEdit
-          Left = 129
-          Top = 334
-          Width = 80
-          Height = 20
+          Left = 175
+          Top = 452
+          Width = 108
+          Height = 27
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           AutoSize = False
           Text = ' 0 DEGC'
           Scale = 1.000000000000000000
@@ -193,59 +265,83 @@ object SettingsFrm: TSettingsFrm
           HiLimit = 1.000000015047466E30
         end
         object ADCPanel: TPanel
-          Left = 7
-          Top = 151
-          Width = 205
-          Height = 29
+          Left = 9
+          Top = 204
+          Width = 278
+          Height = 40
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 5
           object Label48: TLabel
-            Left = 1
-            Top = 3
-            Width = 77
-            Height = 14
+            Left = 5
+            Top = 4
+            Width = 101
+            Height = 18
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Alignment = taRightJustify
             Caption = 'A/D Converter'
           end
           object cbCameraADC: TComboBox
-            Left = 84
+            Left = 114
             Top = 1
-            Width = 118
-            Height = 22
+            Width = 160
+            Height = 26
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Style = csDropDownList
             TabOrder = 0
             OnChange = cbCameraADCChange
           end
         end
         object CameraPanel: TPanel
-          Left = 13
-          Top = 186
-          Width = 204
-          Height = 47
+          Left = 18
+          Top = 252
+          Width = 276
+          Height = 64
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 6
           object Label77: TLabel
-            Left = 4
-            Top = 4
-            Width = 102
-            Height = 14
+            Left = 5
+            Top = 5
+            Width = 129
+            Height = 18
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Caption = 'Available Cameras'
             Font.Charset = ANSI_CHARSET
             Font.Color = clWindowText
-            Font.Height = -11
+            Font.Height = -15
             Font.Name = 'Arial'
             Font.Style = [fsBold]
             ParentFont = False
           end
           object cbCameraNames: TComboBox
             Left = 0
-            Top = 20
-            Width = 204
-            Height = 22
+            Top = 27
+            Width = 276
+            Height = 26
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Style = csDropDownList
             Font.Charset = ANSI_CHARSET
             Font.Color = clWindowText
-            Font.Height = -11
+            Font.Height = -15
             Font.Name = 'Arial'
             Font.Style = [fsBold]
             ParentFont = False
@@ -254,13 +350,17 @@ object SettingsFrm: TSettingsFrm
           end
         end
         object ckDisableExposureIntervalLimit: TCheckBox
-          Left = 6
-          Top = 360
-          Width = 201
-          Height = 24
+          Left = 8
+          Top = 488
+          Width = 272
+          Height = 32
           Hint = 
             'Q Imaging cameras only: Tick to allow exposure intervals less th' +
             'an reported readout time of camera '
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taLeftJustify
           Caption = 'Disable Exposure Time Checking'
           Ctl3D = True
@@ -270,18 +370,26 @@ object SettingsFrm: TSettingsFrm
           TabOrder = 7
         end
         object CamTriggerPanel: TPanel
-          Left = 13
-          Top = 239
-          Width = 204
-          Height = 50
+          Left = 18
+          Top = 324
+          Width = 276
+          Height = 67
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 8
         end
         object edCameraPixelSize: TValidatedEdit
-          Left = 129
-          Top = 308
-          Width = 79
-          Height = 20
+          Left = 175
+          Top = 417
+          Width = 107
+          Height = 27
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           AutoSize = False
           Text = ' 10 um'
           Value = 10.000000000000000000
@@ -293,44 +401,60 @@ object SettingsFrm: TSettingsFrm
         end
       end
       object GroupBox3: TGroupBox
-        Left = 234
-        Top = 6
-        Width = 234
-        Height = 79
+        Left = 317
+        Top = 8
+        Width = 317
+        Height = 107
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
         Caption = ' Camera Trigger '
         TabOrder = 1
         object Label3: TLabel
-          Left = 17
-          Top = 20
-          Width = 116
-          Height = 14
+          Left = 26
+          Top = 27
+          Width = 154
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taRightJustify
           Caption = 'Exposure Trigger O/P'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -15
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object cbCameraTrigger: TComboBox
-          Left = 139
-          Top = 20
-          Width = 86
-          Height = 21
+          Left = 188
+          Top = 27
+          Width = 117
+          Height = 26
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           TabOrder = 0
           Text = 'cbLaserControlComPort'
         end
         object rbCameraTriggerActiveHigh: TRadioButton
-          Left = 49
-          Top = 44
-          Width = 79
-          Height = 17
+          Left = 66
+          Top = 60
+          Width = 107
+          Height = 23
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Caption = 'Active High'
           Checked = True
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -15
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -338,14 +462,18 @@ object SettingsFrm: TSettingsFrm
           TabStop = True
         end
         object rbCameraTriggerActiveLow: TRadioButton
-          Left = 139
-          Top = 44
-          Width = 87
-          Height = 17
+          Left = 188
+          Top = 60
+          Width = 118
+          Height = 23
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Caption = 'Active Low'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -15
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -353,42 +481,58 @@ object SettingsFrm: TSettingsFrm
         end
       end
       object GroupBox5: TGroupBox
-        Left = 234
-        Top = 98
-        Width = 235
-        Height = 88
+        Left = 317
+        Top = 133
+        Width = 318
+        Height = 119
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
         TabOrder = 2
         object Label25: TLabel
-          Left = 8
-          Top = 8
-          Width = 107
-          Height = 13
+          Left = 11
+          Top = 11
+          Width = 148
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Caption = 'Image-J Program Path'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -15
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
         end
         object edImageJPath: TEdit
-          Left = 8
-          Top = 25
-          Width = 212
-          Height = 21
+          Left = 11
+          Top = 34
+          Width = 287
+          Height = 26
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           TabOrder = 0
           Text = 'edImageJPath'
         end
         object ckSaveAsMultipageTIFF: TCheckBox
-          Left = 24
-          Top = 52
-          Width = 196
-          Height = 17
+          Left = 33
+          Top = 70
+          Width = 265
+          Height = 23
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taLeftJustify
           Caption = 'Save stacks as multipage TIFF'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -15
           Font.Name = 'Tahoma'
           Font.Style = [fsBold]
           ParentFont = False
@@ -397,99 +541,143 @@ object SettingsFrm: TSettingsFrm
       end
     end
     object LightSourceTab: TTabSheet
+      Margins.Left = 4
+      Margins.Top = 4
+      Margins.Right = 4
+      Margins.Bottom = 4
       Caption = 'Light Source'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object GroupBox1: TGroupBox
         Left = 0
-        Top = 3
-        Width = 306
-        Height = 264
+        Top = 4
+        Width = 414
+        Height = 358
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
         Caption = ' Light Sources '
         TabOrder = 0
         object Label4: TLabel
-          Left = 7
-          Top = 20
-          Width = 31
-          Height = 14
+          Left = 11
+          Top = 27
+          Width = 40
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taRightJustify
           Caption = 'Name'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -15
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object Label5: TLabel
-          Left = 87
-          Top = 20
-          Width = 68
-          Height = 14
+          Left = 122
+          Top = 27
+          Width = 88
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taRightJustify
           Caption = 'Control Line'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -15
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object Label6: TLabel
-          Left = 174
-          Top = 20
-          Width = 52
-          Height = 14
+          Left = 236
+          Top = 27
+          Width = 70
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Caption = 'Off Level '
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -15
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object Label7: TLabel
-          Left = 238
-          Top = 20
-          Width = 61
-          Height = 14
+          Left = 322
+          Top = 27
+          Width = 81
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Caption = 'Max. Level '
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -15
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object pnLightSource0: TPanel
-          Left = 8
-          Top = 35
-          Width = 298
-          Height = 25
+          Left = 11
+          Top = 47
+          Width = 403
+          Height = 34
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 0
           object Edit2: TEdit
             Left = 0
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             TabOrder = 0
             Text = 'Name?'
           end
           object ComboBox2: TComboBox
             Tag = 1
-            Left = 80
+            Left = 108
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Style = csDropDownList
             TabOrder = 1
           end
           object ValidatedEdit3: TValidatedEdit
             Tag = 2
-            Left = 166
+            Left = 225
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -499,10 +687,14 @@ object SettingsFrm: TSettingsFrm
           end
           object ValidatedEdit4: TValidatedEdit
             Tag = 3
-            Left = 231
+            Left = 313
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -512,35 +704,51 @@ object SettingsFrm: TSettingsFrm
           end
         end
         object pnLightSource1: TPanel
-          Left = 8
-          Top = 61
-          Width = 298
-          Height = 25
+          Left = 11
+          Top = 83
+          Width = 403
+          Height = 33
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 1
           object Edit3: TEdit
             Left = 0
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             TabOrder = 0
             Text = 'Name?'
           end
           object ComboBox3: TComboBox
             Tag = 1
-            Left = 80
+            Left = 108
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Style = csDropDownList
             TabOrder = 1
           end
           object ValidatedEdit5: TValidatedEdit
             Tag = 2
-            Left = 166
+            Left = 225
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -550,10 +758,14 @@ object SettingsFrm: TSettingsFrm
           end
           object ValidatedEdit6: TValidatedEdit
             Tag = 3
-            Left = 231
+            Left = 313
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -563,35 +775,51 @@ object SettingsFrm: TSettingsFrm
           end
         end
         object pnLightSource2: TPanel
-          Left = 8
-          Top = 88
-          Width = 298
-          Height = 25
+          Left = 11
+          Top = 119
+          Width = 403
+          Height = 34
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 2
           object Edit4: TEdit
             Left = 0
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             TabOrder = 0
             Text = 'Name?'
           end
           object ComboBox4: TComboBox
             Tag = 1
-            Left = 80
+            Left = 108
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Style = csDropDownList
             TabOrder = 1
           end
           object ValidatedEdit7: TValidatedEdit
             Tag = 2
-            Left = 166
+            Left = 225
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -601,10 +829,14 @@ object SettingsFrm: TSettingsFrm
           end
           object ValidatedEdit8: TValidatedEdit
             Tag = 3
-            Left = 231
+            Left = 313
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -614,35 +846,51 @@ object SettingsFrm: TSettingsFrm
           end
         end
         object pnLightSource3: TPanel
-          Left = 8
-          Top = 114
-          Width = 298
-          Height = 25
+          Left = 11
+          Top = 154
+          Width = 403
+          Height = 34
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 3
           object Edit5: TEdit
             Left = 0
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             TabOrder = 0
             Text = 'Name?'
           end
           object ComboBox5: TComboBox
             Tag = 1
-            Left = 80
+            Left = 108
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Style = csDropDownList
             TabOrder = 1
           end
           object ValidatedEdit9: TValidatedEdit
             Tag = 2
-            Left = 166
+            Left = 225
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -652,10 +900,14 @@ object SettingsFrm: TSettingsFrm
           end
           object ValidatedEdit10: TValidatedEdit
             Tag = 3
-            Left = 231
+            Left = 313
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -665,35 +917,51 @@ object SettingsFrm: TSettingsFrm
           end
         end
         object pnLightSource4: TPanel
-          Left = 8
-          Top = 141
-          Width = 298
-          Height = 24
+          Left = 11
+          Top = 191
+          Width = 403
+          Height = 32
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 4
           object Edit6: TEdit
             Left = 0
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             TabOrder = 0
             Text = 'Name?'
           end
           object ComboBox6: TComboBox
             Tag = 1
-            Left = 80
+            Left = 108
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Style = csDropDownList
             TabOrder = 1
           end
           object ValidatedEdit11: TValidatedEdit
             Tag = 2
-            Left = 166
+            Left = 225
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -703,10 +971,14 @@ object SettingsFrm: TSettingsFrm
           end
           object ValidatedEdit12: TValidatedEdit
             Tag = 3
-            Left = 231
+            Left = 313
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -716,35 +988,51 @@ object SettingsFrm: TSettingsFrm
           end
         end
         object pnLightSource5: TPanel
-          Left = 8
-          Top = 168
-          Width = 298
-          Height = 23
+          Left = 11
+          Top = 228
+          Width = 403
+          Height = 31
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 5
           object Edit7: TEdit
             Left = 0
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             TabOrder = 0
             Text = 'Name?'
           end
           object ComboBox7: TComboBox
             Tag = 1
-            Left = 80
+            Left = 108
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Style = csDropDownList
             TabOrder = 1
           end
           object ValidatedEdit13: TValidatedEdit
             Tag = 2
-            Left = 166
+            Left = 225
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -754,10 +1042,14 @@ object SettingsFrm: TSettingsFrm
           end
           object ValidatedEdit14: TValidatedEdit
             Tag = 3
-            Left = 231
+            Left = 313
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -767,35 +1059,51 @@ object SettingsFrm: TSettingsFrm
           end
         end
         object pnLightSource6: TPanel
-          Left = 8
-          Top = 194
-          Width = 298
-          Height = 24
+          Left = 11
+          Top = 263
+          Width = 403
+          Height = 32
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 6
           object Edit8: TEdit
             Left = 0
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             TabOrder = 0
             Text = 'Name?'
           end
           object ComboBox8: TComboBox
             Tag = 1
-            Left = 80
+            Left = 108
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Style = csDropDownList
             TabOrder = 1
           end
           object ValidatedEdit15: TValidatedEdit
             Tag = 2
-            Left = 166
+            Left = 225
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -805,10 +1113,14 @@ object SettingsFrm: TSettingsFrm
           end
           object ValidatedEdit16: TValidatedEdit
             Tag = 3
-            Left = 231
+            Left = 313
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -818,35 +1130,51 @@ object SettingsFrm: TSettingsFrm
           end
         end
         object pnLightSource7: TPanel
-          Left = 8
-          Top = 220
-          Width = 298
-          Height = 25
+          Left = 11
+          Top = 298
+          Width = 403
+          Height = 34
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           BevelOuter = bvNone
           TabOrder = 7
           object Edit9: TEdit
             Left = 0
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             TabOrder = 0
             Text = 'Name?'
           end
           object ComboBox9: TComboBox
             Tag = 1
-            Left = 80
+            Left = 108
             Top = 0
-            Width = 78
+            Width = 106
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Style = csDropDownList
             TabOrder = 1
           end
           object ValidatedEdit17: TValidatedEdit
             Tag = 2
-            Left = 166
+            Left = 225
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -856,10 +1184,14 @@ object SettingsFrm: TSettingsFrm
           end
           object ValidatedEdit18: TValidatedEdit
             Tag = 3
-            Left = 231
+            Left = 313
             Top = 0
-            Width = 59
+            Width = 80
             Height = 21
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
             Text = ' 0 V'
             Scale = 1.000000000000000000
             Units = 'V'
@@ -871,68 +1203,104 @@ object SettingsFrm: TSettingsFrm
       end
     end
     object ZStageTab: TTabSheet
+      Margins.Left = 4
+      Margins.Top = 4
+      Margins.Right = 4
+      Margins.Bottom = 4
       Caption = 'Z Stage'
       ImageIndex = 2
       object GroupBox2: TGroupBox
-        Left = 3
-        Top = 3
-        Width = 229
-        Height = 217
+        Left = 4
+        Top = 4
+        Width = 310
+        Height = 294
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
         Caption = ' Z position Control'
         TabOrder = 0
         object Label8: TLabel
-          Left = 53
-          Top = 42
-          Width = 58
-          Height = 13
+          Left = 74
+          Top = 57
+          Width = 76
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taRightJustify
           Caption = 'Control Port'
         end
         object Label10: TLabel
-          Left = 46
-          Top = 122
-          Width = 65
-          Height = 13
+          Left = 62
+          Top = 165
+          Width = 88
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taRightJustify
           Caption = 'Z scale factor'
         end
         object Label13: TLabel
-          Left = 58
-          Top = 149
-          Width = 53
-          Height = 13
+          Left = 76
+          Top = 202
+          Width = 74
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taRightJustify
           Caption = 'Z step time'
         end
         object Label12: TLabel
-          Left = 46
-          Top = 69
-          Width = 65
-          Height = 13
+          Left = 61
+          Top = 93
+          Width = 89
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taRightJustify
           Caption = 'X scale factor'
         end
         object Label14: TLabel
-          Left = 46
-          Top = 96
-          Width = 65
-          Height = 13
+          Left = 60
+          Top = 130
+          Width = 90
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taRightJustify
           Caption = 'Y scale factor'
         end
         object cbZStagePort: TComboBox
-          Left = 118
-          Top = 42
-          Width = 94
-          Height = 21
+          Left = 160
+          Top = 57
+          Width = 127
+          Height = 26
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Style = csDropDownList
           TabOrder = 0
         end
         object edZScaleFactor: TValidatedEdit
-          Left = 118
-          Top = 122
-          Width = 94
-          Height = 21
+          Left = 160
+          Top = 165
+          Width = 127
+          Height = 26
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Text = ' 1 steps/um'
           Value = 1.000000000000000000
           Scale = 1.000000000000000000
@@ -942,19 +1310,27 @@ object SettingsFrm: TSettingsFrm
           HiLimit = 1000000.000000000000000000
         end
         object cbZStageType: TComboBox
-          Left = 8
-          Top = 16
-          Width = 204
-          Height = 21
+          Left = 11
+          Top = 22
+          Width = 276
+          Height = 26
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           TabOrder = 2
           Text = 'cbZStageType'
           OnChange = cbZStageTypeChange
         end
         object edZStepTime: TValidatedEdit
-          Left = 118
-          Top = 149
-          Width = 94
-          Height = 21
+          Left = 160
+          Top = 202
+          Width = 127
+          Height = 26
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Text = ' 100 ms'
           Value = 0.100000001490116100
           Scale = 1000.000000000000000000
@@ -964,10 +1340,14 @@ object SettingsFrm: TSettingsFrm
           HiLimit = 1000000.000000000000000000
         end
         object edXScalefactor: TValidatedEdit
-          Left = 118
-          Top = 69
-          Width = 94
-          Height = 21
+          Left = 160
+          Top = 93
+          Width = 127
+          Height = 26
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Text = ' 1 steps/um'
           Value = 1.000000000000000000
           Scale = 1.000000000000000000
@@ -977,10 +1357,14 @@ object SettingsFrm: TSettingsFrm
           HiLimit = 1000000.000000000000000000
         end
         object edYScaleFactor: TValidatedEdit
-          Left = 117
-          Top = 96
-          Width = 94
-          Height = 21
+          Left = 158
+          Top = 130
+          Width = 128
+          Height = 26
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Text = ' 1 steps/um'
           Value = 1.000000000000000000
           Scale = 1.000000000000000000
@@ -994,53 +1378,77 @@ object SettingsFrm: TSettingsFrm
     object LensTab: TTabSheet
       HelpType = htKeyword
       HelpKeyword = 'Lenses'
+      Margins.Left = 4
+      Margins.Top = 4
+      Margins.Right = 4
+      Margins.Bottom = 4
       Caption = 'Lenses'
       ImageIndex = 3
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object CalibrationGrp: TGroupBox
-        Left = 8
-        Top = 3
-        Width = 235
-        Height = 350
+        Left = 11
+        Top = 4
+        Width = 318
+        Height = 474
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
         Caption = ' Lens Table '
         TabOrder = 0
         object Label2: TLabel
-          Left = 86
-          Top = 16
-          Width = 76
-          Height = 14
+          Left = 121
+          Top = 22
+          Width = 98
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taRightJustify
           Caption = 'No. of Lenses'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -15
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object Label11: TLabel
-          Left = 35
-          Top = 319
-          Width = 136
-          Height = 14
+          Left = 55
+          Top = 432
+          Width = 177
+          Height = 18
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Alignment = taRightJustify
           Caption = 'Relay Lens Magnification'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -15
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object edNumLenses: TValidatedEdit
-          Left = 168
-          Top = 16
-          Width = 38
-          Height = 19
+          Left = 228
+          Top = 22
+          Width = 51
+          Height = 25
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           OnKeyPress = edNumLensesKeyPress
           AutoSize = False
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -12
+          Font.Height = -16
           Font.Name = 'Arial'
           Font.Style = []
           Text = ' 10 '
@@ -1051,15 +1459,19 @@ object SettingsFrm: TSettingsFrm
           HiLimit = 10.000000000000000000
         end
         object sgLensTable: TStringGrid
-          Left = 8
-          Top = 40
-          Width = 217
-          Height = 273
+          Left = 11
+          Top = 54
+          Width = 294
+          Height = 370
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           ColCount = 2
           FixedCols = 0
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -12
+          Font.Height = -16
           Font.Name = 'Arial'
           Font.Style = []
           Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing]
@@ -1067,10 +1479,14 @@ object SettingsFrm: TSettingsFrm
           TabOrder = 1
         end
         object edRelayLensMagnification: TValidatedEdit
-          Left = 177
-          Top = 319
-          Width = 43
-          Height = 19
+          Left = 240
+          Top = 432
+          Width = 58
+          Height = 26
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           AutoSize = False
           Text = ' 10 X'
           Value = 10.000000000000000000
@@ -1081,10 +1497,14 @@ object SettingsFrm: TSettingsFrm
           HiLimit = 1000.000000000000000000
         end
         object udNumLenses: TUpDown
-          Left = 204
-          Top = 14
-          Width = 17
-          Height = 22
+          Left = 276
+          Top = 19
+          Width = 23
+          Height = 30
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
           Min = -100
           Position = 1
           TabOrder = 3

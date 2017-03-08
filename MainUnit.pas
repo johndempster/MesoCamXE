@@ -24,6 +24,10 @@ unit MainUnit;
 // V1.5.9 21.02.17 Time series option added
 // V1.5.9 22.02.17 Z step no longer forced to be multiple of pixel size
 //                 Working on incorrect first image in pixel shift sequence.
+// V1.6.0 08.03.17 Incorrect first image in pixel shift sequence fixed
+//                 'CAPTUREMODE','GOTOXPOSITION','GOTOYPOSITION','GOTOZPOSITION' added to INI file
+//                 SaveImage() Now saves Z stacks as multipage TIFFs correctly.
+
 
 interface
 
@@ -261,6 +265,8 @@ type
     procedure ckAcquireTimeLapseSeriesClick(Sender: TObject);
     procedure scTSectionChange(Sender: TObject);
     procedure mnContentsClick(Sender: TObject);
+    procedure edGotoYPositionKeyPress(Sender: TObject; var Key: Char);
+    procedure edGotoZPositionKeyPress(Sender: TObject; var Key: Char);
   private
 
     { Private declarations }
@@ -459,12 +465,10 @@ function SectionFileName(
          iTSection : Integer     // T section #
          ) : string ;
 
-
 procedure LoadRawImage(
           FileName : String ;    // File to save to
           iSection : Integer     // Image Section number
           ) ;
-
 
 procedure SaveImage(
           OpenImageJ: boolean    // TRUE = open in Image-J
@@ -482,7 +486,6 @@ procedure SaveImage(
     procedure LoadSettingsFromXMLFile(
               FileName : String
               ) ;
-
 
     procedure AddElementDouble(
               ParentNode : IXMLNode ;
@@ -596,13 +599,13 @@ begin
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
-     ProgramName := 'MesoCam V1.5.9 ';
+     ProgramName := 'MesoCam V1.6.0';
      {$IFDEF WIN32}
      ProgramName := ProgramName + '(32 bit)';
     {$ELSE}
      ProgramName := ProgramName + '(64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 22/2/17';
+     ProgramName := ProgramName + ' 8/3/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -1717,16 +1720,12 @@ begin
        NumComponentsPerPixel := Cam1.NumComponentsPerPixel ;
        pLiveImageBuf := GetMemory(Cam1.NumComponentsPerFrame*SizeOf(Integer)) ;
        for i := 0 to Cam1.NumComponentsPerFrame-1 do pLiveImageBuf^[i] := 0 ;
-//       FrameWidth := Cam1.FrameWidth ;
-//       FrameHeight := Cam1.FrameHeight ;
        NumBitsPerPixel := Cam1.PixelDepth ;
        GreyLevelMax := Cam1.GreyLevelMax ;
        end;
 
-//       FrameWidth := Cam1.FrameWidth ;
-//       FrameHeight := Cam1.FrameHeight ;
-       NumBitsPerPixel := Cam1.PixelDepth ;
-       GreyLevelMax := Cam1.GreyLevelMax ;
+    NumBitsPerPixel := Cam1.PixelDepth ;
+    GreyLevelMax := Cam1.GreyLevelMax ;
     nShifts := Round(sqrt(Cam1.NumPixelShiftFrames)) ;
 
     Cam1.NumFramesInBuffer := 18 ;
@@ -1851,12 +1850,40 @@ begin
     end;
 
 procedure TMainFrm.edGotoXPositionKeyPress(Sender: TObject; var Key: Char);
+// ------------------------------
+// Go to user entered X position
+// ------------------------------
 begin
     if Key = #13 then
        begin
-       ZStage.MoveTo( edGoToXPosition.Value, edGoToYPosition.Value, edGoToZPosition.Value ) ;
+       ZStage.MoveTo( edGoToXPosition.Value, ZStage.YPosition, ZStage.ZPosition ) ;
        end;
     end;
+
+
+procedure TMainFrm.edGotoYPositionKeyPress(Sender: TObject; var Key: Char);
+// ------------------------------
+// Go to user entered Y position
+// ------------------------------
+begin
+    if Key = #13 then
+       begin
+       ZStage.MoveTo( ZStage.XPosition, edGoToYPosition.Value, ZStage.ZPosition ) ;
+       end;
+end;
+
+
+procedure TMainFrm.edGotoZPositionKeyPress(Sender: TObject; var Key: Char);
+// ------------------------------
+// Go to user entered Z position
+// ------------------------------
+begin
+    if Key = #13 then
+       begin
+       ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, edGoToZPosition.Value  ) ;
+       end;
+end;
+
 
 procedure TMainFrm.edMicronsPerZStepKeyPress(Sender: TObject; var Key: Char);
 // -------------------------
@@ -2091,26 +2118,10 @@ begin
        if Cam1.CameraActive and (not LiveImagingInProgress) then Cam1.SoftwareTriggerCapture ;
        NextCameraTrigger := timegettime + 1000 + Round(edExposureTime.Value*1000) ;
        end;
+
     iDev := LabIO.Resource[CameraTriggerOutput].Device ;
     iChan := LabIO.Resource[CameraTriggerOutput].StartChannel ;
-//    LabIO.SetBit(LabIO.DigOutState[iDev],iChan,CameraTriggerBit) ;
- //   if CameraTriggerBit <> 0 then Cam1.SoftwareTriggerCapture ;
     CameraTriggerBit := 0 ;
-
-{    if TriggerCameraExposure then
-       begin
-       LabIO.SetBit(LabIO.DigOutState[iDev],iChan,1) ;
-       TriggerCameraExposure := False ;
-       end
-    else
-    if PulseCounter <= 0 then begin
-//       LabIO.SetBit(LabIO.DigOutState[iDev],iChan,1) ;
-       PulseCounter := Round((0.5 + edExposureTime.Value)*1000.0) div Timer.Interval ;
-       end
-    else begin
-       Dec(PulseCounter) ;
-//       LabIO.SetBit(LabIO.DigOutState[iDev],iChan,0) ;
-       end ;}
 
     for iDev := 1 to LabIO.NumDevices do begin
         LabIO.WriteToDigitalOutPutPort( iDev, LabIO.DigOutState[iDev] ) ;
@@ -2141,7 +2152,6 @@ begin
     ZStage.UpdateZPosition ;
     edXYZPosition.Text := format('X=%.2f, Y=%.2f, Z=%.2f um',
                    [ZStage.XPosition,ZStage.YPosition,ZStage.ZPosition]) ;
-
 
     end;
 
@@ -2243,7 +2253,7 @@ begin
           s := s + format('T:%d/%d, ',[NumTSectionsAvailable+1,Round(edNumTimeLapsePoints.Value)]);
        if ckAcquireZStack.Checked then
           s := s + format('Z:%d/%d, ',[NumZSectionsAvailable+1,Round(edNumZSections.Value)]);
-       s := s + format(' F:%d/%d',[Cam1.FrameCount,Cam1.NumPixelShiftFrames]);
+       s := s + format(' F:%d/%d',[Min(Cam1.FrameCount,Cam1.NumPixelShiftFrames),Cam1.NumPixelShiftFrames]);
        edStatus.Text := s ;
        end;
 
@@ -2409,7 +2419,7 @@ begin
          end ;  }
 
       // Save to raw image file
-       edStatus.Text :=' Saving' ;
+       edStatus.Text := s + ' Saving' ;
        Application.ProcessMessages ;
        Inc(NumImagesInRawFile) ;
        SaveRawImage( RawImagesFileName, NumImagesInRawFile-1 ) ;
@@ -2435,7 +2445,8 @@ begin
             begin
             // Increment Z position to next section
             ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStage.ZPosition + ZStep );
-            ScanRequested := True ;
+            ScanRequestedAfterInterval := True ;
+            ScanStartAt := timegettime + Round(1000*ZStage.ZStepTime) ;
             end ;
          end ;
 
@@ -2856,7 +2867,8 @@ begin
                                iZ*Max(NumPanelsAvailable,1) + iPanel ) ;
 
                  // Create file
-                 if (not SaveAsMultipageTIFF) or (iT = 0) or
+                 if (not SaveAsMultipageTIFF) or
+                    ((NumTSectionsAvailable > 1) and (iT = 0)) or
                     ((iZ = 0) and (NumZSectionsAvailable > 1)) then
                     begin
 
@@ -3312,6 +3324,8 @@ begin
     AddElementInt( ProtNode, 'NUMBITSPERPIXEL', NumBitsPerPixel ) ;
     AddElementInt( ProtNode, 'NUMIMAGESINRAWFILE', NumImagesInRawFile ) ;
 
+    AddElementInt( ProtNode, 'CAPTUREMODE', cbCaptureMode.ItemIndex ) ;
+
     AddElementBool( ProtNode,'ROIMODE', rbROIMode.Checked ) ;
 
     AddElementInt( ProtNode, 'PALETTE', cbPalette.ItemIndex ) ;
@@ -3351,6 +3365,9 @@ begin
     AddElementDouble( iNode, 'YSCALEFACTOR', ZStage.YScaleFactor ) ;
     AddElementDouble( iNode, 'ZSCALEFACTOR', ZStage.ZScaleFactor ) ;
     AddElementDouble( iNode, 'ZSTEPTIME', ZStage.ZStepTime ) ;
+    AddElementDouble( iNode, 'GOTOXPOSITION', edGotoXPosition.Value ) ;
+    AddElementDouble( iNode, 'GOTOYPOSITION', edGotoYPosition.Value ) ;
+    AddElementDouble( iNode, 'GOTOZPOSITION', edGotoZPosition.Value ) ;
 
     // Time lapse
     iNode := ProtNode.AddChild( 'TIMELAPSE' ) ;
@@ -3455,6 +3472,8 @@ begin
     rbROIMode.Checked := GetElementBool( ProtNode,'ROIMODE', rbROIMode.Checked ) ;
     rbZoomMode.Checked := not rbROIMode.Checked ;
 
+    cbCaptureMode.ItemIndex := Min(Max(GetElementInt( ProtNode, 'CAPTUREMODE', cbCaptureMode.ItemIndex ),0),cbCaptureMode.Items.Count-1) ;
+
     cbPalette.ItemIndex := GetElementInt( ProtNode, 'PALETTE', cbPalette.ItemIndex ) ;
     PaletteType := TPaletteType(cbPalette.Items.Objects[cbPalette.ItemIndex]) ;
 
@@ -3500,6 +3519,9 @@ begin
       ZStage.YScaleFactor := GetElementDouble( iNode, 'YSCALEFACTOR', ZStage.YScaleFactor ) ;
       ZStage.ZScaleFactor := GetElementDouble( iNode, 'ZSCALEFACTOR', ZStage.ZScaleFactor ) ;
       ZStage.ZStepTime := GetElementDouble( iNode, 'ZSTEPTIME', ZStage.ZStepTime ) ;
+      edGotoXPosition.Value := GetElementDouble( iNode, 'GOTOXPOSITION', edGotoXPosition.Value ) ;
+      edGotoYPosition.Value := GetElementDouble( iNode, 'GOTOYPOSITION', edGotoYPosition.Value ) ;
+      edGotoZPosition.Value := GetElementDouble( iNode, 'GOTOZPOSITION', edGotoZPosition.Value ) ;
       Inc(NodeIndex) ;
       end ;
 
