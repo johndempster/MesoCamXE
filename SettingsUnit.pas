@@ -5,6 +5,7 @@ unit SettingsUnit;
 // 1-6-12 MinPixelDwellTimeAdded
 // 29.11.16 Lens table added
 // 16.01.17 ZStage.XScaleFactor and ZStage.YScaleFactor added
+// 22.03.17 USB-controlled CoolLED pE-x support added
 
 interface
 
@@ -41,7 +42,7 @@ type
     ckDisableExposureIntervalLimit: TCheckBox;
     CamTriggerPanel: TPanel;
     LightSourceTab: TTabSheet;
-    GroupBox1: TGroupBox;
+    LEDGrp: TGroupBox;
     Label4: TLabel;
     Label5: TLabel;
     ZStageTab: TTabSheet;
@@ -118,6 +119,11 @@ type
     Label12: TLabel;
     edYScaleFactor: TValidatedEdit;
     Label14: TLabel;
+    CoolLEDGrp: TGroupBox;
+    cbLightSourceControlPort: TComboBox;
+    Label15: TLabel;
+    cbSourceType: TComboBox;
+    lbSourceType: TLabel;
     procedure FormShow(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCancelClick(Sender: TObject);
@@ -129,8 +135,10 @@ type
     procedure udNumLensesChangingEx(Sender: TObject; var AllowChange: Boolean;
       NewValue: Integer; Direction: TUpDownDirection);
     procedure edNumLensesKeyPress(Sender: TObject; var Key: Char);
+    procedure cbSourceTypeChange(Sender: TObject);
   private
     { Private declarations }
+    procedure ShowLightSourcePanel ;
     procedure SetLightSourcePanel(
               Num : Integer ;
               Panel : TPanel ) ;
@@ -204,6 +212,15 @@ begin
     cbZStagePort.ItemIndex := Min(Max(ZStage.ControlPort,0),cbZStagePort.Items.Count-1) ;
 
     // Light Sources
+    LightSource.GetSourceTypes(cbSourceType.Items);
+    cbSourceType.ItemIndex := LightSource.SourceType ;
+    ShowLightSourcePanel ;
+
+    // COM port list
+    LightSource.GetControlPorts(cbLightSourceControlPort.Items);
+    cbLightSourceControlPort.ItemIndex := Min(Max(LightSource.ControlPort,0),
+                                          cbLightSourceControlPort.Items.Count-1) ;
+
     SetLightSourcePanel( 0, pnLightSource0 ) ;
     SetLightSourcePanel( 1, pnLightSource1 ) ;
     SetLightSourcePanel( 2, pnLightSource2 ) ;
@@ -212,6 +229,10 @@ begin
     SetLightSourcePanel( 5, pnLightSource5 ) ;
     SetLightSourcePanel( 6, pnLightSource6 ) ;
     SetLightSourcePanel( 7, pnLightSource7 ) ;
+
+
+
+    //
 
     edXScaleFactor.Units := ZStage.ScaleFactorUnits ;
     edXScaleFactor.Value := ZStage.XScaleFactor ;
@@ -242,6 +263,19 @@ begin
 
 end;
 
+procedure TSettingsFrm.ShowLightSourcePanel ;
+// -----------------------------------------
+// Show settings panel for light source type
+// -----------------------------------------
+begin
+    // Select panel
+    LEDGrp.Visible := False ;
+    CoolLEDGrp.Visible := False ;
+    case LightSource.SourceType of
+         lsLED : LEDGrp.Visible := True ;
+         lsCoolLED : CoolLEDGrp.Visible := True ;
+         end ;
+    end ;
 
 
 procedure TSettingsFrm.bCancelClick(Sender: TObject);
@@ -338,6 +372,15 @@ begin
     NewCamera(true) ;
 end;
 
+procedure TSettingsFrm.cbSourceTypeChange(Sender: TObject);
+// -------------------------
+// Light source type changed
+// -------------------------
+begin
+    LightSource.SourceType := cbSourceType.ItemIndex ;
+    ShowLightSourcePanel ;
+    end;
+
 procedure TSettingsFrm.cbZStageTypeChange(Sender: TObject);
 //
 // Zstage type changed
@@ -354,6 +397,9 @@ end;
 
 
 procedure TSettingsFrm.edNumLensesKeyPress(Sender: TObject; var Key: Char);
+// -------------------------------
+// No. of available lenses changed
+// -------------------------------
 begin
     if Key = #13 then sgLensTable.RowCount := Round(edNumLenses.Value) + 1 ;
 end;
@@ -401,9 +447,9 @@ end;
 procedure TSettingsFrm.GetLightSourcePanel(
           Num : Integer ;
           Panel : TPanel ) ;
-//
+// -----------------------------------------
 // Read light source settings panel controls
-// -------------------------------------------
+// -----------------------------------------
 var
     i : Integer ;
 begin

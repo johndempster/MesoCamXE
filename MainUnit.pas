@@ -27,6 +27,7 @@ unit MainUnit;
 // V1.6.0 08.03.17 Incorrect first image in pixel shift sequence fixed
 //                 'CAPTUREMODE','GOTOXPOSITION','GOTOYPOSITION','GOTOZPOSITION' added to INI file
 //                 SaveImage() Now saves Z stacks as multipage TIFFs correctly.
+// V1.6.1 22.03.17 USB control of CoolLED light source added
 
 
 interface
@@ -3345,6 +3346,10 @@ begin
 
     // Light sources
 
+    AddElementInt( ProtNode, 'LIGHTSOURCETYPE', LightSource.SourceType ) ;
+    AddElementInt( ProtNode, 'LIGHTSOURCECONTROLPORT', LightSource.ControlPort ) ;
+    AddElementInt( ProtNode, 'LIGHTSOURCEBAUDRATE', LightSource.BaudRate ) ;
+
     for i := 0 to High(LightSource.ControlLines) do begin
         iNode := ProtNode.AddChild( 'LIGHTSOURCE' ) ;
         AddElementInt( iNode, 'NUMBER', i ) ;
@@ -3491,6 +3496,11 @@ begin
        end ;
 
     // Light source control
+
+    LightSource.SourceType := GetElementInt( ProtNode, 'LIGHTSOURCETYPE', LightSource.SourceType ) ;
+    LightSource.ControlPort := GetElementInt( ProtNode, 'LIGHTSOURCECONTROLPORT', LightSource.ControlPort ) ;
+    LightSource.BaudRate := GetElementInt( ProtNode, 'LIGHTSOURCEBAUDRATE', LightSource.BaudRate ) ;
+
     NodeIndex := 0 ;
     Num := High(LightSource.Name) + 1 ;
     While FindXMLNode(ProtNode,'LIGHTSOURCE',iNode,NodeIndex) do
