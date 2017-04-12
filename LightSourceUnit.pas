@@ -246,7 +246,7 @@ var
   SourceLetter : Array[0..3] of string ;
   s,sIntensity : string ;
 begin
-
+    exit ;
     SourceLetter[0] := 'A' ;
     SourceLetter[1] := 'B' ;
     SourceLetter[2] := 'C' ;
@@ -411,6 +411,8 @@ begin
      xBuf[nC] := #13 ;
      Inc(nC) ;
 
+    outputdebugstring( pchar('Send:'+line));
+
     Overlapped := Nil ;
     OK := WriteFile( ComHandle, xBuf, nC, nWritten, Overlapped ) ;
     if (not OK) or (nWRitten <> nC) then
@@ -469,6 +471,7 @@ begin
          Inc( NumRead ) ;
      end ;
 
+     if line <> '' then outputdebugstring( pchar('Rec:'+line));
      Result := Line ;
 
      end ;
@@ -541,6 +544,7 @@ begin
 
     // Request list of wavelengths available
     SendCommand('LAMS');
+//SendCommand('CSSAN050');
 
 end;
 

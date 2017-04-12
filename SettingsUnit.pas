@@ -313,6 +313,8 @@ begin
     ZStage.ZScaleFactor := edZScaleFactor.Value ;
     ZStage.ZStepTime := edZStepTime.Value ;
 
+    LightSource.ControlPort := cbLightSourceControlPort.ItemIndex ;
+
     MainFrm.SetScanZoomToFullField ;
     MainFrm.NumLenses := Round(edNumLenses.Value);
     MainFrm.RelayLensMagnification := Max(edRelayLensMagnification.Value,0.001) ;
