@@ -28,6 +28,8 @@ unit MainUnit;
 //                 'CAPTUREMODE','GOTOXPOSITION','GOTOYPOSITION','GOTOZPOSITION' added to INI file
 //                 SaveImage() Now saves Z stacks as multipage TIFFs correctly.
 // V1.6.1 22.03.17 USB control of CoolLED light source added
+// V1.6.2 27.04.17 Camera trigger pulse to start VA-29MC-5M pixel shift sequences now implemented
+//                 in Cam1.Startcapture to fix pixel misalignment problem
 
 
 interface
@@ -297,6 +299,7 @@ type
     CameraTriggerOutput : Integer ;       // Camera trigger digital output line
     CameraTriggerActiveHigh : Boolean ;   // TTL high level triggers camera
     CameraTriggerBit : Integer ;
+    CameraTriggerRequired : Boolean ;     // Camera trigger pulse required
     CameraGainIndex : Integer ;
     Initialising : Boolean ;
     ShowCapturedImage : Boolean ;
@@ -584,6 +587,7 @@ begin
      pImageBuf := Nil ;
      pLiveImageBuf := Nil ;
      IgnorePanelControls := True ;
+     CameraTriggerRequired := False ;
      end;
 
 
@@ -600,13 +604,13 @@ begin
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
-     ProgramName := 'MesoCam V1.6.0';
+     ProgramName := 'MesoCam V1.6.2';
      {$IFDEF WIN32}
-     ProgramName := ProgramName + '(32 bit)';
+     ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
-     ProgramName := ProgramName + '(64 bit)';
+     ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 8/3/17';
+     ProgramName := ProgramName + ' 27/4/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -1751,6 +1755,7 @@ begin
     SetImagePanels ;
 
     CameraTriggerBit := 1 ;
+    CameraTriggerRequired := True ;
 
     end;
 
@@ -2114,10 +2119,11 @@ begin
     //if pImageBuf = Nil then Exit ;
 
     // Camera exposure trigger
-    if timegettime >= NextCameraTrigger then
+    if {(timegettime >= NextCameraTrigger)} CameraTriggerRequired then
        begin
        if Cam1.CameraActive and (not LiveImagingInProgress) then Cam1.SoftwareTriggerCapture ;
        NextCameraTrigger := timegettime + 1000 + Round(edExposureTime.Value*1000) ;
+       CameraTriggerRequired := False ;
        end;
 
     iDev := LabIO.Resource[CameraTriggerOutput].Device ;
