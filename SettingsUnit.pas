@@ -332,6 +332,9 @@ begin
     MainFrm.Cam1.GetCameraGainList( MainFrm.cbCameraGain.Items );
     MainFrm.cbCameraGain.ItemIndex := 0 ;
 
+    // Camera readout speed
+    MainFrm.Cam1.ReadoutSpeed := cbReadoutSpeed.ItemIndex ;
+
     MainFrm.ImageJPath := edImageJPath.Text ;
     MainFrm.SaveAsMultipageTIFF := ckSaveAsMultipageTIFF.Checked ;
 

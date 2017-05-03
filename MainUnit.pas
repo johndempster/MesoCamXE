@@ -335,7 +335,7 @@ type
     Images : Array[0..3] of TImage ;           // Image pointers
 
     CCDRegion : TDoubleRect ;                    // CCD image area
-    SelectedRect : TDoubleRect ;                     // Selected sub-area within displayed image (image pixels)
+    SelectedRect : TDoubleRect ;               // Selected sub-area within displayed image (image pixels)
     SelectedRectBM : TRect ;                   // Selected sub-area (bitmap pixels)
     SelectedEdge : TRect ;                     // Selection rectangle edges selected
     MouseDown : Boolean ;                      // TRUE = image cursor mouse is depressed
@@ -382,8 +382,8 @@ type
 
     XScale : Single ;
     YScale : Single ;
-    XLeft : Integer ;
-    YTop : Integer ;
+    XLeft : Double ;
+    YTop : Double ;
     XDown : Integer ;
     YDown : Integer ;
     XScaleToBM : Double ;
@@ -872,9 +872,9 @@ begin
       ROIMode := True ;
       // Set top-left of ROI box to current cursor position
       SelectedRectBM.Left := MouseDownAt.X ;
-      SelectedRect.Left := ((SelectedRectBM.Left/XScaleToBM) + XLeft)/FrameWidth ;
+      SelectedRect.Left := (SelectedRectBM.Left/XScaleToBM)/FrameWidth + XLeft ;
       SelectedRectBM.Top := MouseDownAt.Y ;
-      SelectedRect.Top := ((SelectedRectBM.Top/YScaleToBM) + YTop)/FrameHeight ;
+      SelectedRect.Top := (SelectedRectBM.Top/YScaleToBM)/FrameHeight + YTop ;
       UpdateDisplay := True ;
       end;
 
@@ -896,8 +896,8 @@ begin
      YDown := Y ;
      MouseDownAt.X := X ;
      MouseDownAt.Y := Y ;
-     TopLeftDown.X := XLeft ;
-     TopLeftDown.Y := YTop ;
+     TopLeftDown.X := Round(XLeft*FrameWidth) ;
+     TopLeftDown.Y := Round(YTop*FrameHeight) ;
 
      MouseUpCursor := Image0.Cursor ;
      if (Image0.Cursor = crCross) and (not ROIMode) then Image0.Cursor := crHandPoint ;
@@ -914,16 +914,15 @@ const
     EdgeSize = 5 ;
 var
     i : Integer ;
-    XRight,YBottom,XShift,YShift : Integer ;
-    XImage,YImage : Integer ;
+    XRight,YBottom : Double ;
+    XShift,YShift,XImage,YImage : Integer ;
 begin
 
      if pDisplayBuf = Nil then Exit ;
 
-     XImage := Round(X/XScaleToBM) + XLeft ;
-     YImage := Round(Y/YScaleToBM) + YTop ;
+     XImage := Round(X/XScaleToBM) + Round(XLeft*FrameWidth) ;
+     YImage := Round(Y/YScaleToBM) + Round(YTop*FrameHeight) ;
      i := YImage*FrameWidth + XImage ;
-
 
      PixelsToMicronsX := Cam1.BinFactor*MagnifiedCameraPixelSize/sqrt(Cam1.NumPixelShiftFrames) ;
      PixelsToMicronsY := PixelsToMicronsX ;
@@ -979,14 +978,14 @@ begin
            // Move left edge
            SelectedRectBM.Left := Max(SelectedRectBM.Left + XShift,0);
            SelectedRectBM.Left := Min(SelectedRectBM.Left,Min(BitMap.Width-1,SelectedRectBM.Right-1)) ;
-           SelectedRect.Left := ((SelectedRectBM.Left/XScaleToBM) + XLeft)/FrameWidth ;
+           SelectedRect.Left := (SelectedRectBM.Left/XScaleToBM)/FrameWidth + XLeft ;
            end ;
         if SelectedEdge.Right = 1 then
            begin
            // Move right edge
            SelectedRectBM.Right := Max(SelectedRectBM.Right + XShift,Max(0,SelectedRectBM.Left));
            SelectedRectBM.Right := Min(SelectedRectBM.Right,BitMap.Width-1) ;
-           SelectedRect.Right := ((SelectedRectBM.Right/XScaleToBM) + XLeft)/FrameWidth ;
+           SelectedRect.Right := (SelectedRectBM.Right/XScaleToBM)/FrameWidth + XLeft ;
            end;
         if SelectedEdge.Top = 1 then
            begin
@@ -1009,19 +1008,23 @@ begin
            // If in ROI mode, set bottom,right edge of ROI to current cursor position
            SelectedRectBM.Right := X ;
            SelectedRectBM.Bottom := Y ;
-           SelectedRect.Right := ((SelectedRectBM.Right/XScaleToBM) + XLeft)/FrameWidth ;
+           SelectedRect.Right := (SelectedRectBM.Right/XScaleToBM)/FrameWidth + XLeft ;
            SelectedRect.Bottom := ((SelectedRectBM.Bottom/YScaleToBM) + YTop)/FrameHeight ;
            end
         else if (SelectedEdge.Left or SelectedEdge.Right or
             SelectedEdge.Top or SelectedEdge.Bottom) = 0 then
             begin
             // Move display window
+            XLeft := XLeft*FrameWidth ;
+            YTop := YTop*FrameHeight ;
             XLeft := TopLeftDown.X - Round((X - MouseDownAt.X)/XScaleToBM) ;
             XRight := Min(XLeft + Round(Bitmap.Width/XScaleToBM),FrameWidth) ;
             XLeft := Max( XRight - Round(Bitmap.Width/XScaleToBM), 0 ) ;
             YTop := TopLeftDown.Y - Round((Y - MouseDownAt.Y)/YScaleToBM) ;
             YBottom := Min(YTop + Round(Bitmap.Height/YScaleToBM),FrameHeight) ;
             YTop := Max( YBottom - Round(Bitmap.Height/YScaleToBM),0) ;
+            XLeft := XLeft/FrameWidth ;
+            YTop := YTop/FrameHeight ;
             end;
          end ;
 
@@ -1072,10 +1075,14 @@ begin
        NewWidth := Round(BitMap.Width*(MagnificationOld/Magnification[iZoom])) ;
        NewHeight := Round(BitMap.Height*(MagnificationOld/Magnification[iZoom])) ;
 
+       XLeft := XLeft*FrameWidth ;
+       YTop := YTop*FrameHeight ;
        XLeft := Max(XLeft + Round((CursorPos.X-(NewWidth div 2))/XScaleToBM),0);
        XLeft := Min(XLeft,FrameWidth - Round(NewWidth/XScaleToBM)) ;
        YTop := Max(YTop + Round((CursorPos.Y-(NewHeight div 2))/YScaleToBM),0);
        YTop := Min(YTop,FrameHeight - Round(NewHeight/YScaleToBM)) ;
+       XLeft := XLeft/FrameWidth ;
+       YTop := YTop/FrameHeight ;
 
        Resize ;
        UpdateDisplay := True ;
@@ -1283,10 +1290,10 @@ begin
      Bitmap.Canvas.Brush.Style := bsClear ;
      Bitmap.Canvas.Font.Color := PenColor ;
 
-     SelectedRectBM.Left := Round((SelectedRect.Left*FrameWidth - XLeft)*XScaletoBM) ;
-     SelectedRectBM.Right := Round((SelectedRect.Right*FrameWidth - XLeft)*XScaletoBM) ;
-     SelectedRectBM.Top := Round((SelectedRect.Top*FrameHeight - YTop)*YScaletoBM) ;
-     SelectedRectBM.Bottom := Round((SelectedRect.Bottom*FrameHeight - YTop)*YScaletoBM) ;
+     SelectedRectBM.Left := Round((SelectedRect.Left-XLeft)*FrameWidth*XScaletoBM) ;
+     SelectedRectBM.Right := Round((SelectedRect.Right - XLeft)*FrameWidth*XScaletoBM) ;
+     SelectedRectBM.Top := Round((SelectedRect.Top - YTop)*FrameHeight*YScaletoBM) ;
+     SelectedRectBM.Bottom := Round((SelectedRect.Bottom - YTop)*FrameHeight*YScaletoBM) ;
 
      // Display zomm area selection rectangle
      Bitmap.Canvas.Rectangle(SelectedRectBM);
@@ -1337,7 +1344,7 @@ var
     pRGB : pRGBTripleArray ;    // Bitmap line buffer pointer
     X,Y,dX,dY : Double ;
     XMap,YMap : PIntArray ;
-    YBottom,XRight : Integer ;
+    YBottom,XRight : Double ;
     pImBuf : PIntArray ;
 begin
 
@@ -1370,13 +1377,17 @@ begin
     DisplayMaxHeight := tbCHan0.ClientHeight - Image0.Top - 5  ;
 
     // Adjust left,top edge of displayed region of image when bottom,right is off image
+    XLeft := XLeft*FrameWidth ;
+    Ytop := YTop*FrameHeight ;
     XRight := Min(XLeft + Round(Bitmap.Width/XScaleToBM),FrameWidth) ;
     XLeft := Max( XRight - Round(Bitmap.Width/XScaleToBM), 0 ) ;
     YBottom := Min(YTop + Round(Bitmap.Height/YScaleToBM),FrameHeight) ;
     YTop := Max( YBottom - Round(Bitmap.Height/YScaleToBM),0) ;
+    XLeft := XLeft/FrameWidth ;
+    Ytop := YTop/FrameHeight ;
 
     //  X axis pixel mapping
-    X := XLeft ;
+    X := Round(XLeft*FrameWidth) ;
     dX := 1.0/XScaleToBM ;
     GetMem( XMap, BitMap.Width*4 ) ;
     for i := 0 to BitMap.Width-1 do
@@ -1388,7 +1399,7 @@ begin
     // Y axis line mapping
     //YScaleToBM := (BitMap.Width*Magnification*FrameHeightScale) / FrameWidth ;
     GetMem( YMap, BitMap.Height*4 ) ;
-    Y := YTop ;
+    Y := Round(YTop*FrameHeight) ;
     dY := 1.0/YScaleToBM ;
     for i := 0 to BitMap.Height-1 do
         begin
@@ -2548,12 +2559,15 @@ begin
 
      bSelectedRegion.Enabled := False ;
 
-     CCDRegion.Right := (SelectedRectBM.Right/XScaletoBM + XLeft +1)*(CCDRegion.Width/FrameWidth) + CCDRegion.Left ;
-     CCDRegion.Left := (SelectedRectBM.Left/XScaletoBM + XLeft)*(CCDRegion.Width/FrameWidth) + CCDRegion.Left;
+     CCDRegion.Right := (SelectedRectBM.Right/XScaletoBM
+                        + Round(XLeft*FrameWidth) +1)*(CCDRegion.Width/FrameWidth) + CCDRegion.Left ;
+     CCDRegion.Left := (SelectedRectBM.Left/XScaletoBM
+                        + Round(XLeft*FrameWidth))*(CCDRegion.Width/FrameWidth) + CCDRegion.Left;
      CCDRegion.Width := CCDRegion.Right - CCDRegion.Left ;
 
-     CCDRegion.Bottom := (SelectedRectBM.Bottom/YScaletoBM - YTop +1)*(CCDRegion.Height/FrameHeight) + CCDRegion.Top ;
-     CCDRegion.Top := (SelectedRectBM.Top/YScaletoBM - YTop)*(CCDRegion.Height/FrameHeight) + CCDRegion.Top ;
+     CCDRegion.Bottom := (SelectedRectBM.Bottom/YScaletoBM
+                         - Round(YTop*FrameHeight) +1)*(CCDRegion.Height/FrameHeight) + CCDRegion.Top ;
+     CCDRegion.Top := (SelectedRectBM.Top/YScaletoBM - Round(YTop*FrameHeight))*(CCDRegion.Height/FrameHeight) + CCDRegion.Top ;
 //     if LiveImagingInProgress then CCDRegion.Top := 0.0 ;
      CCDRegion.Height := CCDRegion.Bottom - CCDRegion.Top ;
 
