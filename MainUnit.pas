@@ -30,6 +30,7 @@ unit MainUnit;
 // V1.6.1 22.03.17 USB control of CoolLED light source added
 // V1.6.2 27.04.17 Camera trigger pulse to start VA-29MC-5M pixel shift sequences now implemented
 //                 in Cam1.Startcapture to fix pixel misalignment problem
+// V1.6.3 10.05.17 ZPositionMin, ZPositionMax limits added
 
 
 interface
@@ -604,13 +605,13 @@ begin
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
-     ProgramName := 'MesoCam V1.6.2';
+     ProgramName := 'MesoCam V1.6.3';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 27/4/17';
+     ProgramName := ProgramName + ' 10/5/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -1986,6 +1987,9 @@ begin
        NumComponentsPerFrame := HRNumComponentsPerFrame ;
        NumComponentsPerPixel := HRNumComponentsPerPixel ;
        end;
+
+    if pImBuf = Nil then Exit ;
+
 
     NumPixels := FrameWidth*FrameHeight - 4 ;
     FrameType := 0 ;
@@ -3393,6 +3397,8 @@ begin
     AddElementDouble( iNode, 'GOTOXPOSITION', edGotoXPosition.Value ) ;
     AddElementDouble( iNode, 'GOTOYPOSITION', edGotoYPosition.Value ) ;
     AddElementDouble( iNode, 'GOTOZPOSITION', edGotoZPosition.Value ) ;
+    AddElementDouble( iNode, 'ZPOSITIONMAX', ZStage.ZPositionMax ) ;
+    AddElementDouble( iNode, 'ZPOSITIONMIN', ZStage.ZPositionMin ) ;
 
     // Time lapse
     iNode := ProtNode.AddChild( 'TIMELAPSE' ) ;
@@ -3549,11 +3555,17 @@ begin
       ZStage.YScaleFactor := GetElementDouble( iNode, 'YSCALEFACTOR', ZStage.YScaleFactor ) ;
       ZStage.ZScaleFactor := GetElementDouble( iNode, 'ZSCALEFACTOR', ZStage.ZScaleFactor ) ;
       ZStage.ZStepTime := GetElementDouble( iNode, 'ZSTEPTIME', ZStage.ZStepTime ) ;
+      ZStage.ZPositionMax := GetElementDouble( iNode, 'ZPOSITIONMAX', ZStage.ZPositionMax ) ;
+      ZStage.ZPositionMin := GetElementDouble( iNode, 'ZPOSITIONMIN', ZStage.ZPositionMin ) ;
       edGotoXPosition.Value := GetElementDouble( iNode, 'GOTOXPOSITION', edGotoXPosition.Value ) ;
       edGotoYPosition.Value := GetElementDouble( iNode, 'GOTOYPOSITION', edGotoYPosition.Value ) ;
       edGotoZPosition.Value := GetElementDouble( iNode, 'GOTOZPOSITION', edGotoZPosition.Value ) ;
+
       Inc(NodeIndex) ;
       end ;
+
+    edGotoZPosition.HiLimit := ZStage.ZPositionMax ;
+    edGotoZPosition.LoLimit := ZStage.ZPositionMin ;
 
     // Time lapse
     NodeIndex := 0 ;

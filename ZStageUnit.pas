@@ -8,6 +8,7 @@ unit ZStageUnit;
 // 27.0.16 Z stage pressure switch protection implemented
 // 11.02.17 .Enabled removed, XPosition, YPosition added
 // 16.01.17 ZStage.XScaleFactor and ZStage.YScaleFactor added
+// 10.05.17 ZPositionMax,ZPositionMin limits added
 
 interface
 
@@ -32,6 +33,7 @@ type
     NewXPosition : Double ;   // New X position (requested)
     NewYPosition : Double ;   // New Y position (requested)
     NewZPosition : Double ;   // New Z position (requested)
+
     OverLapStructure : POVERLAPPED ;
 
     procedure OpenCOMPort ;
@@ -61,6 +63,8 @@ type
     YPosition : Double ;     // Y position (um)
     YScaleFactor : Double ;  // Y step scaling factor
     ZPosition : Double ;     // Z position (um)
+    ZPositionMax : Double ;  // Z position upper limit (um)
+    ZPositionMin : Double ;  // Z position lower limit (um)
     ZScaleFactor : Double ;  // Z step scaling factor
     ZStepTime : Double ;     // Time to perform Z step (s)
     procedure Open ;
@@ -118,6 +122,8 @@ begin
     YPosition := 0.0 ;
     YScaleFactor := 1.0 ;
     ZPosition := 0.0 ;
+    ZPositionMax := 10000.0 ;
+    ZPositionMin := -10000.0 ;
     ZScaleFactor := 1.0 ;
     NewXPosition := 0.0 ;
     NewYPosition := 0.0 ;
@@ -233,6 +239,9 @@ procedure TZStage.MoveTo( X : Double ; // New X pos.
 // Go to Z position
 // ----------------
 begin
+    // Keep within limits
+    Z := Min(Max(Z,ZPositionMin),ZPositionMax);
+
     case FStageType of
         stOptiscanII,stProScanIII : MoveToOSII(  X,Y,Z ) ;
         stPiezo : MoveToPZ( Z ) ;

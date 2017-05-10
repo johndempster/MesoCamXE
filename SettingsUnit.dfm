@@ -53,7 +53,7 @@ object SettingsFrm: TSettingsFrm
     Top = 8
     Width = 464
     Height = 406
-    ActivePage = CameraTab
+    ActivePage = ZStageTab
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
@@ -923,7 +923,7 @@ object SettingsFrm: TSettingsFrm
         Left = 3
         Top = 3
         Width = 219
-        Height = 207
+        Height = 262
         Caption = ' Z position Control'
         TabOrder = 0
         object Label8: TLabel
@@ -965,6 +965,22 @@ object SettingsFrm: TSettingsFrm
           Height = 13
           Alignment = taRightJustify
           Caption = 'Y scale factor'
+        end
+        object Label16: TLabel
+          Left = 3
+          Top = 170
+          Width = 102
+          Height = 13
+          Alignment = taRightJustify
+          Caption = 'Z Position Lower Limit'
+        end
+        object Label17: TLabel
+          Left = 3
+          Top = 197
+          Width = 102
+          Height = 13
+          Alignment = taRightJustify
+          Caption = 'Z Position Upper Limit'
         end
         object cbZStagePort: TComboBox
           Left = 111
@@ -1032,6 +1048,32 @@ object SettingsFrm: TSettingsFrm
           Scale = 1.000000000000000000
           Units = 'steps/um'
           NumberFormat = '%.4g'
+          LoLimit = -1.000000015047466E30
+          HiLimit = 1000000.000000000000000000
+        end
+        object edZpositionMin: TValidatedEdit
+          Left = 113
+          Top = 170
+          Width = 89
+          Height = 21
+          Text = ' -10000 um'
+          Value = -10000.000000000000000000
+          Scale = 1.000000000000000000
+          Units = 'um'
+          NumberFormat = '%.0f'
+          LoLimit = -1.000000015047466E30
+          HiLimit = 1000000.000000000000000000
+        end
+        object edZPositionMax: TValidatedEdit
+          Left = 113
+          Top = 197
+          Width = 89
+          Height = 21
+          Text = ' 10000 um'
+          Value = 10000.000000000000000000
+          Scale = 1.000000000000000000
+          Units = 'um'
+          NumberFormat = '%.0f'
           LoLimit = -1.000000015047466E30
           HiLimit = 1000000.000000000000000000
         end

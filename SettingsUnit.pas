@@ -6,6 +6,7 @@ unit SettingsUnit;
 // 29.11.16 Lens table added
 // 16.01.17 ZStage.XScaleFactor and ZStage.YScaleFactor added
 // 22.03.17 USB-controlled CoolLED pE-x support added
+// 10.05.17 ZPositionMin, ZPositionMax limits added
 
 interface
 
@@ -124,6 +125,10 @@ type
     Label15: TLabel;
     cbSourceType: TComboBox;
     lbSourceType: TLabel;
+    Label16: TLabel;
+    edZpositionMin: TValidatedEdit;
+    Label17: TLabel;
+    edZPositionMax: TValidatedEdit;
     procedure FormShow(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCancelClick(Sender: TObject);
@@ -230,9 +235,7 @@ begin
     SetLightSourcePanel( 6, pnLightSource6 ) ;
     SetLightSourcePanel( 7, pnLightSource7 ) ;
 
-
-
-    //
+    // Stage control
 
     edXScaleFactor.Units := ZStage.ScaleFactorUnits ;
     edXScaleFactor.Value := ZStage.XScaleFactor ;
@@ -241,6 +244,8 @@ begin
     edZScaleFactor.Units := ZStage.ScaleFactorUnits ;
     edZScaleFactor.Value := ZStage.ZScaleFactor ;
     edZStepTime.Value := ZStage.ZStepTime ;
+    edZPositionMin.Value := ZStage.ZPositionMin ;
+    edZPositionMax.Value := ZStage.ZPositionMax ;
 
     edNumLenses.Value := MainFrm.NumLenses ;
     sgLensTable.RowCount := MainFrm.NumLenses+1 ;
@@ -312,6 +317,8 @@ begin
     ZStage.YScaleFactor := edYScaleFactor.Value ;
     ZStage.ZScaleFactor := edZScaleFactor.Value ;
     ZStage.ZStepTime := edZStepTime.Value ;
+    ZStage.ZPositionMin := edZPositionMin.Value ;
+    ZStage.ZPositionMax := edZPositionMax.Value ;
 
     LightSource.ControlPort := cbLightSourceControlPort.ItemIndex ;
 
