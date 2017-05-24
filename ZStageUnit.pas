@@ -9,6 +9,9 @@ unit ZStageUnit;
 // 11.02.17 .Enabled removed, XPosition, YPosition added
 // 16.01.17 ZStage.XScaleFactor and ZStage.YScaleFactor added
 // 10.05.17 ZPositionMax,ZPositionMin limits added
+// 24.05.17 ProScanEnableZStageTTLAction now executed before first Z stage position
+//          check because commands fail to work immediatelt after opening of com link to
+//          ProSCan III stage
 
 interface
 
@@ -33,6 +36,7 @@ type
     NewXPosition : Double ;   // New X position (requested)
     NewYPosition : Double ;   // New Y position (requested)
     NewZPosition : Double ;   // New Z position (requested)
+    StageInitRequired : Boolean ; // Stage needs to be initialised
 
     OverLapStructure : POVERLAPPED ;
 
@@ -56,6 +60,10 @@ type
     function GetScaleFactorUnits : string ;
     procedure ProScanEnableZStageTTLAction ;
     procedure WaitforCompletion ;
+    function WaitforResponse(
+             ResponseRequired : string
+             ) : Boolean ;
+    procedure Wait( Delay : double ) ;
   public
     { Public declarations }
     XPosition : Double ;     // X position (um)
@@ -129,6 +137,7 @@ begin
     NewYPosition := 0.0 ;
     NewZPosition := 0.0 ;
     MoveToRequest := False ;
+    StageInitRequired := False ;
     end;
 
 procedure TZStage.DataModuleDestroy(Sender: TObject);
@@ -189,10 +198,17 @@ begin
     if ComPortOpen then CloseComPort ;
 
     case FStageType of
-        stOptiscanII,stProScanIII : begin
+        stOptiscanII :
+          begin
           OpenComPort ;
           end ;
-        stPiezo : begin
+        stProScanIII :
+          begin
+          OpenComPort ;
+          StageInitRequired := True ;
+          end ;
+        stPiezo :
+          begin
 
           end;
         end;
@@ -226,7 +242,16 @@ procedure TZStage.UpdateZPosition ;
 // ---------------------------
 begin
     case FStageType of
-        stOptiscanII,stProScanIII : UpdateZPositionOSII ;
+        stOptiscanII : UpdateZPositionOSII ;
+        stProScanIII :
+          begin
+          if StageInitRequired then
+             begin
+             ProScanEnableZStageTTLAction ;
+             StageInitRequired := False ;
+             end;
+          UpdateZPositionOSII ;
+          end;
         stPiezo : UpdateZPositionPZ ;
         end;
     end;
@@ -347,11 +372,32 @@ var
   Timeout : Cardinal ;
   EndOfLine : Boolean ;
 begin
-   TimeOut := timegettime + 1000 ;
+   TimeOut := timegettime + 5000 ;
    repeat
      Status := ReceiveBytes( EndOfLine ) ;
      Until EndOfLine or (timegettime > TimeOut) ;
+     if not EndOfLine then outputDebugstring(pchar('Time out'));
+
      end ;
+
+
+function TZStage.WaitforResponse(
+         ResponseRequired : string
+          ) : Boolean ;
+var
+  Response : string ;
+  EndOfLine : Boolean ;
+  Timeout : Cardinal ;
+begin
+   Response := '' ;
+   TimeOut := timegettime + 5000 ;
+   repeat
+     Response := Response + ReceiveBytes( EndOfLine ) ;
+   until EndOfLine or (TimeGetTime > TimeOut) ;
+
+   if Response = ResponseRequired then Result := True
+                                  else Result := False ;
+   end ;
 
 
 function TZStage.ReceiveBytes(
@@ -379,13 +425,14 @@ begin
      ClearCommError( ComHandle, ComError, PComState )  ;
 
      // Read characters until CR is encountered
-     while (NumRead < ComState.cbInQue) and (RBuf[0] <> #13) do begin
+     while (NumRead < ComState.cbInQue) and (RBuf[0] <> #13) do
+         begin
          ReadFile( ComHandle,rBuf,1,NumBytesRead,OverlapStructure ) ;
          if rBuf[0] <> #13 then Line := Line + String(rBuf[0])
                            else EndOfLine := True ;
          //outputdebugstring(pwidechar(RBuf[0]));
          Inc( NumRead ) ;
-     end ;
+         end ;
 
      Result := Line ;
 
@@ -407,9 +454,16 @@ begin
 
         csIdle :
           begin
+
+          if StageInitRequired then begin
+             ProScanEnableZStageTTLAction ;
+             StageInitRequired := False ;
+          end;
+
           if MoveToRequest then
              begin
              // Go to required position
+
              OK := SendCommand( format('G %d,%d,%d',
                    [Round(NewXPosition*XScaleFactor),
                     Round(NewYPosition*YScaleFactor),
@@ -569,21 +623,31 @@ begin
             end;
     end ;
 
+
 procedure TZStage.ProScanEnableZStageTTLAction ;
 // ---------------------------------------------------------------
 // Enable action to be taken when TTL hard limit trigger activated
 // ---------------------------------------------------------------
 begin
-     SendCommand('TTDEL,1') ;
-     WaitforCompletion ;
+     SendCommand('TTLDEL,1') ;
+     WaitforResponse('0') ;
      SendCommand('TTLTP,1,1') ;       // Enable trigger on input #1 going high
-     WaitforCompletion ;
+     WaitforResponse('0') ;
      SendCommand('TTLACT,1,31,0,0,0') ; // Move Z axis to zero position
-     WaitforCompletion ;
+     WaitforResponse('0') ;
      SendCommand('TTLTRG,1') ;         // Enable triggers
-     WaitforCompletion ;
+     WaitforResponse('0') ;
      end;
 
 
+procedure TZStage.Wait( Delay : double ) ;
+var
+    TEndWait,T : Cardinal ;
+begin
+    TEndWait := TimeGetTime + Round(Delay*1000.0) ;
+    repeat
+      t := TimeGetTime ;
+    until t >= TEndWait ;
+end;
 
 end.

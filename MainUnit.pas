@@ -31,6 +31,7 @@ unit MainUnit;
 // V1.6.2 27.04.17 Camera trigger pulse to start VA-29MC-5M pixel shift sequences now implemented
 //                 in Cam1.Startcapture to fix pixel misalignment problem
 // V1.6.3 10.05.17 ZPositionMin, ZPositionMax limits added
+// V1.6.4 24.05.17 Z stage protection now initialised correctly
 
 
 interface
@@ -605,13 +606,13 @@ begin
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
-     ProgramName := 'MesoCam V1.6.3';
+     ProgramName := 'MesoCam V1.6.4';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 10/5/17';
+     ProgramName := ProgramName + ' 24/5/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
