@@ -32,6 +32,8 @@ unit MainUnit;
 //                 in Cam1.Startcapture to fix pixel misalignment problem
 // V1.6.3 10.05.17 ZPositionMin, ZPositionMax limits added
 // V1.6.4 24.05.17 Z stage protection now initialised correctly
+// V1.6.5 31.05.17 Z stage limits now on goto control now updated when changed in setup
+//                 Pixel-shift images now workinh again with PCVIe-1427 framer grabber
 
 
 interface
@@ -599,20 +601,19 @@ procedure TMainFrm.FormShow(Sender: TObject);
 // --------------------------------------
 var
     i,iDev,iChan : Integer ;
-    NumPix : Cardinal ;
 begin
 
      Initialising := False ;
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
-     ProgramName := 'MesoCam V1.6.4';
+     ProgramName := 'MesoCam V1.6.5';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 24/5/17';
+     ProgramName := ProgramName + ' 31/5/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -2091,6 +2092,7 @@ begin
        i := i + iStep ;
        until i >= NumPixels ;
 
+    YMax := 0.0 ;
     for i := 0 to HistogramNumBins-1 do
         begin
         if YMax < Histogram[i] then YMax := Histogram[i] ;
@@ -2135,10 +2137,10 @@ begin
     //if pImageBuf = Nil then Exit ;
 
     // Camera exposure trigger
-    if {(timegettime >= NextCameraTrigger)} CameraTriggerRequired then
+    if (timegettime >= NextCameraTrigger) {CameraTriggerRequired} then
        begin
        if Cam1.CameraActive and (not LiveImagingInProgress) then Cam1.SoftwareTriggerCapture ;
-       NextCameraTrigger := timegettime + 1000 + Round(edExposureTime.Value*1000) ;
+       NextCameraTrigger := timegettime + 100 + Round(edExposureTime.Value*1000) ;
        CameraTriggerRequired := False ;
        end;
 
@@ -2159,7 +2161,7 @@ begin
        ScanRequested := False ;
        ScanRequestedAfterInterval := False ;
        StartCamera ;
-       NextCameraTrigger := timegettime + 2000 ;
+       NextCameraTrigger := timegettime + 100 ;
        UpdateImage ;
        end ;
 
@@ -2787,9 +2789,18 @@ procedure TMainFrm.mnScanSettingsClick(Sender: TObject);
 // Show Scan Settings dialog
 // --------------------------
 begin
+
+     bStopImage.Click ;
+
      SettingsFrm.Left := MainFrm.Left + 20 ;
      SettingsFrm.Top := MainFrm.Top + 20 ;
      SettingsFrm.ShowModal ;
+
+     // Update Z position limits
+     edGotoZPosition.HiLimit := ZStage.ZPositionMax ;
+     edGotoZPosition.LoLimit := ZStage.ZPositionMin ;
+     edGotoZPosition.Value := edGotoZPosition.Value ;
+
      SetLensMenu ;
      ClearImageBuffers ;
      end;
@@ -2880,6 +2891,7 @@ begin
      // Save image
      FileNames := TStringList.Create ;
      NumFramesInFile := 0 ;
+     NumFiles := 0 ;
      FileOpen := False ;
      for iPanel := 0 to NumPanels-1 do
          begin

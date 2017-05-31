@@ -1598,10 +1598,6 @@ object MainFrm: TMainFrm
         Margins.Bottom = 4
         Caption = 'Sliders'
         ImageIndex = 1
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object Label9: TLabel
           Left = 4
           Top = 5
@@ -1861,10 +1857,6 @@ object MainFrm: TMainFrm
       Margins.Bottom = 4
       Caption = 'Channel 1'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image1: TImage
         Left = 4
         Top = 4
@@ -1893,10 +1885,6 @@ object MainFrm: TMainFrm
       Margins.Bottom = 4
       Caption = 'Channel 2'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image2: TImage
         Left = 4
         Top = 4
@@ -1925,10 +1913,6 @@ object MainFrm: TMainFrm
       Margins.Bottom = 4
       Caption = 'tbChan3'
       ImageIndex = 3
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image3: TImage
         Left = -5
         Top = 4
@@ -2132,8 +2116,8 @@ object MainFrm: TMainFrm
     Enabled = False
     Interval = 60
     OnTimer = TimerTimer
-    Left = 288
-    Top = 392
+    Left = 560
+    Top = 568
   end
   object ImageFile: TImageFile
     XResolution = 1.000000000000000000
@@ -2144,12 +2128,12 @@ object MainFrm: TMainFrm
     Top = 320
   end
   object SaveDialog: TSaveDialog
-    Left = 304
-    Top = 440
+    Left = 616
+    Top = 560
   end
   object MainMenu1: TMainMenu
-    Left = 296
-    Top = 496
+    Left = 496
+    Top = 552
     object File1: TMenuItem
       Caption = 'File'
       OnClick = File1Click
@@ -2207,7 +2191,7 @@ object MainFrm: TMainFrm
     NumPixelShiftFrames = 1
     DisableExposureIntervalLimit = False
     MonochromeImage = False
-    Left = 352
-    Top = 488
+    Left = 704
+    Top = 576
   end
 end
