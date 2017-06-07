@@ -34,7 +34,7 @@ unit MainUnit;
 // V1.6.4 24.05.17 Z stage protection now initialised correctly
 // V1.6.5 31.05.17 Z stage limits now on goto control now updated when changed in setup
 //                 Pixel-shift images now workinh again with PCVIe-1427 framer grabber
-
+// V1.6.6 07.07.17 Fan on/off now handle via attribute string
 
 interface
 
@@ -607,13 +607,13 @@ begin
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
 
-     ProgramName := 'MesoCam V1.6.5';
+     ProgramName := 'MesoCam V1.6.6';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 31/5/17';
+     ProgramName := ProgramName + ' 07/6/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -1692,8 +1692,6 @@ begin
 
     // Stop A/D & D/A
     MemUsed := 0 ;
-//    XZLine := 0 ;
-//    XZAverageLine := 0 ;
 
     Cam1.StopCapture ;
 
@@ -1770,6 +1768,8 @@ begin
 
     CameraTriggerBit := 1 ;
     CameraTriggerRequired := True ;
+
+    NextCameraTrigger := timegettime + 1000  ;
 
     end;
 
@@ -2139,7 +2139,10 @@ begin
     // Camera exposure trigger
     if (timegettime >= NextCameraTrigger) {CameraTriggerRequired} then
        begin
-       if Cam1.CameraActive and (not LiveImagingInProgress) then Cam1.SoftwareTriggerCapture ;
+       if Cam1.CameraActive and (not LiveImagingInProgress) then
+          begin
+          Cam1.SoftwareTriggerCapture ;
+          end;
        NextCameraTrigger := timegettime + 100 + Round(edExposureTime.Value*1000) ;
        CameraTriggerRequired := False ;
        end;
@@ -2161,7 +2164,7 @@ begin
        ScanRequested := False ;
        ScanRequestedAfterInterval := False ;
        StartCamera ;
-       NextCameraTrigger := timegettime + 100 ;
+       NextCameraTrigger := timegettime + 1000 ;
        UpdateImage ;
        end ;
 
@@ -2229,8 +2232,6 @@ begin
        MostRecentFrame := (Cam1.FrameCount-1) mod Cam1.NumFramesInBuffer ;
        NumFramesAcquired := Cam1.FrameCount ;
        end;
-
-    outputdebugstring(pchar(format('%d %d %d',[Cam1.FrameCount,MostRecentFrame,LastFrameDisplayed])));
 
     if MostRecentFrame <> LastFrameDisplayed then
        begin
