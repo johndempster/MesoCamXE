@@ -4,6 +4,7 @@ unit LightSourceUnit;
 // (c) J.Dempster, Strathclyde Institute for Pharmacy & Biomedical Sciences
 // ========================================================================
 // 20.03.17 USB-controlled CoolLED pE-x support added
+// 14.06.17 USB serial communication working but not complete
 
 interface
 
@@ -246,23 +247,22 @@ var
   SourceLetter : Array[0..3] of string ;
   s,sIntensity : string ;
 begin
-    exit ;
-    SourceLetter[0] := 'A' ;
-    SourceLetter[1] := 'B' ;
-    SourceLetter[2] := 'C' ;
-    SourceLetter[3] := 'D' ;
-    s := 'CSS' ;
+
+    SourceLetter[0] := 'CA' ;
+    SourceLetter[1] := 'CB' ;
+    SourceLetter[2] := 'CC' ;
+    SourceLetter[3] := 'CD' ;
     for i := 0 to 3 do if (ControlLines[i] <> LineDisabled) then
         begin
-        s := s + SourceLetter[i] ;
-        if Active[i] then s := s + 'SN'
-                     else s := s + 'SF' ;
-        sIntensity := format('%d',[Intensity[i]]);
+        sIntensity := format('%d',[Round(Intensity[i]*10.0)]) ;
         if Length(sIntensity) < 3 then sIntensity := '0' + sIntensity ;
         if Length(sIntensity) < 3 then sIntensity := '0' + sIntensity ;
-        s := s + sIntensity ;
+        s := SourceLetter[i] + 'I' + sIntensity ;
+        SendCommand(s) ;
+        if Active[i] then s := SourceLetter[i] + 'N'
+                     else s := SourceLetter[i] + 'F' ;
+        SendCommand(s) ;
         end ;
-    SendCommand(s) ;
 
     end;
 
@@ -342,7 +342,7 @@ begin
      if ComPortOpen then Exit ;
 
      { Open com port  }
-     ComHandle :=  CreateFile( PCHar(format('COM%d',[ControlPort+1])),
+     ComHandle :=  CreateFile( PCHar(format('COM%d',[FControlPort+1])),
                      GENERIC_READ or GENERIC_WRITE,
                      0,
                      Nil,
@@ -483,7 +483,7 @@ procedure TLightSource.SetControlPort( Value : DWord ) ;
 //------------------------
 begin
     FControlPort := Max(Value,0) ;
-    ResetCOMPort ;
+//    ResetCOMPort ;
     end;
 
 
@@ -494,7 +494,7 @@ procedure TLightSource.SetBaudRate( Value : DWord ) ;
 begin
     if Value <= 0 then Exit ;
     FBaudRate := Value ;
-    ResetCOMPort ;
+//    ResetCOMPort ;
     end;
 
 
@@ -540,7 +540,7 @@ begin
     for I := 0 to High(ControlLines) do ControlLines[i] := LineDisabled ;
 
     // Select CCS command format
-    SendCommand('PREF:CSS');
+//    SendCommand('PREF:CSS');
 
     // Request list of wavelengths available
     SendCommand('LAMS');

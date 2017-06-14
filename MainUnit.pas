@@ -35,6 +35,7 @@ unit MainUnit;
 // V1.6.5 31.05.17 Z stage limits now on goto control now updated when changed in setup
 //                 Pixel-shift images now workinh again with PCVIe-1427 framer grabber
 // V1.6.6 07.07.17 Fan on/off now handle via attribute string
+//        14.06.17 CoolLED USB serial communication working but not complete
 
 interface
 
@@ -3536,10 +3537,10 @@ begin
        end ;
 
     // Light source control
-
-    LightSource.SourceType := GetElementInt( ProtNode, 'LIGHTSOURCETYPE', LightSource.SourceType ) ;
+    // Note. LightSource.SourceType must be loaded last to avoid port being opened with incorrect serial port
     LightSource.ControlPort := GetElementInt( ProtNode, 'LIGHTSOURCECONTROLPORT', LightSource.ControlPort ) ;
     LightSource.BaudRate := GetElementInt( ProtNode, 'LIGHTSOURCEBAUDRATE', LightSource.BaudRate ) ;
+    LightSource.SourceType := GetElementInt( ProtNode, 'LIGHTSOURCETYPE', LightSource.SourceType ) ;
 
     NodeIndex := 0 ;
     Num := High(LightSource.Name) + 1 ;
