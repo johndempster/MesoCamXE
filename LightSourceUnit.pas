@@ -12,7 +12,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, Windows, FMX.Dialogs, math, Vcl.ExtCtrls,
-  system.StrUtils ;
+  system.StrUtils, System.Character ;
 
 const
   MaxLightSources = 8 ;
@@ -254,7 +254,8 @@ begin
     SourceLetter[3] := 'CD' ;
     for i := 0 to 3 do if (ControlLines[i] <> LineDisabled) then
         begin
-        sIntensity := format('%d',[Round(Intensity[i]*10.0)]) ;
+        Intensity[i] := Min(Max(Intensity[i],0.0),100.0);
+        sIntensity := format('%d',[Round(Intensity[i])]) ;
         if Length(sIntensity) < 3 then sIntensity := '0' + sIntensity ;
         if Length(sIntensity) < 3 then sIntensity := '0' + sIntensity ;
         s := SourceLetter[i] + 'I' + sIntensity ;
@@ -298,31 +299,43 @@ procedure TLightSource.CoolLEDHandleMessages ;
 // -----------------------------
 var
     EndOfLine : Boolean ;
+    sNum : string ;
+    i : Integer ;
 begin
 
     if not ComPortOpen then Exit ;
 
+    // Disable unsupported lines
+    ControlLines[4] := LineDisabled ;
+    ControlLines[5] := LineDisabled ;
+    ControlLines[6]:= LineDisabled ;
+    ControlLines[7]:= LineDisabled ;
+
     ReplyBuf := ReplyBuf + ReceiveBytes( EndOfLine ) ;
     if EndOfLine then
+       sNum := '' ;
+       for i := 1 to Length(ReplyBuf) do
+           if IsNumber(ReplyBuf[i]) then sNum := sNum + ReplyBuf[i] ;
+
        begin
        if ANSIContainsStr( ReplyBuf, 'LAM:A' ) then
           begin
-          Names[0] := ANSIReplaceStr( ReplyBuf, 'LAM:','') ;
+          Names[0] := sNum + 'nm' ;
           ControlLines[0] := 0 ;
           end;
        if ANSIContainsStr( ReplyBuf, 'LAM:B' ) then
           begin
-          Names[1] := ANSIReplaceStr( ReplyBuf, 'LAM:','') ;
+          Names[1] := sNum + 'nm' ;
           ControlLines[1] := 1 ;
           end;
        if ANSIContainsStr( ReplyBuf, 'LAM:C' ) then
           begin
-          Names[2] := ANSIReplaceStr( ReplyBuf, 'LAM:','') ;
+          Names[2] := sNum + 'nm' ;
           ControlLines[2] := 2 ;
           end;
        if ANSIContainsStr( ReplyBuf, 'LAM:D' ) then
           begin
-          Names[3] := ANSIReplaceStr( ReplyBuf, 'LAM:','') ;
+          Names[3] := sNum + 'nm' ;
           ControlLines[3] := 3 ;
           end;
        ReplyBuf := '' ;
@@ -465,9 +478,8 @@ begin
      // Read characters until CR is encountered
      while (NumRead < ComState.cbInQue) and (RBuf[0] <> #13) do begin
          ReadFile( ComHandle,rBuf,1,NumBytesRead,OverlapStructure ) ;
-         if rBuf[0] <> #13 then Line := Line + String(rBuf[0])
-                           else EndOfLine := True ;
-         //outputdebugstring(pwidechar(RBuf[0]));
+         if (rBuf[0] <> #13) and (rBuf[0] <> #10) then Line := Line + String(rBuf[0]) ;
+         if (rBuf[0] = #13) then EndOfLine := True ;
          Inc( NumRead ) ;
      end ;
 

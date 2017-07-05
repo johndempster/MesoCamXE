@@ -468,7 +468,8 @@ begin
       for i := 0 to 3 do if Panel.Controls[i].Tag = 0 then
           LightSource.Names[Num] := TEdit(Panel.Controls[i]).Text ;
 
-      for i := 0 to 3 do if Panel.Controls[i].Tag = 1 then
+      for i := 0 to 3 do if (Panel.Controls[i].Tag = 1) and
+                            (TComboBox(Panel.Controls[i]).ItemIndex >= 0) then
           LightSource.ControlLines[Num] := Integer(
              TComboBox(Panel.Controls[i]).Items.Objects[TComboBox(Panel.Controls[i]).ItemIndex]) ;
 

@@ -621,7 +621,7 @@ object MainFrm: TMainFrm
       Left = 3
       Top = 37
       Width = 332
-      Height = 35
+      Height = 28
       BevelOuter = bvNone
       TabOrder = 0
       object ckLightSourceOn0: TCheckBox
@@ -631,6 +631,12 @@ object MainFrm: TMainFrm
         Height = 25
         Hint = 'Turn Light Source 0 On/Off'
         Caption = 'On'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -15
+        Font.Name = 'Arial'
+        Font.Style = [fsBold]
+        ParentFont = False
         TabOrder = 0
         OnClick = ckLightSourceOn0Click
       end
@@ -676,7 +682,7 @@ object MainFrm: TMainFrm
       Left = 3
       Top = 75
       Width = 332
-      Height = 37
+      Height = 28
       BevelOuter = bvNone
       TabOrder = 1
       object ckLightSourceOn1: TCheckBox
@@ -688,7 +694,7 @@ object MainFrm: TMainFrm
         Caption = 'On'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
-        Font.Height = -16
+        Font.Height = -15
         Font.Name = 'Arial'
         Font.Style = [fsBold]
         ParentFont = False
@@ -739,7 +745,7 @@ object MainFrm: TMainFrm
       Left = 3
       Top = 113
       Width = 332
-      Height = 41
+      Height = 28
       BevelOuter = bvNone
       TabOrder = 2
       object ckLightSourceOn2: TCheckBox
@@ -751,7 +757,7 @@ object MainFrm: TMainFrm
         Caption = 'On'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
-        Font.Height = -16
+        Font.Height = -15
         Font.Name = 'Arial'
         Font.Style = [fsBold]
         ParentFont = False
@@ -802,7 +808,7 @@ object MainFrm: TMainFrm
       Left = 3
       Top = 147
       Width = 332
-      Height = 40
+      Height = 28
       BevelOuter = bvNone
       TabOrder = 3
       object ckLightSourceOn3: TCheckBox
@@ -814,7 +820,7 @@ object MainFrm: TMainFrm
         Caption = 'On'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
-        Font.Height = -16
+        Font.Height = -15
         Font.Name = 'Arial'
         Font.Style = [fsBold]
         ParentFont = False
@@ -865,7 +871,7 @@ object MainFrm: TMainFrm
       Left = 3
       Top = 189
       Width = 332
-      Height = 38
+      Height = 28
       BevelOuter = bvNone
       TabOrder = 4
       object ckLightSourceOn4: TCheckBox
@@ -876,7 +882,7 @@ object MainFrm: TMainFrm
         Caption = 'On'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
-        Font.Height = -16
+        Font.Height = -15
         Font.Name = 'Arial'
         Font.Style = [fsBold]
         ParentFont = False
@@ -925,7 +931,7 @@ object MainFrm: TMainFrm
       Left = 3
       Top = 229
       Width = 332
-      Height = 36
+      Height = 28
       BevelOuter = bvNone
       TabOrder = 5
       object ckLightSourceOn5: TCheckBox
@@ -985,7 +991,7 @@ object MainFrm: TMainFrm
       Left = 12
       Top = 265
       Width = 293
-      Height = 39
+      Height = 28
       BevelOuter = bvNone
       TabOrder = 6
       object ckLightSourceOn6: TCheckBox
@@ -1045,7 +1051,7 @@ object MainFrm: TMainFrm
       Left = 12
       Top = 308
       Width = 293
-      Height = 40
+      Height = 28
       BevelOuter = bvNone
       TabOrder = 7
       object ckLightSourceOn7: TCheckBox
@@ -1335,10 +1341,10 @@ object MainFrm: TMainFrm
     end
   end
   object StatusGrp: TGroupBox
-    Left = 12
-    Top = 1082
+    Left = 14
+    Top = 1080
     Width = 354
-    Height = 248
+    Height = 198
     Caption = ' Pixel Intensity Histogram '
     TabOrder = 5
     object plHistogram: TXYPlotDisplay
@@ -1383,7 +1389,7 @@ object MainFrm: TMainFrm
     end
     object edStatus: TEdit
       Left = 12
-      Top = 204
+      Top = 148
       Width = 326
       Height = 35
       Font.Charset = ANSI_CHARSET

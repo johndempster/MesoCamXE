@@ -53,7 +53,7 @@ object SettingsFrm: TSettingsFrm
     Top = 8
     Width = 464
     Height = 406
-    ActivePage = ZStageTab
+    ActivePage = LightSourceTab
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
@@ -412,476 +412,6 @@ object SettingsFrm: TSettingsFrm
         Font.Style = [fsBold]
         ParentFont = False
       end
-      object LEDGrp: TGroupBox
-        Left = 8
-        Top = 35
-        Width = 352
-        Height = 252
-        Caption = ' LED (Digital/Analogue Control) '
-        TabOrder = 0
-        object Label4: TLabel
-          Left = 5
-          Top = 17
-          Width = 31
-          Height = 14
-          Alignment = taRightJustify
-          Caption = 'Name'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentFont = False
-        end
-        object Label5: TLabel
-          Left = 104
-          Top = 17
-          Width = 68
-          Height = 14
-          Alignment = taRightJustify
-          Caption = 'Control Line'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentFont = False
-        end
-        object Label6: TLabel
-          Left = 194
-          Top = 17
-          Width = 52
-          Height = 14
-          Caption = 'Off Level '
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentFont = False
-        end
-        object Label7: TLabel
-          Left = 262
-          Top = 17
-          Width = 61
-          Height = 14
-          Caption = 'Max. Level '
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentFont = False
-        end
-        object pnLightSource0: TPanel
-          Left = 8
-          Top = 33
-          Width = 323
-          Height = 25
-          BevelOuter = bvNone
-          TabOrder = 0
-          object Edit2: TEdit
-            Left = 0
-            Top = 0
-            Width = 88
-            Height = 21
-            TabOrder = 0
-            Text = 'Name?'
-          end
-          object ComboBox2: TComboBox
-            Tag = 1
-            Left = 98
-            Top = 0
-            Width = 75
-            Height = 21
-            Style = csDropDownList
-            TabOrder = 1
-          end
-          object ValidatedEdit3: TValidatedEdit
-            Tag = 2
-            Left = 186
-            Top = 0
-            Width = 57
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-          object ValidatedEdit4: TValidatedEdit
-            Tag = 3
-            Left = 254
-            Top = -1
-            Width = 57
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-        end
-        object pnLightSource1: TPanel
-          Left = 8
-          Top = 59
-          Width = 323
-          Height = 23
-          BevelOuter = bvNone
-          TabOrder = 1
-          object Edit3: TEdit
-            Left = 0
-            Top = 0
-            Width = 88
-            Height = 21
-            TabOrder = 0
-            Text = 'Name?'
-          end
-          object ComboBox3: TComboBox
-            Tag = 1
-            Left = 98
-            Top = 0
-            Width = 75
-            Height = 21
-            Style = csDropDownList
-            TabOrder = 1
-          end
-          object ValidatedEdit5: TValidatedEdit
-            Tag = 2
-            Left = 186
-            Top = 0
-            Width = 55
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-          object ValidatedEdit6: TValidatedEdit
-            Tag = 3
-            Left = 254
-            Top = 0
-            Width = 57
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-        end
-        object pnLightSource2: TPanel
-          Left = 8
-          Top = 84
-          Width = 323
-          Height = 24
-          BevelOuter = bvNone
-          TabOrder = 2
-          object Edit4: TEdit
-            Left = 0
-            Top = 0
-            Width = 88
-            Height = 21
-            TabOrder = 0
-            Text = 'Name?'
-          end
-          object ComboBox4: TComboBox
-            Tag = 1
-            Left = 98
-            Top = 0
-            Width = 75
-            Height = 21
-            Style = csDropDownList
-            TabOrder = 1
-          end
-          object ValidatedEdit7: TValidatedEdit
-            Tag = 2
-            Left = 186
-            Top = 0
-            Width = 55
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-          object ValidatedEdit8: TValidatedEdit
-            Tag = 3
-            Left = 254
-            Top = 0
-            Width = 57
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-        end
-        object pnLightSource3: TPanel
-          Left = 8
-          Top = 108
-          Width = 323
-          Height = 25
-          BevelOuter = bvNone
-          TabOrder = 3
-          object Edit5: TEdit
-            Left = 0
-            Top = 0
-            Width = 88
-            Height = 21
-            TabOrder = 0
-            Text = 'Name?'
-          end
-          object ComboBox5: TComboBox
-            Tag = 1
-            Left = 98
-            Top = 0
-            Width = 75
-            Height = 21
-            Style = csDropDownList
-            TabOrder = 1
-          end
-          object ValidatedEdit9: TValidatedEdit
-            Tag = 2
-            Left = 186
-            Top = 0
-            Width = 55
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-          object ValidatedEdit10: TValidatedEdit
-            Tag = 3
-            Left = 254
-            Top = 0
-            Width = 57
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-        end
-        object pnLightSource4: TPanel
-          Left = 8
-          Top = 135
-          Width = 323
-          Height = 22
-          BevelOuter = bvNone
-          TabOrder = 4
-          object Edit6: TEdit
-            Left = 0
-            Top = 0
-            Width = 88
-            Height = 21
-            TabOrder = 0
-            Text = 'Name?'
-          end
-          object ComboBox6: TComboBox
-            Tag = 1
-            Left = 98
-            Top = 0
-            Width = 75
-            Height = 21
-            Style = csDropDownList
-            TabOrder = 1
-          end
-          object ValidatedEdit11: TValidatedEdit
-            Tag = 2
-            Left = 186
-            Top = 0
-            Width = 55
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-          object ValidatedEdit12: TValidatedEdit
-            Tag = 3
-            Left = 254
-            Top = 0
-            Width = 57
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-        end
-        object pnLightSource5: TPanel
-          Left = 8
-          Top = 161
-          Width = 323
-          Height = 22
-          BevelOuter = bvNone
-          TabOrder = 5
-          object Edit7: TEdit
-            Left = 0
-            Top = 0
-            Width = 88
-            Height = 21
-            TabOrder = 0
-            Text = 'Name?'
-          end
-          object ComboBox7: TComboBox
-            Tag = 1
-            Left = 98
-            Top = 0
-            Width = 75
-            Height = 21
-            Style = csDropDownList
-            TabOrder = 1
-          end
-          object ValidatedEdit13: TValidatedEdit
-            Tag = 2
-            Left = 186
-            Top = 0
-            Width = 55
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-          object ValidatedEdit14: TValidatedEdit
-            Tag = 3
-            Left = 254
-            Top = 0
-            Width = 57
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-        end
-        object pnLightSource6: TPanel
-          Left = 8
-          Top = 186
-          Width = 323
-          Height = 22
-          BevelOuter = bvNone
-          TabOrder = 6
-          object Edit8: TEdit
-            Left = 0
-            Top = 0
-            Width = 88
-            Height = 21
-            TabOrder = 0
-            Text = 'Name?'
-          end
-          object ComboBox8: TComboBox
-            Tag = 1
-            Left = 98
-            Top = 0
-            Width = 75
-            Height = 21
-            Style = csDropDownList
-            TabOrder = 1
-          end
-          object ValidatedEdit15: TValidatedEdit
-            Tag = 2
-            Left = 186
-            Top = 0
-            Width = 55
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-          object ValidatedEdit16: TValidatedEdit
-            Tag = 3
-            Left = 254
-            Top = 0
-            Width = 57
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-        end
-        object pnLightSource7: TPanel
-          Left = 8
-          Top = 210
-          Width = 323
-          Height = 25
-          BevelOuter = bvNone
-          TabOrder = 7
-          object Edit9: TEdit
-            Left = 0
-            Top = 0
-            Width = 88
-            Height = 21
-            TabOrder = 0
-            Text = 'Name?'
-          end
-          object ComboBox9: TComboBox
-            Tag = 1
-            Left = 98
-            Top = 0
-            Width = 75
-            Height = 21
-            Style = csDropDownList
-            TabOrder = 1
-          end
-          object ValidatedEdit17: TValidatedEdit
-            Tag = 2
-            Left = 186
-            Top = 2
-            Width = 55
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-          object ValidatedEdit18: TValidatedEdit
-            Tag = 3
-            Left = 254
-            Top = 2
-            Width = 57
-            Height = 21
-            Text = ' 0 V'
-            Scale = 1.000000000000000000
-            Units = 'V'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1.000000015047466E30
-          end
-        end
-      end
       object CoolLEDGrp: TGroupBox
         Left = 8
         Top = 34
@@ -914,6 +444,476 @@ object SettingsFrm: TSettingsFrm
         TabOrder = 2
         Text = 'cbZStageType'
         OnChange = cbSourceTypeChange
+      end
+      object LEDGrp: TGroupBox
+        Left = 8
+        Top = 35
+        Width = 385
+        Height = 252
+        Caption = ' LED (Digital/Analogue Control) '
+        TabOrder = 0
+        object Label4: TLabel
+          Left = 5
+          Top = 17
+          Width = 31
+          Height = 14
+          Alignment = taRightJustify
+          Caption = 'Name'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Arial'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object Label5: TLabel
+          Left = 104
+          Top = 17
+          Width = 68
+          Height = 14
+          Alignment = taRightJustify
+          Caption = 'Control Line'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Arial'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object Label6: TLabel
+          Left = 228
+          Top = 17
+          Width = 52
+          Height = 14
+          Caption = 'Off Level '
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Arial'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object Label7: TLabel
+          Left = 298
+          Top = 17
+          Width = 61
+          Height = 14
+          Caption = 'Max. Level '
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Arial'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object pnLightSource0: TPanel
+          Left = 8
+          Top = 33
+          Width = 360
+          Height = 25
+          BevelOuter = bvNone
+          TabOrder = 0
+          object Edit2: TEdit
+            Left = 0
+            Top = 0
+            Width = 88
+            Height = 21
+            TabOrder = 0
+            Text = 'Name?'
+          end
+          object ComboBox2: TComboBox
+            Tag = 1
+            Left = 98
+            Top = 0
+            Width = 100
+            Height = 21
+            Style = csDropDownList
+            TabOrder = 1
+          end
+          object ValidatedEdit3: TValidatedEdit
+            Tag = 2
+            Left = 220
+            Top = 0
+            Width = 57
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+          object ValidatedEdit4: TValidatedEdit
+            Tag = 3
+            Left = 290
+            Top = -1
+            Width = 57
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+        end
+        object pnLightSource1: TPanel
+          Left = 8
+          Top = 59
+          Width = 360
+          Height = 23
+          BevelOuter = bvNone
+          TabOrder = 1
+          object Edit3: TEdit
+            Left = 0
+            Top = 0
+            Width = 88
+            Height = 21
+            TabOrder = 0
+            Text = 'Name?'
+          end
+          object ComboBox3: TComboBox
+            Tag = 1
+            Left = 98
+            Top = 0
+            Width = 100
+            Height = 21
+            Style = csDropDownList
+            TabOrder = 1
+          end
+          object ValidatedEdit5: TValidatedEdit
+            Tag = 2
+            Left = 220
+            Top = 0
+            Width = 55
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+          object ValidatedEdit6: TValidatedEdit
+            Tag = 3
+            Left = 290
+            Top = 0
+            Width = 57
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+        end
+        object pnLightSource2: TPanel
+          Left = 8
+          Top = 84
+          Width = 360
+          Height = 24
+          BevelOuter = bvNone
+          TabOrder = 2
+          object Edit4: TEdit
+            Left = 0
+            Top = 0
+            Width = 88
+            Height = 21
+            TabOrder = 0
+            Text = 'Name?'
+          end
+          object ComboBox4: TComboBox
+            Tag = 1
+            Left = 98
+            Top = 0
+            Width = 100
+            Height = 21
+            Style = csDropDownList
+            TabOrder = 1
+          end
+          object ValidatedEdit7: TValidatedEdit
+            Tag = 2
+            Left = 220
+            Top = 0
+            Width = 55
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+          object ValidatedEdit8: TValidatedEdit
+            Tag = 3
+            Left = 290
+            Top = 0
+            Width = 57
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+        end
+        object pnLightSource3: TPanel
+          Left = 8
+          Top = 108
+          Width = 360
+          Height = 25
+          BevelOuter = bvNone
+          TabOrder = 3
+          object Edit5: TEdit
+            Left = 0
+            Top = 0
+            Width = 88
+            Height = 21
+            TabOrder = 0
+            Text = 'Name?'
+          end
+          object ComboBox5: TComboBox
+            Tag = 1
+            Left = 98
+            Top = 0
+            Width = 100
+            Height = 21
+            Style = csDropDownList
+            TabOrder = 1
+          end
+          object ValidatedEdit9: TValidatedEdit
+            Tag = 2
+            Left = 220
+            Top = 0
+            Width = 55
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+          object ValidatedEdit10: TValidatedEdit
+            Tag = 3
+            Left = 290
+            Top = 0
+            Width = 57
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+        end
+        object pnLightSource4: TPanel
+          Left = 8
+          Top = 135
+          Width = 360
+          Height = 22
+          BevelOuter = bvNone
+          TabOrder = 4
+          object Edit6: TEdit
+            Left = 0
+            Top = 0
+            Width = 88
+            Height = 21
+            TabOrder = 0
+            Text = 'Name?'
+          end
+          object ComboBox6: TComboBox
+            Tag = 1
+            Left = 98
+            Top = 0
+            Width = 100
+            Height = 21
+            Style = csDropDownList
+            TabOrder = 1
+          end
+          object ValidatedEdit11: TValidatedEdit
+            Tag = 2
+            Left = 220
+            Top = 0
+            Width = 55
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+          object ValidatedEdit12: TValidatedEdit
+            Tag = 3
+            Left = 290
+            Top = 0
+            Width = 57
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+        end
+        object pnLightSource5: TPanel
+          Left = 8
+          Top = 161
+          Width = 360
+          Height = 22
+          BevelOuter = bvNone
+          TabOrder = 5
+          object Edit7: TEdit
+            Left = 0
+            Top = 0
+            Width = 88
+            Height = 21
+            TabOrder = 0
+            Text = 'Name?'
+          end
+          object ComboBox7: TComboBox
+            Tag = 1
+            Left = 98
+            Top = 0
+            Width = 100
+            Height = 21
+            Style = csDropDownList
+            TabOrder = 1
+          end
+          object ValidatedEdit13: TValidatedEdit
+            Tag = 2
+            Left = 220
+            Top = 0
+            Width = 55
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+          object ValidatedEdit14: TValidatedEdit
+            Tag = 3
+            Left = 290
+            Top = 0
+            Width = 57
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+        end
+        object pnLightSource6: TPanel
+          Left = 8
+          Top = 186
+          Width = 360
+          Height = 22
+          BevelOuter = bvNone
+          TabOrder = 6
+          object Edit8: TEdit
+            Left = 0
+            Top = 0
+            Width = 88
+            Height = 21
+            TabOrder = 0
+            Text = 'Name?'
+          end
+          object ComboBox8: TComboBox
+            Tag = 1
+            Left = 98
+            Top = 0
+            Width = 100
+            Height = 21
+            Style = csDropDownList
+            TabOrder = 1
+          end
+          object ValidatedEdit15: TValidatedEdit
+            Tag = 2
+            Left = 220
+            Top = 0
+            Width = 55
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+          object ValidatedEdit16: TValidatedEdit
+            Tag = 3
+            Left = 290
+            Top = 0
+            Width = 57
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+        end
+        object pnLightSource7: TPanel
+          Left = 8
+          Top = 210
+          Width = 360
+          Height = 25
+          BevelOuter = bvNone
+          TabOrder = 7
+          object Edit9: TEdit
+            Left = 0
+            Top = 0
+            Width = 88
+            Height = 21
+            TabOrder = 0
+            Text = 'Name?'
+          end
+          object ComboBox9: TComboBox
+            Tag = 1
+            Left = 98
+            Top = 0
+            Width = 100
+            Height = 21
+            Style = csDropDownList
+            TabOrder = 1
+          end
+          object ValidatedEdit17: TValidatedEdit
+            Tag = 2
+            Left = 220
+            Top = 3
+            Width = 55
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+          object ValidatedEdit18: TValidatedEdit
+            Tag = 3
+            Left = 290
+            Top = 3
+            Width = 57
+            Height = 21
+            Text = ' 0 V'
+            Scale = 1.000000000000000000
+            Units = 'V'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
+          end
+        end
       end
     end
     object ZStageTab: TTabSheet

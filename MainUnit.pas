@@ -34,8 +34,11 @@ unit MainUnit;
 // V1.6.4 24.05.17 Z stage protection now initialised correctly
 // V1.6.5 31.05.17 Z stage limits now on goto control now updated when changed in setup
 //                 Pixel-shift images now workinh again with PCVIe-1427 framer grabber
-// V1.6.6 07.07.17 Fan on/off now handle via attribute string
+// V1.6.6 07.06.17 Fan on/off now handle via attribute string
 //        14.06.17 CoolLED USB serial communication working but not complete
+// V1.6.7 05.07.17 Save Image now works again
+//                 CoolLED USB support now works
+
 
 interface
 
@@ -419,6 +422,8 @@ type
     ScanRequestedAfterInterval : Boolean ;
     ScanStartAt : Cardinal ;                       // Time to acquire next image (time lapse mode)
 
+    UpdateLightSource : Boolean ;                  // Update light source flag
+
     ScanningInProgress : Boolean ;
 
     INIFileName : String ;
@@ -607,14 +612,15 @@ begin
      Initialising := False ;
      LiveImagingInProgress := False ;
      ShowCapturedImage := False ;
+     UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.6.6';
+     ProgramName := 'MesoCam V1.6.7';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 07/6/17';
+     ProgramName := ProgramName + ' 05/7/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -804,6 +810,8 @@ begin
      Height := Screen.Height - 50 - Top ;
 
      IgnorePanelControls := False ;
+
+     Resize ;
 
      end;
 
@@ -1547,7 +1555,7 @@ begin
       GetLightSourcePanel(5, pnLightSource5, False ) ;
       GetLightSourcePanel(6, pnLightSource6, False ) ;
       GetLightSourcePanel(7, pnLightSource7, False ) ;
-      LightSource.Update ;
+      UpdateLightSource := True ;
       end ;
 end;
 
@@ -2176,11 +2184,18 @@ begin
        PlotHistogram ;
        end ;
 
+    // Update light source settings (if requested)
+    if UpdateLightSource then
+       begin
+       LightSource.Update ;
+       UpdateLightSource := False ;
+       end;
+
     GetImage ;
 
     ZStage.UpdateZPosition ;
     edXYZPosition.Text := format('X=%.2f, Y=%.2f, Z=%.2f um',
-                   [ZStage.XPosition,ZStage.YPosition,ZStage.ZPosition]) ;
+                          [ZStage.XPosition,ZStage.YPosition,ZStage.ZPosition]) ;
 
     end;
 
@@ -2198,7 +2213,7 @@ begin
     GetLightSourcePanel(5, pnLightSource5, True ) ;
     GetLightSourcePanel(6, pnLightSource6, True ) ;
     GetLightSourcePanel(7, pnLightSource7, True ) ;
-    LightSource.Update ;
+    UpdateLightSource := True ;
     end;
 
 
@@ -2723,7 +2738,7 @@ procedure TMainFrm.ckLightSourceOn0Click(Sender: TObject);
 begin
     if IgnorePanelControls then Exit ;
     GetAllLightSourcePanels ;
-    LightSource.Update ;
+    UpdateLightSource := True ;
     if LiveImagingInProgress then SetImagePanels ;
     end;
 
@@ -2805,6 +2820,9 @@ begin
 
      SetLensMenu ;
      ClearImageBuffers ;
+
+     Resize ;
+
      end;
 
 
@@ -2871,7 +2889,7 @@ begin
      // Ensure extension is set
      FileName := ChangeFileExt(SaveDialog.FileName, '.tif' ) ;
      Filename := ReplaceText( FileName, '.ome.tif', '.tif' ) ;
-     SaveDirectory := ExtractFilePath(SaveDialog.FileName) ;
+       SaveDirectory := ExtractFilePath(SaveDialog.FileName) ;
 
      // Check if any files exist already and allow user option to quit
      Exists := False ;
@@ -2998,7 +3016,10 @@ begin
      if ((NumZSectionsAvailable > 1) and (not SaveAsMultipageTIFF)) then
         s := s + format('Z%d.',[iZSection]) ;
 
-     Result := ANSIReplaceText( FileName, '.tif', s + '.tif' ) ;
+     FileName := ANSIReplaceText( FileName, '.tif', s + '.tif' ) ;
+     FileName := ANSIReplaceText( FileName, '..','.' ) ;
+     FileName := ANSIReplaceText( FileName, '..','.' ) ;
+     Result := FileName ;
 
      end;
 
@@ -3097,6 +3118,7 @@ begin
 
   end;
 
+
 procedure TMainFrm.SetLightSourcePanel(
 
           Num : Integer ;
@@ -3110,8 +3132,10 @@ var
 begin
 
       Panel.Enabled := False ;
-      if LightSource.ControlLines[Num] < LineDisabled then Panel.Visible := True
-                                                      else Panel.Visible := False ;
+      if (LightSource.ControlLines[Num] < LineDisabled) and
+         (LightSource.SourceType <> lsNone) then Panel.Visible := True
+                                           else Panel.Visible := False ;
+
       if Panel.Visible then begin
          Panel.Top := iTop ;
          iTop := iTop + Panel.Height ;
@@ -3152,6 +3176,7 @@ var
 begin
 
      if IgnorePanelControls then Exit ;
+     if LightSource.SourceType = lsNone then Exit ;
 
       // Set On check box
       for i := 0 to 3 do if Panel.Controls[i].Tag = 0 then
