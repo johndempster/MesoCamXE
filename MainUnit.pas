@@ -38,6 +38,7 @@ unit MainUnit;
 //        14.06.17 CoolLED USB serial communication working but not complete
 // V1.6.7 05.07.17 Save Image now works again
 //                 CoolLED USB support now works
+// V1.6.8 12.07.17 VA-29MC-5M Fan on/off now handled by call again
 
 
 interface
@@ -614,13 +615,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.6.7';
+     ProgramName := 'MesoCam V1.6.8';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 05/7/17';
+     ProgramName := ProgramName + ' 12/7/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
