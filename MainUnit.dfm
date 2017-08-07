@@ -2,8 +2,8 @@ object MainFrm: TMainFrm
   Left = 122
   Top = 357
   Caption = 'to'
-  ClientHeight = 1158
-  ClientWidth = 1328
+  ClientHeight = 986
+  ClientWidth = 1284
   Color = clBtnFace
   DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET

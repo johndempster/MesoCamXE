@@ -12,6 +12,11 @@ unit ZStageUnit;
 // 24.05.17 ProScanEnableZStageTTLAction now executed before first Z stage position
 //          check because commands fail to work immediatelt after opening of com link to
 //          ProSCan III stage
+// 02.08.17 ProScanEnableZStageTTLAction - stop all movement command added
+//          to TTL triggered list to abort any move commands in progress.
+//          Prior stage: Stage movements now executed as a series of small
+//          steps to allow movement to be easily changed and stage position
+//          to be updated continuously.
 
 interface
 
@@ -31,11 +36,15 @@ type
     FBaudRate : DWord ;       // Com port baud rate
     ControlState : Integer ;  // Z stage control state
     Status : String ;         // Z stage status report
-    MoveToRequest : Boolean ;   // Go to requested flag
+    MoveToRequest : Boolean ;   // Go to Final flag
     MoveToPosition : Double ;   // Position (um) to go to
-    NewXPosition : Double ;   // New X position (requested)
-    NewYPosition : Double ;   // New Y position (requested)
-    NewZPosition : Double ;   // New Z position (requested)
+    FinalXPos : Double ;   // Final X position
+    FinalYPos : Double ;   // Final Y position
+    FinalZPos : Double ;   // Final Z position
+    RequestedXPos : Double ;   // Intermediate X position
+    RequestedYPos : Double ;   // Intermediate Y position
+    RequestedZPos : Double ;   // Intermediate Z position
+
     StageInitRequired : Boolean ; // Stage needs to be initialised
 
     OverLapStructure : POVERLAPPED ;
@@ -49,9 +58,9 @@ type
     procedure SetBaudRate( Value : DWord ) ;
     procedure SetStageType( Value : Integer ) ;
 
-    procedure UpdateZPositionOSII ;
+    procedure UpdateZPositionPrior ;
     procedure UpdateZPositionPZ ;
-    procedure MoveToOSII( X : Double ; // New X pos.
+    procedure MoveToPrior( X : Double ; // New X pos.
                           Y : Double ; // NEw Y pos.
                           Z : Double  // New Z pos.
                           ) ;
@@ -113,6 +122,9 @@ const
     stProscanIII = 2 ;
     stPiezo = 3 ;
 
+    XMaxStep = 100.0 ;
+    YMaxStep = 100.0 ;
+    ZMaxStep = 100.0 ;
 
 procedure TZStage.DataModuleCreate(Sender: TObject);
 // ---------------------------------------
@@ -133,9 +145,13 @@ begin
     ZPositionMax := 10000.0 ;
     ZPositionMin := -10000.0 ;
     ZScaleFactor := 1.0 ;
-    NewXPosition := 0.0 ;
-    NewYPosition := 0.0 ;
-    NewZPosition := 0.0 ;
+    FinalXPos := 0.0 ;       // Set position at 0,0,0
+    FinalYPos := 0.0 ;
+    FinalZPos := 0.0 ;
+    RequestedXPos := 0.0 ;
+    RequestedYPos := 0.0 ;
+    RequestedZPos := 0.0 ;
+
     MoveToRequest := False ;
     StageInitRequired := False ;
     end;
@@ -242,7 +258,7 @@ procedure TZStage.UpdateZPosition ;
 // ---------------------------
 begin
     case FStageType of
-        stOptiscanII : UpdateZPositionOSII ;
+        stOptiscanII : UpdateZPositionPrior ;
         stProScanIII :
           begin
           if StageInitRequired then
@@ -250,7 +266,7 @@ begin
              ProScanEnableZStageTTLAction ;
              StageInitRequired := False ;
              end;
-          UpdateZPositionOSII ;
+          UpdateZPositionPrior ;
           end;
         stPiezo : UpdateZPositionPZ ;
         end;
@@ -268,7 +284,7 @@ begin
     Z := Min(Max(Z,ZPositionMin),ZPositionMax);
 
     case FStageType of
-        stOptiscanII,stProScanIII : MoveToOSII(  X,Y,Z ) ;
+        stOptiscanII,stProScanIII : MoveToPrior(  X,Y,Z ) ;
         stPiezo : MoveToPZ( Z ) ;
         end;
     end;
@@ -439,7 +455,7 @@ begin
      end ;
 
 
-procedure TZStage.UpdateZPositionOSII ;
+procedure TZStage.UpdateZPositionPrior ;
 // ----------------------------------------
 // Update position of Z stage (Optoscan II)
 // ----------------------------------------
@@ -448,6 +464,7 @@ var
     OK : Boolean ;
     i,iNum : Integer ;
     c,s : string ;
+    XStep,YStep,ZStep : Double ;
 begin
 
     case ControlState of
@@ -462,18 +479,22 @@ begin
 
           if MoveToRequest then
              begin
-             // Go to required position
-
+             // Go to final position position in a series of intermediate steps
+             // ---------------------------------------------------------------
+             RequestedXPos := XPosition + Min(FinalXPos - XPosition,XMaxStep);
+             RequestedYPos := YPosition + Min(FinalYPos - YPosition,YMaxStep);
+             RequestedZPos := ZPosition + Min(FinalZPos - ZPosition,ZMaxStep);
              OK := SendCommand( format('G %d,%d,%d',
-                   [Round(NewXPosition*XScaleFactor),
-                    Round(NewYPosition*YScaleFactor),
-                    Round(NewZPosition*ZScaleFactor)]));
+                   [Round(RequestedXPos*XScaleFactor),
+                    Round(RequestedYPos*YScaleFactor),
+                    Round(RequestedZPos*ZScaleFactor)]));
              if OK then ControlState := csWaitingForCompletion ;
              MoveToRequest := False ;
              end
           else
              begin
              // Request stage X,Y,Z position
+             // ----------------------------
              OK := SendCommand( 'P' ) ;
              if OK then ControlState := csWaitingForPosition ;
              end ;
@@ -481,6 +502,8 @@ begin
 
         csWaitingForPosition :
           begin
+          // Decode X,Y,Z stage position
+          // ---------------------------
           XScaleFactor := Max(XScaleFactor,1E-4) ;
           YScaleFactor := Max(YScaleFactor,1E-4) ;
           ZScaleFactor := Max(ZScaleFactor,1E-4) ;
@@ -508,12 +531,25 @@ begin
                    Inc(i) ;
                    end;
              Status := '' ;
+
+             // Request additional move if requested position reached
+             // but not the final position
+             if (XPosition = RequestedXPos) and
+                (YPosition = RequestedYPos) and
+                (ZPosition = RequestedZPos) then
+                begin
+                if (XPosition <> FinalXPos) or
+                   (YPosition <> FinalYPos) or
+                   (ZPosition <> FinalZPos) then  MoveToRequest := True ;
+                end ;
+
              ControlState := csIdle ;
              end;
           end ;
 
         csWaitingForCompletion :
           begin
+          // Wait for response indicating completion of command
           Status := ReceiveBytes( EndOfLine ) ;
           if EndOfLine then
              begin
@@ -527,7 +563,7 @@ begin
 end;
 
 
-procedure TZStage.MoveToOSII( X : Double ; // New X pos.
+procedure TZStage.MoveToPrior( X : Double ; // New X pos.
                               Y : Double ; // New Y pos.
                               Z : Double   // New Z pos.
                               ) ;
@@ -535,9 +571,9 @@ procedure TZStage.MoveToOSII( X : Double ; // New X pos.
 // Go to Z position (Optoscan II)
 // ------------------------------
 begin
-    NewXPosition := X ;
-    NewYPosition := Y ;
-    NewZPosition := Z ;
+    FinalXPos := X ;
+    FinalYPos := Y ;
+    FinalZPos := Z ;
     MoveToRequest := True ;
 end;
 
@@ -632,6 +668,8 @@ begin
      SendCommand('TTLDEL,1') ;
      WaitforResponse('0') ;
      SendCommand('TTLTP,1,1') ;       // Enable trigger on input #1 going high
+     WaitforResponse('0') ;
+     SendCommand('TTLACT,1,70,0,0,0') ; // Stop all movement
      WaitforResponse('0') ;
      SendCommand('TTLACT,1,31,0,0,0') ; // Move Z axis to zero position
      WaitforResponse('0') ;

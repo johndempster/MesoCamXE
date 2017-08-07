@@ -39,6 +39,10 @@ unit MainUnit;
 // V1.6.7 05.07.17 Save Image now works again
 //                 CoolLED USB support now works
 // V1.6.8 12.07.17 VA-29MC-5M Fan on/off now handled by call again
+// V1.6.9 04.08.17 ZStage: Prior stage now moved in small increments to
+//                 allow movement to be changed during stage movement. Lens protection
+//                 TTL command now aborts move command before moving to 0,0,0
+//                 VMC-29MC-5MCCD stage position now set manually using Cam1.CCDXShift Cam1.CCDYShift properties.
 
 
 interface
@@ -307,7 +311,6 @@ type
     MagnifiedCameraPixelSize : double ;             // Image pixel size (microns)
     CameraTriggerOutput : Integer ;       // Camera trigger digital output line
     CameraTriggerActiveHigh : Boolean ;   // TTL high level triggers camera
-    CameraTriggerBit : Integer ;
     CameraTriggerRequired : Boolean ;     // Camera trigger pulse required
     CameraGainIndex : Integer ;
     Initialising : Boolean ;
@@ -321,6 +324,7 @@ type
 
     FramePointer : Integer ;
     MostRecentFrame : Integer ;
+    PreviousFrameCount : Integer ;
     LastFrameDisplayed : Integer ;
     GetImageInProgress : Boolean ;
     TStart : Integer  ;
@@ -328,7 +332,6 @@ type
     NumFramesCaptured : Integer ;     // No. of frames transferred to capture buffer
     NumFramesRequired : Integer ;     //  No. of frames required to be captured
     OldNumFramesAcquired : Integer ;
-    PulseCounter : Integer ;
     NextCameraTrigger : Integer ;
 
     TimeLapseNumPoints : Integer ;    // No. points in time lapse series
@@ -615,13 +618,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.6.8';
+     ProgramName := 'MesoCam V1.6.9';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 12/7/17';
+     ProgramName := ProgramName + ' 03/08/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -671,8 +674,8 @@ begin
 
      cbCaptureMode.Clear ;
      cbCaptureMode.Items.AddObject('Standard (X1)',TObject(1));
-     cbCaptureMode.Items.AddObject('High Res. (X4)',TObject(4));
-     cbCaptureMode.Items.AddObject('High Res. (X9)',TObject(9));
+     cbCaptureMode.Items.AddObject('High Res. (X4)',TObject(2));
+     cbCaptureMode.Items.AddObject('High Res. (X9)',TObject(3));
      cbCaptureMode.ItemIndex := 0 ;
 
      // Imaging mode
@@ -782,10 +785,6 @@ begin
 
     SetScanZoomToFullField ;
 
-    iDev := LabIO.Resource[CameraTriggerOutput].Device ;
-    iChan := LabIO.Resource[CameraTriggerOutput].StartChannel ;
-    LabIO.SetBit(LabIO.DigOutState[iDev],iChan,CameraTriggerBit);
-    CameraTriggerBit := 0 ;
     // Initialise digital outputs
     for iDev := 1 to LabIO.NumDevices do begin
         LabIO.WriteToDigitalOutPutPort( iDev, LabIO.DigOutState[iDev] ) ;
@@ -1763,6 +1762,7 @@ begin
     Cam1.StartCapture ;
     FramePointer := 0 ;
     MostRecentFrame := -1 ;
+    PreviousFrameCount := -1 ;
     LastFrameDisplayed := MostRecentFrame ;
     GetImageInProgress := false ;
 
@@ -1772,12 +1772,10 @@ begin
     NumFramesAcquired := 0 ;
     NumFramesCaptured := 0 ;
     OldNumFramesAcquired := 0 ;
-    PulseCounter := 5 ;
 
     SetImagePanels ;
 
-    CameraTriggerBit := 1 ;
-    CameraTriggerRequired := True ;
+    CameraTriggerRequired := False ;
 
     NextCameraTrigger := timegettime + 1000  ;
 
@@ -2146,20 +2144,26 @@ var
 begin
     //if pImageBuf = Nil then Exit ;
 
-    // Camera exposure trigger
-    if (timegettime >= NextCameraTrigger) {CameraTriggerRequired} then
-       begin
-       if Cam1.CameraActive and (not LiveImagingInProgress) then
-          begin
-          Cam1.SoftwareTriggerCapture ;
-          end;
-       NextCameraTrigger := timegettime + 100 + Round(edExposureTime.Value*1000) ;
-       CameraTriggerRequired := False ;
-       end;
-
-    iDev := LabIO.Resource[CameraTriggerOutput].Device ;
-    iChan := LabIO.Resource[CameraTriggerOutput].StartChannel ;
-    CameraTriggerBit := 0 ;
+    if Cam1.CameraActive and (not LiveImagingInProgress) then
+       Begin
+         // Update CCD XY stage position
+         if Cam1.FrameCount <> PreviousFrameCount then
+            begin
+            Cam1.CCDXShift := Cam1.FrameCount mod (cbCaptureMode.ItemIndex + 1) ;
+            Cam1.CCDYShift := Cam1.FrameCount div (cbCaptureMode.ItemIndex + 1) ;
+            NextCameraTrigger := TimeGetTime + 100 ;
+            if PreviousFrameCount < 0 then NextCameraTrigger := NextCameraTrigger + Round(ZStage.ZStepTime*1000) ;
+            PreviousFrameCount := Cam1.FrameCount ;
+            CameraTriggerRequired := True ;
+            end
+         else if (timegettime >= NextCameraTrigger) and CameraTriggerRequired then
+            begin
+            // Trigger exposure
+            Cam1.SoftwareTriggerCapture ;
+            // Set next trigger to far in the future to disable.
+            CameraTriggerRequired := False ;
+           end ;
+       End;
 
     for iDev := 1 to LabIO.NumDevices do begin
         LabIO.WriteToDigitalOutPutPort( iDev, LabIO.DigOutState[iDev] ) ;
@@ -2174,7 +2178,6 @@ begin
        ScanRequested := False ;
        ScanRequestedAfterInterval := False ;
        StartCamera ;
-       NextCameraTrigger := timegettime + 1000 ;
        UpdateImage ;
        end ;
 
