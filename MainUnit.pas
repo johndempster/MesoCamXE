@@ -624,7 +624,7 @@ begin
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 03/08/17';
+     ProgramName := ProgramName + ' 08/08/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -674,8 +674,8 @@ begin
 
      cbCaptureMode.Clear ;
      cbCaptureMode.Items.AddObject('Standard (X1)',TObject(1));
-     cbCaptureMode.Items.AddObject('High Res. (X4)',TObject(2));
-     cbCaptureMode.Items.AddObject('High Res. (X9)',TObject(3));
+     cbCaptureMode.Items.AddObject('High Res. (X4)',TObject(4));
+     cbCaptureMode.Items.AddObject('High Res. (X9)',TObject(9));
      cbCaptureMode.ItemIndex := 0 ;
 
      // Imaging mode
@@ -2140,7 +2140,7 @@ procedure TMainFrm.TimerTimer(Sender: TObject);
 // Regular timed operations
 // --------------------------
 var
-    iDev,iChan : Integer ;
+    iDev,NumSubPixels : Integer ;
 begin
     //if pImageBuf = Nil then Exit ;
 
@@ -2149,8 +2149,9 @@ begin
          // Update CCD XY stage position
          if Cam1.FrameCount <> PreviousFrameCount then
             begin
-            Cam1.CCDXShift := Cam1.FrameCount mod (cbCaptureMode.ItemIndex + 1) ;
-            Cam1.CCDYShift := Cam1.FrameCount div (cbCaptureMode.ItemIndex + 1) ;
+            NumSubPixels := Round(sqrt(Integer(cbCaptureMode.Items.Objects[cbCaptureMode.ItemIndex]))) ;
+//            Cam1.CCDXShift := Cam1.FrameCount mod NumSubPixels ;
+//            Cam1.CCDYShift := Cam1.FrameCount div NumSubPixels ;
             NextCameraTrigger := TimeGetTime + 100 ;
             if PreviousFrameCount < 0 then NextCameraTrigger := NextCameraTrigger + Round(ZStage.ZStepTime*1000) ;
             PreviousFrameCount := Cam1.FrameCount ;
