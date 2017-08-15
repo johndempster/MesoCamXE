@@ -1706,6 +1706,10 @@ begin
 
     LightSource.Update ;
 
+//    Cam1.CCDXShift := 0.0 ;
+//    Cam1.CCDYShift := 0.0 ;
+
+
     // Save current positoion of Z stage
     ZStartingPosition := ZStage.ZPosition ;
 
@@ -1759,6 +1763,8 @@ begin
 
     //InitialiseImage ;
     Cam1.GetFrameBufferPointer( pFrameBuf ) ;
+
+
     Cam1.StartCapture ;
     FramePointer := 0 ;
     MostRecentFrame := -1 ;
@@ -2150,8 +2156,12 @@ begin
          if Cam1.FrameCount <> PreviousFrameCount then
             begin
             NumSubPixels := Round(sqrt(Integer(cbCaptureMode.Items.Objects[cbCaptureMode.ItemIndex]))) ;
-//            Cam1.CCDXShift := Cam1.FrameCount mod NumSubPixels ;
-//            Cam1.CCDYShift := Cam1.FrameCount div NumSubPixels ;
+            if Cam1.FrameCount = 1 then begin
+            Cam1.PauseCapture ;
+            Cam1.CCDXShift := Cam1.FrameCount mod NumSubPixels ;
+            Cam1.CCDYShift := Cam1.FrameCount div NumSubPixels ;
+            Cam1.RestartCapture ;
+            end;
             NextCameraTrigger := TimeGetTime + 100 ;
             if PreviousFrameCount < 0 then NextCameraTrigger := NextCameraTrigger + Round(ZStage.ZStepTime*1000) ;
             PreviousFrameCount := Cam1.FrameCount ;
