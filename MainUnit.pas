@@ -616,7 +616,7 @@ procedure TMainFrm.FormShow(Sender: TObject);
 // Initialisations when form is displayed
 // --------------------------------------
 var
-    i,iDev,iChan : Integer ;
+    i,iDev : Integer ;
 begin
 
      Initialising := False ;
@@ -1837,7 +1837,7 @@ begin
 
 procedure TMainFrm.bFullScaleClick(Sender: TObject);
 // --------------------------------------------------------
-// Set display grey scale to full intensity range of camera
+// Set display grey scale t1o full intensity range of camera
 // --------------------------------------------------------
 begin
 
@@ -2177,6 +2177,8 @@ begin
          // Update CCD XY stage position
          if Cam1.FrameCount >= 1 then
             begin
+            // Stop camera
+            Cam1.StopCapture ;
             // Copy image to display buffer
             CopyImageToDisplayBuf( Cam1.FrameCount-1 ) ;
             // Add image to interleaved buffer
@@ -2184,25 +2186,25 @@ begin
             // Set next pixel shift steps
             NumSubPixels := Round(sqrt(NumPixelShiftFrames)) ;
             Inc(CCDShiftCounter) ;
-            Cam1.CCDXShift := Max(CCDShiftCounter,0) mod NumSubPixels ;
-            Cam1.CCDYShift := Max(CCDShiftCounter,0) div NumSubPixels ;
+            // Calculate fractional CCD shifts
+            Cam1.CCDXShift := (Max(CCDShiftCounter,0) mod NumSubPixels)/NumSubPixels ;
+            Cam1.CCDYShift := (Max(CCDShiftCounter,0) div NumSubPixels)/NumSubPixels ;
+            outputdebugstring(Pchar(format('%d CCD = %.3g %.3g',[CCDShiftCounter,Cam1.CCDXShift,Cam1.CCDXShift])));
 
-            NextCameraTrigger := TimeGetTime + 100 ;
-            NextCameraTrigger := NextCameraTrigger + Round(ZStage.ZStepTime*1000) ;
             if CCDShiftCounter < NumPixelShiftFrames then
                begin
+               NextCameraTrigger := TimeGetTime + 20 ;
                CameraTriggerRequired := True ;
                end
             else
-                begin
-                // Save to raw image file
-                Cam1.StopCapture ;
-                edStatus.Text := s + ' Saving' ;
-                Application.ProcessMessages ;
-                Inc(NumImagesInRawFile) ;
-                SaveRawImage( RawImagesFileName, NumImagesInRawFile-1 ) ;
-                NextZTStepRequested := True ;
-                end;
+               begin
+               // Save to raw image file
+               edStatus.Text := s + ' Saving' ;
+               Application.ProcessMessages ;
+               Inc(NumImagesInRawFile) ;
+               SaveRawImage( RawImagesFileName, NumImagesInRawFile-1 ) ;
+               NextZTStepRequested := True ;
+               end;
 
             // Update status
             s := '' ;
@@ -2212,16 +2214,17 @@ begin
                s := s + format('Z:%d/%d, ',[NumZSectionsAvailable+1,Round(edNumZSections.Value)]);
             s := s + format(' F:%d/%d',[Min(CCDShiftCounter,NumPixelShiftFrames),NumPixelShiftFrames]);
             edStatus.Text := s ;
-
-            end
-         else if (timegettime >= NextCameraTrigger) and CameraTriggerRequired then
-            begin
-            // Acquire single image
-            Cam1.SnapImage ;
-            // Set next trigger to far in the future to disable.
-            CameraTriggerRequired := False ;
-           end ;
+            UpdateDisplay := True ;
+            end ;
        End;
+
+    if (timegettime >= NextCameraTrigger) and CameraTriggerRequired then
+       begin
+       // Acquire single image
+       Cam1.SnapImage ;
+       // Set next trigger to far in the future to disable.
+       CameraTriggerRequired := False ;
+       end ;
 
     // Live imaging
     if Cam1.CameraActive and LiveImagingInProgress then
@@ -2238,6 +2241,7 @@ begin
           // Copy image to display buffer
           CopyImageToDisplayBuf( MostRecentFrame ) ;
           LastFrameDisplayed := MostRecentFrame ;
+          UpdateDisplay := True ;
           end;
 
        // Update status
