@@ -53,7 +53,7 @@ object SettingsFrm: TSettingsFrm
     Top = 8
     Width = 464
     Height = 406
-    ActivePage = CameraTab
+    ActivePage = ZStageTab
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
@@ -356,7 +356,7 @@ object SettingsFrm: TSettingsFrm
         Left = 224
         Top = 94
         Width = 225
-        Height = 84
+        Height = 171
         TabOrder = 2
         object Label25: TLabel
           Left = 8
@@ -364,6 +364,19 @@ object SettingsFrm: TSettingsFrm
           Width = 107
           Height = 13
           Caption = 'Image-J Program Path'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+        end
+        object Label18: TLabel
+          Left = 8
+          Top = 80
+          Width = 99
+          Height = 13
+          Caption = 'Raw Data File Folder'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -393,6 +406,14 @@ object SettingsFrm: TSettingsFrm
           Font.Style = [fsBold]
           ParentFont = False
           TabOrder = 1
+        end
+        object edRawFileFolder: TEdit
+          Left = 8
+          Top = 97
+          Width = 202
+          Height = 21
+          TabOrder = 2
+          Text = 'edImageJPath'
         end
       end
     end
@@ -919,10 +940,6 @@ object SettingsFrm: TSettingsFrm
     object ZStageTab: TTabSheet
       Caption = 'Z Stage'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object GroupBox2: TGroupBox
         Left = 3
         Top = 3
@@ -952,7 +969,7 @@ object SettingsFrm: TSettingsFrm
           Width = 53
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Z step time'
+          Caption = 'Z step rate'
         end
         object Label12: TLabel
           Left = 40
@@ -1021,10 +1038,10 @@ object SettingsFrm: TSettingsFrm
           Top = 143
           Width = 89
           Height = 21
-          Text = ' 100 ms'
+          Text = ' 100 ms/um'
           Value = 0.100000001490116100
           Scale = 1000.000000000000000000
-          Units = 'ms'
+          Units = 'ms/um'
           NumberFormat = '%.4g'
           LoLimit = -1.000000015047466E30
           HiLimit = 1000000.000000000000000000
@@ -1088,10 +1105,6 @@ object SettingsFrm: TSettingsFrm
       HelpKeyword = 'Lenses'
       Caption = 'Lenses'
       ImageIndex = 3
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object CalibrationGrp: TGroupBox
         Left = 8
         Top = 3

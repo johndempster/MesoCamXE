@@ -13,7 +13,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, ValidatedEdit, math,
-  Vcl.ExtCtrls,LabIOUnit,LightSourceUnit, Vcl.ComCtrls, Vcl.Grids ;
+  Vcl.ExtCtrls,LabIOUnit,LightSourceUnit, Vcl.ComCtrls, Vcl.Grids, strutils ;
 
 type
   TSettingsFrm = class(TForm)
@@ -129,6 +129,8 @@ type
     edZpositionMin: TValidatedEdit;
     Label17: TLabel;
     edZPositionMax: TValidatedEdit;
+    Label18: TLabel;
+    edRawFileFolder: TEdit;
     procedure FormShow(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCancelClick(Sender: TObject);
@@ -265,6 +267,7 @@ begin
 
     edImageJPath.Text := MainFrm.ImageJPath ;
     ckSaveAsMultipageTIFF.Checked := MainFrm.SaveAsMultipageTIFF ;
+    edRawFileFolder.Text := ExtractFilePath(MainFrm.RawImagesFileName) ;
 
 end;
 
@@ -344,6 +347,9 @@ begin
 
     MainFrm.ImageJPath := edImageJPath.Text ;
     MainFrm.SaveAsMultipageTIFF := ckSaveAsMultipageTIFF.Checked ;
+    MainFrm.RawImagesFileName := edRawFileFolder.Text + '\mesocam.raw' ;
+    // Ensure no duplications of \
+    for i := 1 to 3 do MainFrm.RawImagesFileName := ANSIReplaceStr(  MainFrm.RawImagesFileName, '\\', '\');
 
     Close ;
     end;

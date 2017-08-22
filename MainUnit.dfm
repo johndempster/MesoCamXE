@@ -2,7 +2,7 @@ object MainFrm: TMainFrm
   Left = 122
   Top = 357
   Caption = 'to'
-  ClientHeight = 986
+  ClientHeight = 1242
   ClientWidth = 1284
   Color = clBtnFace
   DoubleBuffered = True
@@ -23,8 +23,8 @@ object MainFrm: TMainFrm
   PixelsPerInch = 96
   TextHeight = 13
   object lbReadout: TLabel
-    Left = 366
-    Top = 440
+    Left = 646
+    Top = 433
     Width = 4
     Height = 19
     Font.Charset = ANSI_CHARSET
@@ -281,46 +281,52 @@ object MainFrm: TMainFrm
     Left = 8
     Top = 291
     Width = 354
-    Height = 246
+    Height = 230
     Caption = ' Image Mode'
     TabOrder = 1
     object ZStackGrp: TGroupBox
-      Left = 12
+      Left = 8
       Top = 97
       Width = 326
-      Height = 74
+      Height = 56
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
       TabOrder = 0
       object Label5: TLabel
-        Left = 7
-        Top = 3
-        Width = 97
-        Height = 19
+        Left = 8
+        Top = 6
+        Width = 79
+        Height = 16
         Caption = 'No. Sections'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
-        Font.Height = -16
+        Font.Height = -13
         Font.Name = 'Arial'
         Font.Style = [fsBold]
         ParentFont = False
       end
       object Label6: TLabel
         Left = 121
-        Top = 3
-        Width = 85
-        Height = 19
+        Top = 6
+        Width = 72
+        Height = 16
         Caption = 'Z Step Size'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
-        Font.Height = -16
+        Font.Height = -13
         Font.Name = 'Arial'
         Font.Style = [fsBold]
         ParentFont = False
       end
       object edNumZSections: TValidatedEdit
-        Left = 7
-        Top = 30
+        Left = 8
+        Top = 26
         Width = 76
-        Height = 21
+        Height = 24
         Hint = 'No. of sections in Z stack'
         ShowHint = True
         Text = ' 1 '
@@ -332,9 +338,9 @@ object MainFrm: TMainFrm
       end
       object edNumPixelsPerZStep: TValidatedEdit
         Left = 121
-        Top = 30
+        Top = 26
         Width = 97
-        Height = 21
+        Height = 24
         Hint = 'Z increment between sections (pixels)'
         OnKeyPress = edNumPixelsPerZStepKeyPress
         ShowHint = True
@@ -348,9 +354,9 @@ object MainFrm: TMainFrm
       end
       object edMicronsPerZStep: TValidatedEdit
         Left = 227
-        Top = 30
+        Top = 26
         Width = 94
-        Height = 21
+        Height = 24
         Hint = 'Z position increment between sections (microns)'
         OnKeyPress = edMicronsPerZStepKeyPress
         ShowHint = True
@@ -366,7 +372,7 @@ object MainFrm: TMainFrm
       Left = 12
       Top = 24
       Width = 282
-      Height = 26
+      Height = 25
       Hint = 
         'Check to produce separate, sequentially acquired  images for eac' +
         'h light source in use. '
@@ -386,7 +392,7 @@ object MainFrm: TMainFrm
       Left = 12
       Top = 46
       Width = 282
-      Height = 26
+      Height = 25
       Hint = 
         'Check to acquire a series of image at incremental Z axis positio' +
         'ns'
@@ -421,45 +427,50 @@ object MainFrm: TMainFrm
       OnClick = ckAcquireTimeLapseSeriesClick
     end
     object TimeLapseGrp: TGroupBox
-      Left = 12
-      Top = 177
+      Left = 8
+      Top = 159
       Width = 326
       Height = 56
       TabOrder = 4
       object Label3: TLabel
-        Left = 10
+        Left = 8
         Top = 3
-        Width = 78
-        Height = 19
+        Width = 63
+        Height = 16
         Alignment = taRightJustify
         Caption = 'No. points'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
-        Font.Height = -16
+        Font.Height = -13
         Font.Name = 'Arial'
         Font.Style = [fsBold]
         ParentFont = False
       end
       object Label4: TLabel
-        Left = 129
+        Left = 121
         Top = 3
-        Width = 104
-        Height = 19
+        Width = 87
+        Height = 16
         Alignment = taRightJustify
         Caption = 'At Intervals of'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
-        Font.Height = -16
+        Font.Height = -13
         Font.Name = 'Arial'
         Font.Style = [fsBold]
         ParentFont = False
       end
       object edNumTimeLapsePoints: TValidatedEdit
         Left = 7
-        Top = 28
+        Top = 22
         Width = 86
-        Height = 21
+        Height = 24
         Hint = 'No. of images to be captured in time series'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -13
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsBold]
         ShowHint = True
         Text = ' 1 '
         Value = 1.000000000000000000
@@ -470,11 +481,16 @@ object MainFrm: TMainFrm
       end
       object edTimeLapseInterval: TValidatedEdit
         Left = 121
-        Top = 28
+        Top = 22
         Width = 108
-        Height = 21
+        Height = 24
         Hint = 'Time interval between images'
         OnKeyPress = edNumPixelsPerZStepKeyPress
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -13
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsBold]
         ShowHint = True
         Text = ' 1.00 s'
         Value = 1.000000000000000000
@@ -1109,8 +1125,8 @@ object MainFrm: TMainFrm
     end
   end
   object DisplayGrp: TGroupBox
-    Left = 12
-    Top = 899
+    Left = 8
+    Top = 922
     Width = 354
     Height = 177
     Caption = ' Display '
@@ -1337,7 +1353,7 @@ object MainFrm: TMainFrm
     end
   end
   object StatusGrp: TGroupBox
-    Left = 14
+    Left = 8
     Top = 1080
     Width = 354
     Height = 198
@@ -1487,16 +1503,16 @@ object MainFrm: TMainFrm
     end
   end
   object ZSectionPanel: TPanel
-    Left = 861
-    Top = 391
-    Width = 320
-    Height = 32
+    Left = 380
+    Top = 399
+    Width = 270
+    Height = 28
     BevelOuter = bvNone
     DoubleBuffered = False
     ParentDoubleBuffered = False
     TabOrder = 7
     object lbZSection: TLabel
-      Left = 224
+      Left = 190
       Top = 0
       Width = 24
       Height = 20
@@ -1522,77 +1538,34 @@ object MainFrm: TMainFrm
       ParentFont = False
     end
     object scZSection: TScrollBar
-      Left = 30
+      Left = 20
       Top = 0
-      Width = 189
+      Width = 164
       Height = 22
       PageSize = 0
       TabOrder = 0
       OnChange = scZSectionChange
     end
   end
-  object DisplayModeGrp: TGroupBox
-    Left = 373
-    Top = 397
-    Width = 258
-    Height = 47
-    TabOrder = 8
-    object rbZoomMode: TRadioButton
-      Left = 12
-      Top = 4
-      Width = 128
-      Height = 37
-      Hint = 'Select image zoom/position selection mode'
-      Caption = 'Zoom Mode'
-      Checked = True
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -16
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-      ParentShowHint = False
-      ShowHint = True
-      TabOrder = 0
-      TabStop = True
-    end
-    object rbROIMode: TRadioButton
-      Left = 146
-      Top = 4
-      Width = 111
-      Height = 37
-      Hint = 'Display CCD region of interest selection rectangle'
-      Caption = 'ROI Mode'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -16
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-      ParentShowHint = False
-      ShowHint = True
-      TabOrder = 1
-    end
-  end
   object TSectionPanel: TPanel
-    Left = 827
-    Top = 475
-    Width = 319
-    Height = 32
+    Left = 380
+    Top = 433
+    Width = 270
+    Height = 28
     BevelOuter = bvNone
     DoubleBuffered = False
     ParentDoubleBuffered = False
-    TabOrder = 9
+    TabOrder = 8
     object lbTSection: TLabel
-      Left = 224
+      Left = 190
       Top = 0
-      Width = 36
-      Height = 19
+      Width = 24
+      Height = 20
       Caption = 'xxxx'
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
       Font.Height = -16
-      Font.Name = 'Arial'
+      Font.Name = 'Arial Narrow'
       Font.Style = [fsBold]
       ParentFont = False
     end
@@ -1610,13 +1583,57 @@ object MainFrm: TMainFrm
       ParentFont = False
     end
     object scTSection: TScrollBar
-      Left = 30
+      Left = 20
       Top = 0
-      Width = 189
+      Width = 164
       Height = 22
       PageSize = 0
       TabOrder = 0
       OnChange = scTSectionChange
+    end
+  end
+  object DisplayModePanel: TPanel
+    Left = 1004
+    Top = 390
+    Width = 225
+    Height = 26
+    BevelOuter = bvNone
+    TabOrder = 9
+    object rbZoomMode: TRadioButton
+      Left = 12
+      Top = 0
+      Width = 104
+      Height = 24
+      Hint = 'Select image zoom/position selection mode'
+      Caption = 'Zoom Mode'
+      Checked = True
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -15
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 0
+      TabStop = True
+    end
+    object rbROIMode: TRadioButton
+      Left = 130
+      Top = 0
+      Width = 95
+      Height = 24
+      Hint = 'Display CCD region of interest selection rectangle'
+      Caption = 'ROI Mode'
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -15
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 1
     end
   end
   object Timer: TTimer
