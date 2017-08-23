@@ -2,7 +2,7 @@ object MainFrm: TMainFrm
   Left = 122
   Top = 357
   Caption = 'to'
-  ClientHeight = 1242
+  ClientHeight = 1158
   ClientWidth = 1284
   Color = clBtnFace
   DoubleBuffered = True

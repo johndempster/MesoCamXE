@@ -46,6 +46,7 @@ unit MainUnit;
 // V1.7.0 16.08.17 Images now acquired as single image snaps in Timer procedure.
 // V1.7.1 22.08.17 Pixel shift images now equalised in intensity before interleaving into final image
 //                 Folder holding mesocam.raw file can now be changed in settings.
+// V1.7.1 23.08.17 Variation in exposure time still noy fully resolved.
 
 
 interface
@@ -328,7 +329,7 @@ type
     DeviceNum : Integer ;
     pFrameBuf : Pointer ;
     TempBuf : PBig16bitArray ;
-    FirstImageSum : Cardinal ;
+    FirstImageSum : Double ;
 
     FramePointer : Integer ;
     MostRecentFrame : Integer ;
@@ -634,7 +635,7 @@ begin
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 21/08/17';
+     ProgramName := ProgramName + ' 23/08/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -2192,7 +2193,7 @@ begin
             // Calculate fractional CCD shifts
             Cam1.CCDXShift := (Max(CCDShiftCounter,0) mod NumSubPixels)/NumSubPixels ;
             Cam1.CCDYShift := (Max(CCDShiftCounter,0) div NumSubPixels)/NumSubPixels ;
-            outputdebugstring(Pchar(format('%d CCD = %.3g %.3g',[CCDShiftCounter,Cam1.CCDXShift,Cam1.CCDXShift])));
+ //           outputdebugstring(Pchar(format('%d CCD X=%.3g Y=%.3g',[CCDShiftCounter,Cam1.CCDXShift,Cam1.CCDYShift])));
 
             if CCDShiftCounter < NumPixelShiftFrames then
                begin
@@ -2356,7 +2357,7 @@ var
     xshift : array[0..8] of Integer ;
     yshift : array[0..8] of Integer ;
     Scale : single ;
-    Sum : Cardinal ;
+    Sum : double ;
 begin
 
     if iShift >= NumPixelShiftFrames then Exit ;
@@ -2455,11 +2456,13 @@ begin
        // -----------
 
        // Sum of pixels
-       Sum := 0 ;
+       Sum := 0.0 ;
        for i := 0 to Cam1.FrameHeight*Cam1.FrameWidth-1 do Sum := Sum + PWordArray(pBuf)^[i] ;
        if iShift = 0 then FirstImageSum := Sum ;
        // Scale to same average intensity of first image
        Scale := FirstImageSum / Max(Sum,1) ;
+       outputdebugstring(pchar(format('%d Scale=%.4g',[iShift,Scale])));
+  //     Scale := 1.0 ;
 
        // Copy into interleaved position in high resolution image
        for y := 0 to Cam1.FrameHeight-1 do
