@@ -85,9 +85,9 @@ object MainFrm: TMainFrm
       ParentFont = False
     end
     object bCaptureImage: TButton
-      Left = 12
+      Left = 8
       Top = 84
-      Width = 147
+      Width = 180
       Height = 27
       Hint = 'Capture new image(s)'
       Caption = 'Capture Image'
@@ -103,9 +103,9 @@ object MainFrm: TMainFrm
       OnClick = bCaptureImageClick
     end
     object bStopImage: TButton
-      Left = 12
+      Left = 8
       Top = 140
-      Width = 151
+      Width = 180
       Height = 28
       Hint = 'Stop Image Capture'
       Caption = 'Stop'
@@ -121,9 +121,9 @@ object MainFrm: TMainFrm
       OnClick = bStopImageClick
     end
     object bLiveImage: TButton
-      Left = 12
-      Top = 24
-      Width = 147
+      Left = 8
+      Top = 19
+      Width = 180
       Height = 30
       Hint = 'Display live images from camera'
       Caption = 'Live Image'
@@ -139,9 +139,9 @@ object MainFrm: TMainFrm
       OnClick = bLiveImageClick
     end
     object cbCaptureMode: TComboBox
-      Left = 12
+      Left = 8
       Top = 113
-      Width = 147
+      Width = 180
       Height = 21
       Hint = 'Select image superresolution mode (pixel-shifting  cameras only)'
       Style = csDropDownList
@@ -167,7 +167,7 @@ object MainFrm: TMainFrm
       HiLimit = 7.000000000000000000
     end
     object CCDAreaGrp: TGroupBox
-      Left = 12
+      Left = 8
       Top = 174
       Width = 327
       Height = 91
@@ -247,9 +247,9 @@ object MainFrm: TMainFrm
       OnChange = cbCameraGainChange
     end
     object cbLiveBin: TComboBox
-      Left = 12
-      Top = 55
-      Width = 147
+      Left = 8
+      Top = 52
+      Width = 180
       Height = 21
       Hint = 'Live image binning mode'
       Style = csDropDownList

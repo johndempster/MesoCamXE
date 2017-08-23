@@ -1716,7 +1716,6 @@ begin
     Cam1.StopCapture ;
 
     LightSource.Update ;
-
     // Set CDD pixel shift stage to 0,0
     Cam1.CCDXShift := 0.0 ;
     Cam1.CCDYShift := 0.0 ;
@@ -2176,7 +2175,7 @@ begin
         // Read images from camera
     if Cam1.CameraActive then Cam1.ReadCamera ;
 
-    if Cam1.CameraActive and (not LiveImagingInProgress) then
+    if Cam1.CameraActive and (not LiveImagingInProgress) {and (not bCaptureImage.Enabled)} then
        Begin
          // Update CCD XY stage position
          if Cam1.FrameCount >= 1 then
@@ -2489,6 +2488,9 @@ procedure TMainFrm.NextZTStep ;
 // ---------------------
 begin
 
+       // Exit if capture not in progress
+       if bCaptureImage.Enabled then Exit ;
+
        InitialiseImage ;
 
        // Light source control
@@ -2632,11 +2634,9 @@ end;
 
 
 procedure TMainFrm.bStopImageClick(Sender: TObject);
-// -------------
-// Stop scanning
-// -------------
-//var
-//    FileHandle : Integer ;
+// ----------------------
+// Stop collecting images
+// ----------------------
 begin
 
     if LabIO.ADCActive[DeviceNum] then LabIO.StopADC(DeviceNum) ;
@@ -2675,6 +2675,9 @@ begin
     LiveImagingInProgress := False ;
     SnapRequested := False ;
     ScanningInProgress := False ;
+    ShowCameraImage := False ;
+    ShowCapturedImage := True ;
+    CameraTriggerRequired := False ;
 
     end;
 
