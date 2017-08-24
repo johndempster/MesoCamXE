@@ -142,7 +142,7 @@ begin
     case FSourceType of
         lsCoolLED : begin
           OpenComPort ;
-          CoolLEDInit ;
+//          CoolLEDInit ;
           end ;
         end;
     end;
@@ -372,6 +372,7 @@ begin
      DCB.ByteSize := 8 ;
      DCB.Parity := NOPARITY ;
      DCB.StopBits := ONESTOPBIT ;
+//     DCB.DTRFlowControl := 1
 
      { Update COM port }
      SetCommState( ComHandle, DCB ) ;
@@ -417,7 +418,7 @@ var
    Overlapped : Pointer ;
    OK : Boolean ;
 begin
-
+     exit;
      { Copy command line to be sent to xMit buffer and and a CR character }
      nC := Length(Line) ;
      for i := 1 to nC do xBuf[i-1] := ANSIChar(Line[i]) ;

@@ -47,6 +47,7 @@ unit MainUnit;
 // V1.7.1 22.08.17 Pixel shift images now equalised in intensity before interleaving into final image
 //                 Folder holding mesocam.raw file can now be changed in settings.
 // V1.7.1 23.08.17 Variation in exposure time still noy fully resolved.
+// V1.7.2 24.08.17 Pixel shift imaging working
 
 
 interface
@@ -495,7 +496,9 @@ function SectionFileName(
 
 procedure LoadRawImage(
           FileName : String ;    // File to save to
-          iSection : Integer     // Image Section number
+          ZSection : Integer ;   // Z stack section
+          TSection : Integer ;   // T series section
+          iPanel : Integer       // Wavelength panel
           ) ;
 
 procedure SaveImage(
@@ -777,9 +780,7 @@ begin
      scTSection.Position := 0 ;
      Page.TabIndex := 0 ;
      TSection := scTSection.Position ;
-     LoadRawImage( RawImagesFileName,
-                   TSection*Max(NumZSectionsAvailable,1)*Max(NumPanelsAvailable,1) +
-                   ZSection*Max(NumPanelsAvailable,1) + Page.TabIndex ) ;
+     LoadRawImage( RawImagesFileName,ZSection,TSection,Page.TabIndex) ;
 
      UpdateDisplay := False ;
      SnapRequested := False ;
@@ -1451,18 +1452,18 @@ begin
      Images[Page.TabIndex].Height := BitMap.Height ;
 
      // Show Z section slider bar
-     if (NumZSectionsAvailable > 1) and (not bStopImage.Enabled)  then
+     if ckAcquireZStack.Checked and (not bStopImage.Enabled)  then
         begin
         ZSectionPanel.Visible := True ;
-        lbZSection.Caption := format('Section %d/%d',[ZSection+1,NumZSectionsAvailable]) ;
+        lbZSection.Caption := format('Section %d/%d',[ZSection+1,Round(edNumZSections.Value)]) ;
         end
      else ZSectionPanel.Visible := False ;
 
      // Show T section slider bar
-     if (NumTSectionsAvailable > 1) and (not bStopImage.Enabled)  then
+     if ckAcquireTimeLapseSeries.Checked and (not bStopImage.Enabled)  then
         begin
         TSectionPanel.Visible := True ;
-        lbTSection.Caption := format('T %d/%d',[TSection+1,NumTSectionsAvailable]) ;
+        lbTSection.Caption := format('T %d/%d',[TSection+1,Round(edNumTimeLapsePoints.Value)]) ;
         end
      else TSectionPanel.Visible := False ;
 
@@ -2663,9 +2664,7 @@ begin
     if not LiveImagingInProgress then
        begin
        TSection := scTSection.Position ;
-       LoadRawImage( RawImagesFileName,
-                     TSection*Max(NumZSectionsAvailable,1)*Max(NumPanelsAvailable,1) +
-                     ZSection*Max(NumPanelsAvailable,1) + Page.TabIndex ) ;
+       LoadRawImage( RawImagesFileName,ZSection,TSection,Page.TabIndex) ;
        UpdateDisplay := True ;
        end;
 
@@ -2859,9 +2858,7 @@ procedure TMainFrm.PageChange(Sender: TObject);
 begin
      ZSection := scZSection.Position ;
      TSection := scTSection.Position ;
-     LoadRawImage( RawImagesFileName,
-                   TSection*Max(NumZSectionsAvailable,1)*Max(NumPanelsAvailable,1) +
-                   ZSection*Max(NumPanelsAvailable,1) + Page.TabIndex ) ;
+     LoadRawImage( RawImagesFileName,ZSection,TSection,Page.TabIndex) ;
 
      UpdateDisplay := True ;
      end;
@@ -2888,7 +2885,10 @@ var
     FileNames : TStringList ;
 begin
 
+
+
      SaveDialog.InitialDir := SaveDirectory ;
+
 
      // Create an unused file name
      iNum := 1 ;
@@ -2912,10 +2912,12 @@ begin
      SaveDialog.FileName := ExtractFileName(FileName) ;
      if not SaveDialog.Execute then Exit ;
 
+     edStatus.Text := 'Saving Image' ;
+
      // Ensure extension is set
      FileName := ChangeFileExt(SaveDialog.FileName, '.tif' ) ;
      Filename := ReplaceText( FileName, '.ome.tif', '.tif' ) ;
-       SaveDirectory := ExtractFilePath(SaveDialog.FileName) ;
+     SaveDirectory := ExtractFilePath(SaveDialog.FileName) ;
 
      // Check if any files exist already and allow user option to quit
      Exists := False ;
@@ -2946,9 +2948,7 @@ begin
              for iZ  := 0 to Max(NumZSectionsAvailable,1)-1 do
                  begin
                  // Get image
-                 LoadRawImage( RawImagesFileName,
-                               iT*Max(NumZSectionsAvailable,1)*Max(NumPanelsAvailable,1) +
-                               iZ*Max(NumPanelsAvailable,1) + iPanel ) ;
+                 LoadRawImage( RawImagesFileName,iZ,iT,iPanel) ;
 
                  // Create file
                  if (not SaveAsMultipageTIFF) or
@@ -3017,6 +3017,7 @@ begin
 
      FileNames.Destroy ;
      UnsavedRawImage := False ;
+     edStatus.Text := '' ;
 
 end;
 
@@ -3262,9 +3263,7 @@ procedure TMainFrm.scTSectionChange(Sender: TObject);
 // ---------------
 begin
      TSection := scTSection.Position ;
-     LoadRawImage( RawImagesFileName,
-                   TSection*Max(NumZSectionsAvailable,1)*Max(NumPanelsAvailable,1) +
-                   ZSection*Max(NumPanelsAvailable,1) + Page.TabIndex ) ;
+     LoadRawImage( RawImagesFileName,ZSection,TSection,Page.TabIndex) ;
      UpdateDisplay := True ;
      end;
 
@@ -3275,9 +3274,7 @@ procedure TMainFrm.scZSectionChange(Sender: TObject);
 // ---------------
 begin
      ZSection := scZSection.Position ;
-     LoadRawImage( RawImagesFileName,
-                   TSection*Max(NumZSectionsAvailable,1)*Max(NumPanelsAvailable,1) +
-                   ZSection*Max(NumPanelsAvailable,1) + Page.TabIndex ) ;
+     LoadRawImage( RawImagesFileName,ZSection,TSection,Page.TabIndex) ;
      UpdateDisplay := True ;
      end;
 
@@ -3330,19 +3327,32 @@ begin
 
 procedure TMainFrm.LoadRawImage(
           FileName : String ;    // File to save to
-          iSection : Integer     // Image Section number
+          ZSection : Integer ;   // Z stack section
+          TSection : Integer ;   // T series section
+          iPanel : Integer       // Panel
           ) ;
-// ----------------------
-// Load raw image to file
-// ----------------------
+// ------------------------
+// Load raw image from file
+// ------------------------
 var
     FileHandle : THandle ;
     FilePointer,NumBytes : Int64 ;
+    iSection : Integer ;
     i : DWORD ;
     pBufW : PWordArray ;
 begin
 
       if not RawImageAvailable then Exit ;
+
+     iSection := TSection*Max(Round(edNumZSections.Value),1)*Max(NumPanelsAvailable,1) +
+                 ZSection*Max(NumPanelsAvailable,1) + iPanel  ;
+
+     // Exit with zero image if image not available
+     if iSection >= NumImagesInRawFile then
+        begin
+        for i := 0 to HRNumComponentsPerFrame-1 do  pImageBuf^[i] := 0 ;
+        Exit ;
+        end;
 
       FileHandle := FileOpen( FileName, fmOpenRead ) ;
       if Integer(FileHandle) < 0 then
@@ -3350,7 +3360,6 @@ begin
          ShowMessage('Unable to open ' + FileName ) ;
          Exit ;
          end;
-
 
       NumBytes := HRNumComponentsPerFrame*2 ;
       pBufW := GetMemory( NumBytes ) ;
@@ -3682,11 +3691,11 @@ begin
     SaveAsMultipageTIFF := GetElementBool( ProtNode, 'SAVEASMULTIPAGETIFF', SaveAsMultipageTIFF ) ;
     RawImagesFileName := GetElementText( ProtNode, 'RAWIMAGESFILENAME', RawImagesFileName ) ;
 
-    GetElementInt( ProtNode, 'NUMZSECTIONSAVAILABLE', NumZSectionsAvailable ) ;
+    NumZSectionsAvailable := GetElementInt( ProtNode, 'NUMZSECTIONSAVAILABLE', NumZSectionsAvailable ) ;
     scZSection.Max := NumZSectionsAvailable ;
-    GetElementInt( ProtNode, 'NUMTSECTIONSAVAILABLE', NumTSectionsAvailable ) ;
+    NumTSectionsAvailable := GetElementInt( ProtNode, 'NUMTSECTIONSAVAILABLE', NumTSectionsAvailable ) ;
     scTSection.Max := NumTSectionsAvailable ;
-    GetElementInt( ProtNode, 'NUMPANELSAVAILABLE', NumPanelsAvailable ) ;
+    NumPanelsAvailable := GetElementInt( ProtNode, 'NUMPANELSAVAILABLE', NumPanelsAvailable ) ;
 
     // Image acquisition modes
     ckSeparateLightSources.Checked := GetElementBool( ProtNode, 'SEPARATELIGHTSOURCES', ckSeparateLightSources.Checked ) ;
