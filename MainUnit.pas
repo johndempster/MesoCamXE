@@ -48,6 +48,9 @@ unit MainUnit;
 //                 Folder holding mesocam.raw file can now be changed in settings.
 // V1.7.1 23.08.17 Variation in exposure time still noy fully resolved.
 // V1.7.2 24.08.17 Pixel shift imaging working
+//        25.08.17 Now correctly displays captured image when live imaging stopped
+//        28.08.17 ROI, zoom and display move functions now available simultaneously
+//        29.08.17 Sequential multiwavelength imaging working
 
 
 interface
@@ -226,9 +229,6 @@ type
     scTSection: TScrollBar;
     Label1: TLabel;
     Label15: TLabel;
-    DisplayModePanel: TPanel;
-    rbZoomMode: TRadioButton;
-    rbROIMode: TRadioButton;
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -259,7 +259,6 @@ type
     procedure edNumPixelsPerZStepKeyPress(Sender: TObject; var Key: Char);
     procedure edMicronsPerZStepKeyPress(Sender: TObject; var Key: Char);
     procedure edGotoXPositionKeyPress(Sender: TObject; var Key: Char);
-    procedure Image0DblClick(Sender: TObject);
     procedure sbContrastChange(Sender: TObject);
     procedure bLiveImageClick(Sender: TObject);
     procedure mnSaveImageClick(Sender: TObject);
@@ -288,6 +287,8 @@ type
     procedure mnContentsClick(Sender: TObject);
     procedure edGotoYPositionKeyPress(Sender: TObject; var Key: Char);
     procedure edGotoZPositionKeyPress(Sender: TObject; var Key: Char);
+    procedure rbROIModeClick(Sender: TObject);
+    procedure rbZoomModeClick(Sender: TObject);
   private
 
     { Private declarations }
@@ -307,7 +308,6 @@ type
     { Public declarations }
     ProgramName : string ;                  // Program name & version
     CameraType : Integer ;
-//    PixelWidth : Double ;                 // Camera pixel size (um)
 
     RelayLensMagnification : Double ;       // Camera relay lens magnification
     NumLenses : Integer ;                   // No. lenses in table
@@ -331,6 +331,7 @@ type
     pFrameBuf : Pointer ;
     TempBuf : PBig16bitArray ;
     FirstImageSum : Double ;
+    ResizeImage : Boolean ;
 
     FramePointer : Integer ;
     MostRecentFrame : Integer ;
@@ -346,16 +347,11 @@ type
     TimeLapseNumPoints : Integer ;    // No. points in time lapse series
     TimeLapseInterval : Double ;      // Interval between time lapse images
 
-    BufSize : Integer ;
-    XCentre : Double ;
-    XWidth : Double ;
-    YCentre : Double ;
-    YHeight : Double ;
     PixelsToMicronsX : Double ;                // Image pixel X# to micron scaling factor
     PixelsToMicronsY : Double ;                // Image pixel Y# to micron scaling factor
     Images : Array[0..3] of TImage ;           // Image pointers
 
-    CCDRegion : TDoubleRect ;                    // CCD image area
+    CCDRegion : TDoubleRect ;                  // CCD image area
     SelectedRect : TDoubleRect ;               // Selected sub-area within displayed image (image pixels)
     SelectedRectBM : TRect ;                   // Selected sub-area (bitmap pixels)
     SelectedEdge : TRect ;                     // Selection rectangle edges selected
@@ -381,14 +377,12 @@ type
     HRNumComponentsPerFrame : Integer ;     // No. of colour components
     NumPixelShiftFrames : Integer ;         // No. of pixel shifted frames
 
-    ScanInfo : String ;
     SlidersDisabled : Boolean ;
 
     // Z axis control
     ZSection : Integer ;                // Current Z Section being acquired
     ZStep : Double ;                  // Spacing between Z Sections (microns)
     NumZSectionsAvailable : Integer ;   // No. of Sections in Z stack
-    NumLinesPerZStep : Integer ;      // No. lines per Z step in XZ mode
     ZStackStartingPosition : Double ;   // Starting position of Z stack series
 
     TSection : Integer ;                // Current time lapse Section being acquired
@@ -401,18 +395,11 @@ type
 
     DisplayMaxWidth : Integer ;
     DisplayMaxHeight : Integer ;
-    NumFrameTypes : Integer ;
 
-    XScale : Single ;
-    YScale : Single ;
-    XLeft : Double ;
-    YTop : Double ;
-    XDown : Integer ;
-    YDown : Integer ;
-    XScaleToBM : Double ;
-    ROIMode : Boolean ;
-
-    YScaleToBM : Double ;
+    XLeft : Double ;                 // Left edge of display (fraction of camera frame)
+    YTop : Double ;                  // Top edge of display (fraction of camera frame)
+    ScaleToBM : Double ;             // Scale from image pixel to bit map coord
+    ROIMode : Boolean ;              // Region of interest mode flag
 
     Magnification : Array[0..999] of Integer ;
 
@@ -446,7 +433,6 @@ type
     SaveDirectory : String ;
     SettingsDirectory : String ;
     RawImagesFileName : String ;
-    iImage : Integer ;
     NumImagesInRawFile : Integer ;        // Num images in file
 
     UnsavedRawImage : Boolean ;      // TRUE indicates raw images file contains an unsaved hi res. image
@@ -459,7 +445,6 @@ type
     IgnorePanelControls : Boolean ;
 
     MemUsed : Integer ;
-    procedure InitialiseImage ;
     procedure SetImagePanels ;
     procedure StartNewScan ;
     procedure StartCamera ;
@@ -616,6 +601,7 @@ begin
      IgnorePanelControls := True ;
      CameraTriggerRequired := False ;
      TimerBusy := False ;
+     ResizeImage := False ;
      end;
 
 
@@ -632,13 +618,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.7.1';
+     ProgramName := 'MesoCam V1.7.2';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 23/08/17';
+     ProgramName := ProgramName + ' 29/08/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -653,8 +639,6 @@ begin
      LabIO.ADCInputMode := imDifferential ;
      if cam1.NumBytesPerPixel = 1 then EmptyFlag := 255
                                   else EmptyFlag := 32000 ;
-
-     NumLinesPerZStep := 1 ;
 
     TimeLapseNumPoints := 100 ;
     TimeLapseInterval := 10.0 ;
@@ -787,8 +771,14 @@ begin
      SnapRequestedAfterInterval := False ;
      ScanningInProgress := False ;
 
-    SetImagePanels ;
-    InitialiseImage ;
+     SetImagePanels ;
+
+     // Indicate selected frame type selected for contrast update
+     DisplayGrp.Caption := ' Contrast ' ;
+     SetDisplayIntensityRange( GreyLo, GreyHi ) ;
+     // Update display look up tables
+     UpdateLUT( GreyLevelMax );
+
     MouseUpCursor := crCross ;
 
     SetScanZoomToFullField ;
@@ -886,21 +876,6 @@ begin
      end ;
 
 
-procedure TMainFrm.Image0DblClick(Sender: TObject);
-// -----------------------------
-// Mouse double clicked on image
-// -----------------------------
-begin
-      ROIMode := True ;
-      // Set top-left of ROI box to current cursor position
-      SelectedRectBM.Left := MouseDownAt.X ;
-      SelectedRect.Left := (SelectedRectBM.Left/XScaleToBM)/FrameWidth + XLeft ;
-      SelectedRectBM.Top := MouseDownAt.Y ;
-      SelectedRect.Top := (SelectedRectBM.Top/YScaleToBM)/FrameHeight + YTop ;
-      UpdateDisplay := True ;
-      end;
-
-
 procedure TMainFrm.Image0MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 // -------------------
@@ -914,15 +889,23 @@ begin
 
      // Set mouse down flag
      MouseDown := True ;
-     XDown := X ;
-     YDown := Y ;
+//     XDown := X ;
+//     YDown := Y ;
      MouseDownAt.X := X ;
      MouseDownAt.Y := Y ;
      TopLeftDown.X := Round(XLeft*FrameWidth) ;
      TopLeftDown.Y := Round(YTop*FrameHeight) ;
 
      MouseUpCursor := Image0.Cursor ;
-     if (Image0.Cursor = crCross) and (not ROIMode) then Image0.Cursor := crHandPoint ;
+     if (Image0.Cursor = crCross) {and (not ROIMode)} then Image0.Cursor := crHandPoint ;
+
+     Image0.Cursor := crSizeAll ;
+
+     if not ROIMode then Screen.Cursor := crSizeAll ;
+
+     UpdateDisplay := True ;
+
+//     Screen.Cursor := crSizeAll ;
 
      end;
 
@@ -942,8 +925,11 @@ begin
 
      if pDisplayBuf = Nil then Exit ;
 
-     XImage := Round(X/XScaleToBM) + Round(XLeft*FrameWidth) ;
-     YImage := Round(Y/YScaleToBM) + Round(YTop*FrameHeight) ;
+     // Add magnification and limit bitmap to window
+     ScaleToBM := (BitMap.Width*Magnification[iZoom]) / Max(FrameWidth,1) ;
+
+     XImage := Round(X/ScaleToBM) + Round(XLeft*FrameWidth) ;
+     YImage := Round(Y/ScaleToBM) + Round(YTop*FrameHeight) ;
      i := YImage*FrameWidth + XImage ;
 
      PixelsToMicronsX := Cam1.BinFactor*MagnifiedCameraPixelSize/sqrt(Cam1.NumPixelShiftFrames) ;
@@ -985,36 +971,43 @@ begin
         else if SelectedEdge.Top = 1 then Image0.Cursor := crSizeNS
         else if SelectedEdge.Bottom = 1 then Image0.Cursor := crSizeNS
         else Image0.Cursor := crCross ;
+        if Image0.Cursor <>  crCross then ROIMode := True
+                                     else ROIMode := False ;
         CursorPos.X := X ;
         CursorPos.Y := Y ;
         end
      else
         begin
-        if Image0.Cursor = crCRoss then Image0.Cursor := crHandPoint ;
+
         XShift := X - CursorPos.X ;
         CursorPos.X := X ;
         YShift := Y - CursorPos.Y ;
         CursorPos.Y := Y ;
+        if (Abs(XShift) >= 2) or (Abs(YShift) >= 2) then
+           begin
+  //         Image0.Cursor := crDrag ;
+
+           end;
         if SelectedEdge.Left = 1 then
            begin
            // Move left edge
            SelectedRectBM.Left := Max(SelectedRectBM.Left + XShift,0);
            SelectedRectBM.Left := Min(SelectedRectBM.Left,Min(BitMap.Width-1,SelectedRectBM.Right-1)) ;
-           SelectedRect.Left := (SelectedRectBM.Left/XScaleToBM)/FrameWidth + XLeft ;
+           SelectedRect.Left := (SelectedRectBM.Left/ScaleToBM)/FrameWidth + XLeft ;
            end ;
         if SelectedEdge.Right = 1 then
            begin
            // Move right edge
            SelectedRectBM.Right := Max(SelectedRectBM.Right + XShift,Max(0,SelectedRectBM.Left));
            SelectedRectBM.Right := Min(SelectedRectBM.Right,BitMap.Width-1) ;
-           SelectedRect.Right := (SelectedRectBM.Right/XScaleToBM)/FrameWidth + XLeft ;
+           SelectedRect.Right := (SelectedRectBM.Right/ScaleToBM)/FrameWidth + XLeft ;
            end;
         if SelectedEdge.Top = 1 then
            begin
            // Move top edge
            SelectedRectBM.Top := Max(SelectedRectBM.Top + YShift,0);
            SelectedRectBM.Top := Min(SelectedRectBM.Top,Min(BitMap.Height-1,SelectedRectBM.Bottom-1)) ;
-           SelectedRect.Top := ((SelectedRectBM.Top/YScaleToBM) + YTop)/FrameHeight ;
+           SelectedRect.Top := ((SelectedRectBM.Top/ScaleToBM))/FrameHeight + YTop ;
            end;
 
         if SelectedEdge.Bottom = 1 then
@@ -1022,34 +1015,30 @@ begin
            // Move bottom edge
            SelectedRectBM.Bottom := Max(SelectedRectBM.Bottom + YShift,SelectedRectBM.Top+1);
            SelectedRectBM.Bottom := Min(SelectedRectBM.Bottom,BitMap.Height-1) ;
-           SelectedRect.Bottom := ((SelectedRectBM.Bottom/YScaleToBM) + YTop)/FrameHeight ;
+           SelectedRect.Bottom := ((SelectedRectBM.Bottom/ScaleToBM))/FrameHeight + YTop ;
            end;
 
-        if ROIMode then
-           begin
-           // If in ROI mode, set bottom,right edge of ROI to current cursor position
-           SelectedRectBM.Right := X ;
-           SelectedRectBM.Bottom := Y ;
-           SelectedRect.Right := (SelectedRectBM.Right/XScaleToBM)/FrameWidth + XLeft ;
-           SelectedRect.Bottom := ((SelectedRectBM.Bottom/YScaleToBM) + YTop)/FrameHeight ;
-           end
-        else if (SelectedEdge.Left or SelectedEdge.Right or
-            SelectedEdge.Top or SelectedEdge.Bottom) = 0 then
+
+        if (SelectedEdge.Left = 0) or
+           (SelectedEdge.Right = 0) or
+           (SelectedEdge.Top = 0 ) or
+           (SelectedEdge.Bottom = 0) then
             begin
             // Move display window
             XLeft := XLeft*FrameWidth ;
             YTop := YTop*FrameHeight ;
-            XLeft := TopLeftDown.X - Round((X - MouseDownAt.X)/XScaleToBM) ;
-            XRight := Min(XLeft + Round(Bitmap.Width/XScaleToBM),FrameWidth) ;
-            XLeft := Max( XRight - Round(Bitmap.Width/XScaleToBM), 0 ) ;
-            YTop := TopLeftDown.Y - Round((Y - MouseDownAt.Y)/YScaleToBM) ;
-            YBottom := Min(YTop + Round(Bitmap.Height/YScaleToBM),FrameHeight) ;
-            YTop := Max( YBottom - Round(Bitmap.Height/YScaleToBM),0) ;
+            XLeft := TopLeftDown.X - Round((X - MouseDownAt.X)/ScaleToBM) ;
+            XRight := Min(XLeft + Round(Bitmap.Width/ScaleToBM),FrameWidth) ;
+            XLeft := Max( XRight - Round(Bitmap.Width/ScaleToBM), 0 ) ;
+            YTop := TopLeftDown.Y - Round((Y - MouseDownAt.Y)/ScaleToBM) ;
+            YBottom := Min(YTop + Round(Bitmap.Height/ScaleToBM),FrameHeight) ;
+            YTop := Max( YBottom - Round(Bitmap.Height/ScaleToBM),0) ;
             XLeft := XLeft/FrameWidth ;
             YTop := YTop/FrameHeight ;
             end;
          end ;
-     UpdateDisplay := True ;
+//     UpdateDisplay := True ;
+
      end ;
 
 
@@ -1079,29 +1068,26 @@ var
    NewWidth,NewHeight,MagnificationOld : Integer ;
 begin
 
-    if rbZoomMode.Checked and
-       (CursorPos.X = MouseDownAt.X) and
-       (CursorPos.Y = MouseDownAt.Y) then
+    if not ROIMode and
+       (Abs(CursorPos.X - MouseDownAt.X) < 2) and
+       (Abs(CursorPos.Y - MouseDownAt.Y) < 2) then
        begin
        MagnificationOld := Magnification[iZoom] ;
-       if Button = mbLeft then
-          begin
-          iZoom := Min(iZoom + 1,High(Magnification));
-          end
-       else
-          begin
-          iZoom := Max(iZoom - 1,0);
-          end;
+       if Button = mbLeft then iZoom := Min(iZoom + 1,High(Magnification))
+                          else iZoom := Max(iZoom - 1,0);
+
+       // Add magnification and limit bitmap to window
+       ScaleToBM := (BitMap.Width*Magnification[iZoom]) / Max(FrameWidth,1) ;
 
        NewWidth := Round(BitMap.Width*(MagnificationOld/Magnification[iZoom])) ;
        NewHeight := Round(BitMap.Height*(MagnificationOld/Magnification[iZoom])) ;
 
        XLeft := XLeft*FrameWidth ;
        YTop := YTop*FrameHeight ;
-       XLeft := Max(XLeft + Round((CursorPos.X-(NewWidth div 2))/XScaleToBM),0);
-       XLeft := Min(XLeft,FrameWidth - Round(NewWidth/XScaleToBM)) ;
-       YTop := Max(YTop + Round((CursorPos.Y-(NewHeight div 2))/YScaleToBM),0);
-       YTop := Min(YTop,FrameHeight - Round(NewHeight/YScaleToBM)) ;
+       XLeft := Max(XLeft + Round((CursorPos.X-(NewWidth div 2))/ScaleToBM),0);
+       XLeft := Min(XLeft,FrameWidth - Round(NewWidth/ScaleToBM)) ;
+       YTop := Max(YTop + Round((CursorPos.Y-(NewHeight div 2))/ScaleToBM),0);
+       YTop := Min(YTop,FrameHeight - Round(NewHeight/ScaleToBM)) ;
        XLeft := XLeft/FrameWidth ;
        YTop := YTop/FrameHeight ;
 
@@ -1110,36 +1096,16 @@ begin
        end;
 
      MouseDown := False ;
-     Image0.Cursor := MouseUpCursor ;
-     //Screen.Cursor :=crDefault ;
-     if rbZoomMode.Checked then Image0.Cursor := crSizeAll
-                           else Image0.Cursor :=crDefault ;
 
      ROIMode := False ;                   // Turn ROI mode off
      FixRectangle(SelectedRectBM);
 
+     // Screen cursor restored to default
+     Image0.Cursor := crCross ;
+     Screen.Cursor := crDefault ;
+     UpdateDisplay := True ;
+
 end;
-
-
-procedure TMainFrm.InitialiseImage ;
-// ------------------------------------------------------
-// Re-initialise size of memory buffers and image bitmaps
-// ------------------------------------------------------
-begin
-
-     // Set size and location of image display panels
-     SetImagePanels ;
-
-     // Indicate selected frame type selected for contrast update
-     DisplayGrp.Caption := ' Contrast ' ;
-
-     // Set intensity range and sliders
-     SetDisplayIntensityRange( GreyLo, GreyHi ) ;
-
-     // Update display look up tables
-     UpdateLUT( GreyLevelMax );
-
-end ;
 
 
 procedure TMainFrm.SetImagePanels ;
@@ -1174,8 +1140,7 @@ begin
         end;
 
      // Add magnification and limit bitmap to window
-     XScaleToBM := (BitMap.Width*Magnification[iZoom]) / Max(FrameWidth,1) ;
-     YScaleToBM := (BitMap.Width*Magnification[iZoom]) / Max(FrameWidth,1) ;
+     ScaleToBM := (BitMap.Width*Magnification[iZoom]) / Max(FrameWidth,1) ;
      BitMap.Width := Min(BitMap.Width*Magnification[iZoom],DisplayMaxWidth) ;
      BitMap.Height := Min(BitMap.Height*Magnification[iZoom],DisplayMaxHeight) ;
 
@@ -1310,10 +1275,10 @@ begin
      Bitmap.Canvas.Brush.Style := bsClear ;
      Bitmap.Canvas.Font.Color := PenColor ;
 
-     SelectedRectBM.Left := Round((SelectedRect.Left-XLeft)*FrameWidth*XScaletoBM) ;
-     SelectedRectBM.Right := Round((SelectedRect.Right - XLeft)*FrameWidth*XScaletoBM) ;
-     SelectedRectBM.Top := Round((SelectedRect.Top - YTop)*FrameHeight*YScaletoBM) ;
-     SelectedRectBM.Bottom := Round((SelectedRect.Bottom - YTop)*FrameHeight*YScaletoBM) ;
+     SelectedRectBM.Left := Round((SelectedRect.Left-XLeft)*FrameWidth*ScaleToBM) ;
+     SelectedRectBM.Right := Round((SelectedRect.Right - XLeft)*FrameWidth*ScaleToBM) ;
+     SelectedRectBM.Top := Round((SelectedRect.Top - YTop)*FrameHeight*ScaleToBM) ;
+     SelectedRectBM.Bottom := Round((SelectedRect.Bottom - YTop)*FrameHeight*ScaleToBM) ;
 
      // Display zomm area selection rectangle
      Bitmap.Canvas.Rectangle(SelectedRectBM);
@@ -1389,7 +1354,11 @@ begin
 
     if pImBuf = Nil then Exit ;
 
-    //SetImagePanels ;
+    if ResizeImage then SetImagePanels ;//Resize ;
+    ResizeImage := False ;
+
+    ScaleToBM := (BitMap.Width*Magnification[iZoom]) / Max(FrameWidth,1) ;
+
     Images[Page.TabIndex].Width := BitMap.Width ;
     Images[Page.TabIndex].Height := BitMap.Height ;
 
@@ -1399,16 +1368,16 @@ begin
     // Adjust left,top edge of displayed region of image when bottom,right is off image
     XLeft := XLeft*FrameWidth ;
     Ytop := YTop*FrameHeight ;
-    XRight := Min(XLeft + Round(Bitmap.Width/XScaleToBM),FrameWidth) ;
-    XLeft := Max( XRight - Round(Bitmap.Width/XScaleToBM), 0 ) ;
-    YBottom := Min(YTop + Round(Bitmap.Height/YScaleToBM),FrameHeight) ;
-    YTop := Max( YBottom - Round(Bitmap.Height/YScaleToBM),0) ;
+    XRight := Min(XLeft + Round(Bitmap.Width/ScaleToBM),FrameWidth) ;
+    XLeft := Max( XRight - Round(Bitmap.Width/ScaleToBM), 0 ) ;
+    YBottom := Min(YTop + Round(Bitmap.Height/ScaleToBM),FrameHeight) ;
+    YTop := Max( YBottom - Round(Bitmap.Height/ScaleToBM),0) ;
     XLeft := XLeft/FrameWidth ;
     Ytop := YTop/FrameHeight ;
 
     //  X axis pixel mapping
     X := Round(XLeft*FrameWidth) ;
-    dX := 1.0/XScaleToBM ;
+    dX := 1.0/ScaleToBM ;
     GetMem( XMap, BitMap.Width*4 ) ;
     for i := 0 to BitMap.Width-1 do
         begin
@@ -1417,10 +1386,10 @@ begin
         end;
 
     // Y axis line mapping
-    //YScaleToBM := (BitMap.Width*Magnification*FrameHeightScale) / FrameWidth ;
+    //ScaleToBM := (BitMap.Width*Magnification*FrameHeightScale) / FrameWidth ;
     GetMem( YMap, BitMap.Height*4 ) ;
     Y := Round(YTop*FrameHeight) ;
-    dY := 1.0/YScaleToBM ;
+    dY := 1.0/ScaleToBM ;
     for i := 0 to BitMap.Height-1 do
         begin
         YMap^[i] := Min(Max(Round(Y),0),FrameHeight-1) ;
@@ -1444,8 +1413,8 @@ begin
             end ;
         end ;
 
-     // Display ROI in XY and XYZ modde
-     if not rbZoomMode.Checked then DisplayROI(BitMap) ;
+     // Display ROI
+     DisplayROI(BitMap) ;
 
      Images[Page.TabIndex].Picture.Assign(BitMap) ;
      Images[Page.TabIndex].Width := BitMap.Width ;
@@ -1470,14 +1439,11 @@ begin
      TSectionPanel.Left := Page.Left ;
      if TSectionPanel.Visible then ZSectionPanel.Left := TSectionPanel.Left + TSectionPanel.Width
                               else ZSectionPanel.Left := TSectionPanel.Left ;
-     DisplayModePanel.Left := Page.Left + Page.Width - DisplayModePanel.Width ;
 
      if TSectionPanel.Visible or ZSectionPanel.Visible then lbReadout.Left := ZSectionPanel.Left + ZSectionPanel.Width ;
 
      FreeMem(XMap) ;
      FreeMem(YMap) ;
-
-     SetImagePanels ;
 
      end ;
 
@@ -1744,8 +1710,6 @@ begin
        end;
     NumFramesRequired := Cam1.NumPixelShiftFrames ;
 
-    InitialiseImage ;
-
      // Set to full frame
     Cam1.SetCCDArea( Round(CCDRegion.Left*MainFrm.Cam1.FrameWidthMax),
                      Round(CCDRegion.Top*MainFrm.Cam1.FrameHeightMax),
@@ -1774,7 +1738,6 @@ begin
     Cam1.NumFramesInBuffer := 18 ;
 //    Cam1.TriggerMode := CamExtTrigger ;//camFreeRun ;
 
-    //InitialiseImage ;
     Cam1.GetFrameBufferPointer( pFrameBuf ) ;
 
     if LiveImagingInProgress then Cam1.StartCapture
@@ -1794,11 +1757,12 @@ begin
 
     CCDShiftCounter := -1 ;
 
-    SetImagePanels ;
-
     CameraTriggerRequired := False ;
 
     NextCameraTrigger := timegettime + 1000  ;
+
+    UpdateDisplay := True ;
+    ResizeImage := True ;
 
     end;
 
@@ -1983,6 +1947,7 @@ begin
 
      // Set intensity range and sliders
      SetDisplayIntensityRange( GreyLo,GreyHi ) ;
+
      UpdateDisplay := True ;
 
 end;
@@ -2156,6 +2121,22 @@ begin
 end ;
 
 
+procedure TMainFrm.rbROIModeClick(Sender: TObject);
+// -----------------
+// ROI mode selected
+// -----------------
+begin
+    UpdateDisplay := True ;
+    end;
+
+procedure TMainFrm.rbZoomModeClick(Sender: TObject);
+// -----------------
+// Zoom mode selected
+// -----------------
+begin
+    UpdateDisplay := True ;
+    end;
+
 procedure TMainFrm.TimerTimer(Sender: TObject);
 // -------------------------
 // Regular timed operations
@@ -2294,6 +2275,7 @@ begin
     edXYZPosition.Text := format('X=%.2f, Y=%.2f, Z=%.2f um',
                           [ZStage.XPosition,ZStage.YPosition,ZStage.ZPosition]) ;
 
+    Image0.Cursor := Image0.Cursor ;
     TimerBusy := False ;
 
     end;
@@ -2492,8 +2474,6 @@ begin
        // Exit if capture not in progress
        if bCaptureImage.Enabled then Exit ;
 
-       InitialiseImage ;
-
        // Light source control
        // (Image capture request is made if not at end of light source list)
        SnapRequested := not SelectNextLightSource(false) ;
@@ -2609,24 +2589,24 @@ begin
 
      bSelectedRegion.Enabled := False ;
 
-     CCDRegion.Right := (SelectedRectBM.Right/XScaletoBM
-                        + Round(XLeft*FrameWidth) +1)*(CCDRegion.Width/FrameWidth) + CCDRegion.Left ;
-     CCDRegion.Left := (SelectedRectBM.Left/XScaletoBM
-                        + Round(XLeft*FrameWidth))*(CCDRegion.Width/FrameWidth) + CCDRegion.Left;
-     CCDRegion.Width := CCDRegion.Right - CCDRegion.Left ;
+     // Set CCD region to selected ROI region
+     CCDRegion.Left := SelectedRect.Left ;
+     CCDRegion.Right := SelectedRect.Right ;
+     CCDRegion.Top := SelectedRect.Top ;
+     CCDRegion.Bottom := SelectedRect.Bottom ;
 
-     CCDRegion.Bottom := (SelectedRectBM.Bottom/YScaletoBM
-                         - Round(YTop*FrameHeight) +1)*(CCDRegion.Height/FrameHeight) + CCDRegion.Top ;
-     CCDRegion.Top := (SelectedRectBM.Top/YScaletoBM - Round(YTop*FrameHeight))*(CCDRegion.Height/FrameHeight) + CCDRegion.Top ;
-//     if LiveImagingInProgress then CCDRegion.Top := 0.0 ;
-     CCDRegion.Height := CCDRegion.Bottom - CCDRegion.Top ;
-
+     // Reset selected ROI to full image
      SelectedRect.Left := 0 ;
      SelectedRect.Right := 1.0 ;
      SelectedRect.Width := 1.0 ;
      SelectedRect.Top := 0.0 ;
      SelectedRect.Bottom := 1.0 ;
      SelectedRect.Height := 1.0 ;
+
+     // Reset display zoom to full image
+     iZoom := 0 ;
+     XLeft := 0.0 ;
+     YTop := 0.0 ;
 
      if LiveImagingInProgress then SnapRequested := True ;
      bSelectedRegion.Enabled := True  ;
@@ -2664,6 +2644,7 @@ begin
     if not LiveImagingInProgress then
        begin
        TSection := scTSection.Position ;
+       ZSection := scZSection.Position ;
        LoadRawImage( RawImagesFileName,ZSection,TSection,Page.TabIndex) ;
        UpdateDisplay := True ;
        end;
@@ -2677,6 +2658,7 @@ begin
     ShowCameraImage := False ;
     ShowCapturedImage := True ;
     CameraTriggerRequired := False ;
+    UpdateDisplay := True ;
 
     end;
 
@@ -2856,6 +2838,7 @@ procedure TMainFrm.PageChange(Sender: TObject);
 // Tab page changed
 // ----------------
 begin
+
      ZSection := scZSection.Position ;
      TSection := scTSection.Position ;
      LoadRawImage( RawImagesFileName,ZSection,TSection,Page.TabIndex) ;
@@ -2885,10 +2868,7 @@ var
     FileNames : TStringList ;
 begin
 
-
-
      SaveDialog.InitialDir := SaveDirectory ;
-
 
      // Create an unused file name
      iNum := 1 ;
@@ -3090,10 +3070,7 @@ begin
   TSectionPanel.Top := ZSectionPanel.Top ;
   TSectionPanel.Left := ZSectionPanel.Left - TSectionPanel.Width - 5 ;
 
-  DisplayModePanel.Left := Page.Left + Page.Width - DisplayModePanel.Width ;
-  DisplayModePanel.Top := ZSectionPanel.Top ;
   lbReadout.Top :=  ZSectionPanel.Top ;
-
 
   DisplayMaxWidth := tbChan0.ClientWidth - Image0.Left - 5 ;
   DisplayMaxHeight := tbChan0.ClientHeight - Image0.Top - 5 - ZSectionPanel.Height ;
@@ -3119,7 +3096,6 @@ begin
      ImageSizeGrp.ClientHeight := ImageSizeGrp.ClientHeight + TimeLapseGrp.Height + 10 ;
      end
   else TimeLapseGrp.Visible := False ;
-
 
   // Set light source panels
   iTop := 16 ;
@@ -3436,8 +3412,6 @@ begin
 
     AddElementInt( ProtNode, 'CAPTUREMODE', cbCaptureMode.ItemIndex ) ;
 
-    AddElementBool( ProtNode,'ROIMODE', rbROIMode.Checked ) ;
-
     AddElementInt( ProtNode, 'PALETTE', cbPalette.ItemIndex ) ;
 
 //    AddElementDouble( ProtNode, 'LASERINTENSITY', LaserIntensity ) ;
@@ -3585,9 +3559,6 @@ begin
     NumBitsPerPixel := GetElementInt( ProtNode, 'NUMBITSPERPIXEL', NumBitsPerPixel ) ;
     NumImagesInRawFile := GetElementInt( ProtNode, 'NUMIMAGESINRAWFILE', NumImagesInRawFile ) ;
     NumImagesInRawFile := 0 ;
-
-    rbROIMode.Checked := GetElementBool( ProtNode,'ROIMODE', rbROIMode.Checked ) ;
-    rbZoomMode.Checked := not rbROIMode.Checked ;
 
     cbCaptureMode.ItemIndex := Min(Max(GetElementInt( ProtNode, 'CAPTUREMODE', cbCaptureMode.ItemIndex ),0),cbCaptureMode.Items.Count-1) ;
 

@@ -121,8 +121,8 @@ object MainFrm: TMainFrm
       OnClick = bStopImageClick
     end
     object bLiveImage: TButton
-      Left = 8
-      Top = 19
+      Left = 3
+      Top = 16
       Width = 180
       Height = 30
       Hint = 'Display live images from camera'
@@ -193,7 +193,7 @@ object MainFrm: TMainFrm
       end
       object bSelectedRegion: TButton
         Left = 12
-        Top = 54
+        Top = 56
         Width = 140
         Height = 26
         Hint = 'Set CCD readout area to rectangle indicated on display '
@@ -1245,10 +1245,6 @@ object MainFrm: TMainFrm
       object SlidersTab: TTabSheet
         Caption = 'Sliders'
         ImageIndex = 1
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object Label9: TLabel
           Left = 3
           Top = 4
@@ -1423,7 +1419,7 @@ object MainFrm: TMainFrm
     Top = 12
     Width = 854
     Height = 376
-    ActivePage = tbChan0
+    ActivePage = tbChan2
     TabOrder = 6
     OnChange = PageChange
     object tbChan0: TTabSheet
@@ -1439,7 +1435,6 @@ object MainFrm: TMainFrm
         ParentShowHint = False
         ShowHint = True
         Stretch = True
-        OnDblClick = Image0DblClick
         OnMouseDown = Image0MouseDown
         OnMouseMove = Image0MouseMove
         OnMouseUp = Image0MouseUp
@@ -1448,10 +1443,6 @@ object MainFrm: TMainFrm
     object tbChan1: TTabSheet
       Caption = 'Channel 1'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image1: TImage
         Left = 3
         Top = 3
@@ -1463,7 +1454,6 @@ object MainFrm: TMainFrm
         ParentShowHint = False
         ShowHint = True
         Stretch = True
-        OnDblClick = Image0DblClick
         OnMouseDown = Image0MouseDown
         OnMouseMove = Image0MouseMove
         OnMouseUp = Image0MouseUp
@@ -1472,10 +1462,6 @@ object MainFrm: TMainFrm
     object tbChan2: TTabSheet
       Caption = 'Channel 2'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image2: TImage
         Left = 3
         Top = 3
@@ -1487,7 +1473,6 @@ object MainFrm: TMainFrm
         ParentShowHint = False
         ShowHint = True
         Stretch = True
-        OnDblClick = Image0DblClick
         OnMouseDown = Image0MouseDown
         OnMouseMove = Image0MouseMove
         OnMouseUp = Image0MouseUp
@@ -1496,10 +1481,6 @@ object MainFrm: TMainFrm
     object tbChan3: TTabSheet
       Caption = 'tbChan3'
       ImageIndex = 3
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image3: TImage
         Left = -4
         Top = 3
@@ -1511,7 +1492,6 @@ object MainFrm: TMainFrm
         ParentShowHint = False
         ShowHint = True
         Stretch = True
-        OnDblClick = Image0DblClick
         OnMouseDown = Image0MouseDown
         OnMouseMove = Image0MouseMove
         OnMouseUp = Image0MouseUp
@@ -1606,50 +1586,6 @@ object MainFrm: TMainFrm
       PageSize = 0
       TabOrder = 0
       OnChange = scTSectionChange
-    end
-  end
-  object DisplayModePanel: TPanel
-    Left = 1004
-    Top = 390
-    Width = 225
-    Height = 26
-    BevelOuter = bvNone
-    TabOrder = 9
-    object rbZoomMode: TRadioButton
-      Left = 12
-      Top = 0
-      Width = 104
-      Height = 24
-      Hint = 'Select image zoom/position selection mode'
-      Caption = 'Zoom Mode'
-      Checked = True
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -15
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-      ParentShowHint = False
-      ShowHint = True
-      TabOrder = 0
-      TabStop = True
-    end
-    object rbROIMode: TRadioButton
-      Left = 130
-      Top = 0
-      Width = 95
-      Height = 24
-      Hint = 'Display CCD region of interest selection rectangle'
-      Caption = 'ROI Mode'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -15
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-      ParentShowHint = False
-      ShowHint = True
-      TabOrder = 1
     end
   end
   object Timer: TTimer
