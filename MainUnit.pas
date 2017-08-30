@@ -51,6 +51,7 @@ unit MainUnit;
 //        25.08.17 Now correctly displays captured image when live imaging stopped
 //        28.08.17 ROI, zoom and display move functions now available simultaneously
 //        29.08.17 Sequential multiwavelength imaging working
+//        30.08.17 Sequential multiwavelength imaging tested and working
 
 
 interface
@@ -624,7 +625,7 @@ begin
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 29/08/17';
+     ProgramName := ProgramName + ' 30/08/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -1720,7 +1721,7 @@ begin
     Cam1.GetFrameBufferPointer( pFrameBuf ) ;
     Cam1.AmpGain := cbCameraGain.ItemIndex ;
 
-    if (Cam1.NumComponentsPerFrame <> NumComponentsPerFrame) or (pLiveImageBuf = Nil) then
+    if true {(Cam1.NumComponentsPerFrame <> NumComponentsPerFrame) or (pLiveImageBuf = Nil)} then
        begin
        if pLiveImageBuf <> Nil then FreeMem(pLiveImageBuf);
        NumComponentsPerFrame := Cam1.NumComponentsPerFrame ;
@@ -2197,7 +2198,10 @@ begin
                s := s + format('T:%d/%d, ',[NumTSectionsAvailable+1,Round(edNumTimeLapsePoints.Value)]);
             if ckAcquireZStack.Checked then
                s := s + format('Z:%d/%d, ',[NumZSectionsAvailable+1,Round(edNumZSections.Value)]);
-            s := s + format(' F:%d/%d',[Min(CCDShiftCounter,NumPixelShiftFrames),NumPixelShiftFrames]);
+            if ckSeparateLightSources.Checked then
+               s := s + format(' F(%s):',[LightSource.Names[LightSource.List[LightSource.ListIndex]]])
+            else s := s + 'F:' ;
+            s := s + format('%d/%d',[Min(CCDShiftCounter,NumPixelShiftFrames),NumPixelShiftFrames]);
             edStatus.Text := s ;
             UpdateDisplay := True ;
             end ;
@@ -2572,7 +2576,7 @@ begin
 
     // Update selected light source
     for i := 0 to High(LightSource.Active) do LightSource.Active[i] := False ;
-    LightSource.Active[LightSource.ListIndex] := True ;
+    LightSource.Active[LightSource.List[LightSource.ListIndex]] := True ;
     LightSource.Update ;
 
     end;

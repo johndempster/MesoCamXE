@@ -121,7 +121,7 @@ object MainFrm: TMainFrm
       OnClick = bStopImageClick
     end
     object bLiveImage: TButton
-      Left = 3
+      Left = 8
       Top = 16
       Width = 180
       Height = 30
@@ -229,7 +229,7 @@ object MainFrm: TMainFrm
       end
     end
     object cbCameraGain: TComboBox
-      Left = 211
+      Left = 212
       Top = 84
       Width = 121
       Height = 28
@@ -259,7 +259,7 @@ object MainFrm: TMainFrm
       OnChange = cbLiveBinChange
     end
     object cbLens: TComboBox
-      Left = 208
+      Left = 212
       Top = 138
       Width = 124
       Height = 28
@@ -1403,10 +1403,10 @@ object MainFrm: TMainFrm
       Left = 12
       Top = 148
       Width = 326
-      Height = 35
+      Height = 30
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
-      Font.Height = -23
+      Font.Height = -19
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentFont = False

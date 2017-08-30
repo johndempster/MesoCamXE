@@ -324,6 +324,8 @@ begin
     ZStage.ZPositionMax := edZPositionMax.Value ;
 
     LightSource.ControlPort := cbLightSourceControlPort.ItemIndex ;
+    LightSource.Close ;
+    LightSource.Open ;
 
     MainFrm.SetScanZoomToFullField ;
     MainFrm.NumLenses := Round(edNumLenses.Value);

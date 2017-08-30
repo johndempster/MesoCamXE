@@ -5,6 +5,8 @@ unit LightSourceUnit;
 // ========================================================================
 // 20.03.17 USB-controlled CoolLED pE-x support added
 // 14.06.17 USB serial communication working but not complete
+// 38.08.17 Now uses correct COM port settings for CoolLED
+//          Detects and reports failure to communicate with CoolLED
 
 interface
 
@@ -19,28 +21,28 @@ const
   lsNone = 0 ;
   lsLED = 1 ;
   lsCoolLED = 2 ;
-
-dcb_Binary = $00000001;
-dcb_ParityCheck = $00000002;
-dcb_OutxCtsFlow = $00000004;
-dcb_OutxDsrFlow = $00000008;
-dcb_DtrControlMask = $00000030;
-dcb_DtrControlDisable = $00000000;
-dcb_DtrControlEnable = $00000010;
-dcb_DtrControlHandshake = $00000020;
-dcb_DsrSensivity = $00000040;
-dcb_TXContinueOnXoff = $00000080;
-dcb_OutX = $00000100;
-dcb_InX = $00000200;
-dcb_ErrorChar = $00000400;
-dcb_NullStrip = $00000800;
-dcb_RtsControlMask = $00003000;
-dcb_RtsControlDisable = $00000000;
-dcb_RtsControlEnable = $00001000;
-dcb_RtsControlHandshake = $00002000;
-dcb_RtsControlToggle = $00003000;
-dcb_AbortOnError = $00004000;
-dcb_Reserveds = $FFFF8000;
+  // Com port control flags
+  dcb_Binary = $00000001;
+  dcb_ParityCheck = $00000002;
+  dcb_OutxCtsFlow = $00000004;
+  dcb_OutxDsrFlow = $00000008;
+  dcb_DtrControlMask = $00000030;
+  dcb_DtrControlDisable = $00000000;
+  dcb_DtrControlEnable = $00000010;
+  dcb_DtrControlHandshake = $00000020;
+  dcb_DsrSensivity = $00000040;
+  dcb_TXContinueOnXoff = $00000080;
+  dcb_OutX = $00000100;
+  dcb_InX = $00000200;
+  dcb_ErrorChar = $00000400;
+  dcb_NullStrip = $00000800;
+  dcb_RtsControlMask = $00003000;
+  dcb_RtsControlDisable = $00000000;
+  dcb_RtsControlEnable = $00001000;
+  dcb_RtsControlHandshake = $00002000;
+  dcb_RtsControlToggle = $00003000;
+  dcb_AbortOnError = $00004000;
+  dcb_Reserveds = $FFFF8000;
 
 
 
@@ -60,16 +62,17 @@ type
     ControlState : Integer ;  // Control state
     OverLapStructure : POVERLAPPED ;
     ReplyBuf : string ;
+    ComFailed : Boolean ;
 
     procedure OpenCOMPort ;
     procedure CloseCOMPort ;
     procedure ResetCOMPort ;
     function SendCommand( const Line : string ) : Boolean ;
+    procedure WaitforCompletion ;
     function ReceiveBytes( var EndOfLine : Boolean ) : string ;
     procedure SetBaudRate( Value : DWord ) ;
     procedure SetControlPort( Value : DWord ) ;
     procedure SetSourceType( Value : Integer ) ;
-    procedure WaitforCompletion ;
     procedure CoolLEDInit ;
     procedure CoolLEDHandleMessages ;
     procedure CoolLEDUpdate ;
@@ -142,6 +145,7 @@ begin
     Status := '' ;
     ControlState := csIdle ;
     ReplyBuf := '' ;
+    ComFailed := False ;
 
     for I := 0 to High(Names) do begin
         Names[i] := format('LS%d',[i]) ;
@@ -164,7 +168,7 @@ begin
     case FSourceType of
         lsCoolLED : begin
           OpenComPort ;
-//          CoolLEDInit ;
+          CoolLEDInit ;
           end ;
         end;
     end;
@@ -282,9 +286,11 @@ begin
         if Length(sIntensity) < 3 then sIntensity := '0' + sIntensity ;
         s := SourceLetter[i] + 'I' + sIntensity ;
         SendCommand(s) ;
+        WaitforCompletion ;
         if Active[i] then s := SourceLetter[i] + 'N'
                      else s := SourceLetter[i] + 'F' ;
         SendCommand(s) ;
+        WaitforCompletion ;
         end ;
 
     end;
@@ -389,13 +395,13 @@ begin
 
      { Get current state of COM port and fill device control block }
      GetCommState( ComHandle, DCB ) ;
-     { Change settings to those required for 1902 }
+     { Change settings to those required for CoolLED }
      DCB.BaudRate := CBR_9600 ;
      DCB.ByteSize := 8 ;
      DCB.Parity := NOPARITY ;
      DCB.StopBits := ONESTOPBIT ;
-
-//     DCB.DTRFlowControl := 1
+     // Settings required to activate remote mode of CoolLED
+     DCB.Flags := dcb_Binary or dcb_DtrControlEnable or dcb_RtsControlEnable ;
 
      { Update COM port }
      SetCommState( ComHandle, DCB ) ;
@@ -415,6 +421,7 @@ begin
      ComPortOpen := True ;
       Status := '' ;
     ControlState := csIdle ;
+    ComFailed := False ;
 
     end ;
 
@@ -441,7 +448,9 @@ var
    Overlapped : Pointer ;
    OK : Boolean ;
 begin
-     exit;
+
+     if ComFailed then Exit ;
+
      { Copy command line to be sent to xMit buffer and and a CR character }
      nC := Length(Line) ;
      for i := 1 to nC do xBuf[i-1] := ANSIChar(Line[i]) ;
@@ -468,6 +477,7 @@ var
   Timeout : Cardinal ;
   EndOfLine : Boolean ;
 begin
+   if ComFailed then Exit ;
    TimeOut := timegettime + 1000 ;
    repeat
      Status := ReceiveBytes( EndOfLine ) ;
@@ -489,12 +499,15 @@ var
    NumBytesRead,ComError,NumRead : DWORD ;
 begin
 
+
      PComState := @ComState ;
      Line := '' ;
      rBuf[0] := ' ' ;
      NumRead := 0 ;
      EndOfLine := False ;
      Result := '' ;
+
+     if ComFailed then Exit ;
 
      { Find out if there are any characters in receive buffer }
      ClearCommError( ComHandle, ComError, PComState )  ;
@@ -575,15 +588,12 @@ begin
     // Clear control lines
     for I := 0 to High(ControlLines) do ControlLines[i] := LineDisabled ;
 
-    // Select CCS command format
-//    SendCommand('PREF:CSS');
-
     // Request list of wavelengths available
-    SendCommand('LAMS');
-//SendCommand('CSSAN050');
+    COMFailed := not SendCommand('LAMS');
 
-end;
+    if COMFailed then ShowMessage('CoolLED light source not responding');
 
+    end;
 
 
 

@@ -53,7 +53,7 @@ object SettingsFrm: TSettingsFrm
     Top = 8
     Width = 464
     Height = 406
-    ActivePage = CameraTab
+    ActivePage = LightSourceTab
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
@@ -1105,6 +1105,10 @@ object SettingsFrm: TSettingsFrm
       HelpKeyword = 'Lenses'
       Caption = 'Lenses'
       ImageIndex = 3
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object CalibrationGrp: TGroupBox
         Left = 8
         Top = 3
