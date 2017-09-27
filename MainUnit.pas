@@ -52,6 +52,7 @@ unit MainUnit;
 //        28.08.17 ROI, zoom and display move functions now available simultaneously
 //        29.08.17 Sequential multiwavelength imaging working
 //        30.08.17 Sequential multiwavelength imaging tested and working
+// V1.7.3 27.09.17
 
 
 interface
@@ -384,10 +385,13 @@ type
     ZSection : Integer ;                // Current Z Section being acquired
     ZStep : Double ;                  // Spacing between Z Sections (microns)
     NumZSectionsAvailable : Integer ;   // No. of Sections in Z stack
+    NumZSectionsRequested : Integer ;   // No. of sections in Z stack requested
+
     ZStackStartingPosition : Double ;   // Starting position of Z stack series
 
     TSection : Integer ;                // Current time lapse Section being acquired
     NumTSectionsAvailable : Integer ;   // No. of time lapse sections available
+    NumTSectionsRequested : Integer ;   // No. of time lapse sections required
     NumPanelsAvailable : Integer ;   // No. of image panels available
 
     ZStartingPosition : Double ;      // Z position at start of scanning
@@ -619,13 +623,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.7.2';
+     ProgramName := 'MesoCam V1.7.3';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 30/08/17';
+     ProgramName := ProgramName + ' 27/09/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -1425,7 +1429,7 @@ begin
      if ckAcquireZStack.Checked and (not bStopImage.Enabled)  then
         begin
         ZSectionPanel.Visible := True ;
-        lbZSection.Caption := format('Section %d/%d',[ZSection+1,Round(edNumZSections.Value)]) ;
+        lbZSection.Caption := format('Section %d/%d',[ZSection+1,NumZSectionsRequested]) ;
         end
      else ZSectionPanel.Visible := False ;
 
@@ -1433,7 +1437,7 @@ begin
      if ckAcquireTimeLapseSeries.Checked and (not bStopImage.Enabled)  then
         begin
         TSectionPanel.Visible := True ;
-        lbTSection.Caption := format('T %d/%d',[TSection+1,Round(edNumTimeLapsePoints.Value)]) ;
+        lbTSection.Caption := format('T %d/%d',[TSection+1,NumTSectionsRequested]) ;
         end
      else TSectionPanel.Visible := False ;
 
@@ -1614,9 +1618,17 @@ begin
 
     // Z sections
     ZSection := 0 ;
-    TSection := 0 ;
+
+
     NumZSectionsAvailable := 0 ;
+    if ckAcquireZStack.Checked then NumZSectionsRequested := Max(Round(edNumZsections.Value),1)
+                               else NumZSectionsRequested := 1 ;
+
+    TSection := 0 ;
     NumTSectionsAvailable := 0 ;
+    if ckAcquireTimeLapseSeries.Checked then NumTSectionsRequested := Max(Round(edNumTimeLapsePoints.Value),1)
+                                        else NumTSectionsRequested := 1 ;
+
     NumImagesInRawFile := 0 ;
     RawImageAvailable := False ;
     ZStep := edMicronsPerZStep.Value ;
@@ -2195,9 +2207,9 @@ begin
             // Update status
             s := '' ;
             if ckAcquireTimeLapseSeries.Checked then
-               s := s + format('T:%d/%d, ',[NumTSectionsAvailable+1,Round(edNumTimeLapsePoints.Value)]);
+               s := s + format('T:%d/%d, ',[NumTSectionsAvailable+1,NumTSectionsRequested]);
             if ckAcquireZStack.Checked then
-               s := s + format('Z:%d/%d, ',[NumZSectionsAvailable+1,Round(edNumZSections.Value)]);
+               s := s + format('Z:%d/%d, ',[NumZSectionsAvailable+1,NumZSectionsRequested]);
             if ckSeparateLightSources.Checked then
                s := s + format(' F(%s):',[LightSource.Names[LightSource.List[LightSource.ListIndex]]])
             else s := s + 'F:' ;
@@ -2447,8 +2459,7 @@ begin
        if iShift = 0 then FirstImageSum := Sum ;
        // Scale to same average intensity of first image
        Scale := FirstImageSum / Max(Sum,1) ;
-       outputdebugstring(pchar(format('%d Scale=%.4g',[iShift,Scale])));
-  //     Scale := 1.0 ;
+//       outputdebugstring(pchar(format('%d Scale=%.4g',[iShift,Scale])));
 
        // Copy into interleaved position in high resolution image
        for y := 0 to Cam1.FrameHeight-1 do
@@ -2487,10 +2498,10 @@ begin
        // Z stage control
        if ckAcquireZStack.Checked then
           begin
-          scZSection.Max := Max(Round(edNumZSections.Value)-1,0) ;
+          scZSection.Max := NumZSectionsRequested-1 ;
           scZSection.Position := 0 ;
           Inc(NumZSectionsAvailable) ;
-          lbZSection.Caption := Format('Section %d/%d',[NumZSectionsAvailable,Round(edNumZSections.Value)]);
+          lbZSection.Caption := Format('Section %d/%d',[NumZSectionsAvailable,NumZSectionsRequested]);
 
           if NumZSectionsAvailable < Round(edNumZSections.Value) then
              begin
@@ -2498,7 +2509,7 @@ begin
              if NumZSectionsAvailable = 1 then ZStackStartingPosition := ZStage.ZPosition ;
              ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStage.ZPosition + ZStep );
              SnapRequestedAfterInterval := True ;
-             ScanStartAt := timegettime + Round(1000*ZStage.ZStepTime*Max(ZStep,1.0)) ;
+             ScanStartAt := timegettime + Round(1000*ZStage.ZStepTime*Max(Abs(ZStep),1.0)) ;
              end ;
           end ;
 
@@ -2874,6 +2885,8 @@ begin
 
      SaveDialog.InitialDir := SaveDirectory ;
 
+
+
      // Create an unused file name
      iNum := 1 ;
      repeat
@@ -2896,7 +2909,8 @@ begin
      SaveDialog.FileName := ExtractFileName(FileName) ;
      if not SaveDialog.Execute then Exit ;
 
-     edStatus.Text := 'Saving Image' ;
+     edStatus.Text := 'Saving Image To OME.TIF' ;
+     application.processmessages ;
 
      // Ensure extension is set
      FileName := ChangeFileExt(SaveDialog.FileName, '.tif' ) ;
@@ -2921,6 +2935,7 @@ begin
              end;
 
      // Save image
+     edStatus.Text := 'Saving to TIF' ;
      FileNames := TStringList.Create ;
      NumFramesInFile := 0 ;
      NumFiles := 0 ;
@@ -3324,7 +3339,7 @@ begin
 
       if not RawImageAvailable then Exit ;
 
-     iSection := TSection*Max(Round(edNumZSections.Value),1)*Max(NumPanelsAvailable,1) +
+     iSection := TSection*NumZSectionsRequested*Max(NumPanelsAvailable,1) +
                  ZSection*Max(NumPanelsAvailable,1) + iPanel  ;
 
      // Exit with zero image if image not available

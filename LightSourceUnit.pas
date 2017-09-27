@@ -457,7 +457,7 @@ begin
      xBuf[nC] := #13 ;
      Inc(nC) ;
 
-    outputdebugstring( pchar('Send:'+line));
+//    outputdebugstring( pchar('Send:'+line));
 
     Overlapped := Nil ;
     OK := WriteFile( ComHandle, xBuf, nC, nWritten, Overlapped ) ;
@@ -520,7 +520,7 @@ begin
          Inc( NumRead ) ;
      end ;
 
-     if line <> '' then outputdebugstring( pchar('Rec:'+line));
+//     if line <> '' then outputdebugstring( pchar('Rec:'+line));
      Result := Line ;
 
      end ;
