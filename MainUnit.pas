@@ -54,6 +54,7 @@ unit MainUnit;
 //        30.08.17 Sequential multiwavelength imaging tested and working
 // V1.7.3 27.09.17
 // V1.7.4 04.10.17 Display control text reduced to fit everyyhing on screen
+// V1.7.5
 
 
 interface
@@ -71,15 +72,9 @@ const
     MaxFrameType = 2 ;
     GreyScalePalette = 0 ;
     LUTSize = $10000 ;
- {   iLUTGrey = 0 ;
-    iLUTRed = 1 ;
-    iLUTGreen = 2 ;
-    iLUTBlue = 3 ;
-    iLUTFalseColour = 4 ;}
     GreyLevelLimit = $FFFF ;
     FalseColourPalette = 1 ;
     MaxPanels = 4 ;
-
     MaxHistogramBins = 128 ;
     MaxLenses = 10 ;
 type
@@ -231,6 +226,7 @@ type
     scTSection: TScrollBar;
     Label1: TLabel;
     Label15: TLabel;
+    Image4: TImage;
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -623,7 +619,7 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.7.4';
+     ProgramName := 'MesoCam V1.7.5';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
@@ -1445,7 +1441,8 @@ begin
      if TSectionPanel.Visible then ZSectionPanel.Left := TSectionPanel.Left + TSectionPanel.Width
                               else ZSectionPanel.Left := TSectionPanel.Left ;
 
-     if TSectionPanel.Visible or ZSectionPanel.Visible then lbReadout.Left := ZSectionPanel.Left + ZSectionPanel.Width ;
+     lbReadout.Left := ZSectionPanel.Left ;
+     if TSectionPanel.Visible or ZSectionPanel.Visible then lbReadout.Left := lbReadout.Left + ZSectionPanel.Width ;
 
      FreeMem(XMap) ;
      FreeMem(YMap) ;

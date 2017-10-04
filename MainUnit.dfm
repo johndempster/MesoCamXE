@@ -34,6 +34,12 @@ object MainFrm: TMainFrm
     Font.Style = [fsBold]
     ParentFont = False
   end
+  object Image4: TImage
+    Left = 696
+    Top = 744
+    Width = 105
+    Height = 105
+  end
   object ControlGrp: TGroupBox
     Left = 8
     Top = 8
@@ -140,7 +146,7 @@ object MainFrm: TMainFrm
     end
     object cbCaptureMode: TComboBox
       Left = 8
-      Top = 106
+      Top = 104
       Width = 180
       Height = 21
       Hint = 'Select image superresolution mode (pixel-shifting  cameras only)'
@@ -248,7 +254,7 @@ object MainFrm: TMainFrm
     end
     object cbLiveBin: TComboBox
       Left = 8
-      Top = 47
+      Top = 45
       Width = 180
       Height = 21
       Hint = 'Live image binning mode'
@@ -372,7 +378,7 @@ object MainFrm: TMainFrm
       Left = 12
       Top = 16
       Width = 282
-      Height = 25
+      Height = 20
       Hint = 
         'Check to produce separate, sequentially acquired  images for eac' +
         'h light source in use. '
@@ -392,7 +398,7 @@ object MainFrm: TMainFrm
       Left = 12
       Top = 38
       Width = 282
-      Height = 25
+      Height = 20
       Hint = 
         'Check to acquire a series of image at incremental Z axis positio' +
         'ns'
@@ -412,7 +418,7 @@ object MainFrm: TMainFrm
       Left = 12
       Top = 58
       Width = 282
-      Height = 25
+      Height = 20
       Hint = 'Check to a acquire a series of images at timed intervals'
       Caption = 'Acquire Time Lapse Series'
       Font.Charset = ANSI_CHARSET
@@ -1153,7 +1159,6 @@ object MainFrm: TMainFrm
       TabOrder = 1
       object RangeTab: TTabSheet
         Caption = 'Display Contrast'
-        ExplicitHeight = 87
         object bFullScale: TButton
           Left = 1
           Top = 4
@@ -1245,7 +1250,10 @@ object MainFrm: TMainFrm
       object SlidersTab: TTabSheet
         Caption = 'Sliders'
         ImageIndex = 1
-        ExplicitHeight = 87
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label9: TLabel
           Left = 3
           Top = 4
@@ -1276,7 +1284,7 @@ object MainFrm: TMainFrm
           Left = 260
           Top = 4
           Width = 15
-          Height = 20
+          Height = 30
           Caption = '+'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1289,7 +1297,7 @@ object MainFrm: TMainFrm
           Left = 260
           Top = 36
           Width = 15
-          Height = 20
+          Height = 30
           Caption = '+'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1302,7 +1310,7 @@ object MainFrm: TMainFrm
           Left = 110
           Top = 0
           Width = 9
-          Height = 20
+          Height = 29
           Caption = '-'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1315,7 +1323,7 @@ object MainFrm: TMainFrm
           Left = 110
           Top = 36
           Width = 9
-          Height = 20
+          Height = 29
           Caption = '-'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1425,6 +1433,10 @@ object MainFrm: TMainFrm
     OnChange = PageChange
     object tbChan0: TTabSheet
       Caption = 'Channel 0'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image0: TImage
         Left = 3
         Top = 3
@@ -1444,6 +1456,10 @@ object MainFrm: TMainFrm
     object tbChan1: TTabSheet
       Caption = 'Channel 1'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image1: TImage
         Left = 3
         Top = 3
@@ -1482,6 +1498,10 @@ object MainFrm: TMainFrm
     object tbChan3: TTabSheet
       Caption = 'tbChan3'
       ImageIndex = 3
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image3: TImage
         Left = -4
         Top = 3

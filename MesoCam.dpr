@@ -15,6 +15,7 @@ uses
 
 begin
   Application.Initialize;
+  Application.Title := 'MesoCam';
   Application.CreateForm(TMainFrm, MainFrm);
   Application.CreateForm(TLabIO, LabIO);
   Application.CreateForm(TSettingsFrm, SettingsFrm);
