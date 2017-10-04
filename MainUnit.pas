@@ -53,6 +53,7 @@ unit MainUnit;
 //        29.08.17 Sequential multiwavelength imaging working
 //        30.08.17 Sequential multiwavelength imaging tested and working
 // V1.7.3 27.09.17
+// V1.7.4 04.10.17 Display control text reduced to fit everyyhing on screen
 
 
 interface
@@ -119,7 +120,6 @@ type
     bGotoZPosition: TButton;
     LightSourceGrp: TGroupBox;
     DisplayGrp: TGroupBox;
-    Splitter1: TSplitter;
     cbPalette: TComboBox;
     ContrastPage: TPageControl;
     RangeTab: TTabSheet;
@@ -623,13 +623,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.7.3';
+     ProgramName := 'MesoCam V1.7.4';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 27/09/17';
+     ProgramName := ProgramName + ' 04/10/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -2988,6 +2988,10 @@ begin
                     Inc(NumFramesInFile) ;
                     ImageFile.SaveFrame32( NumFramesInFile, PImageBuf ) ;
                     end;
+
+                 edStatus.Text := format('Saving Image To OME.TIF %d/%d',[NumFramesInFile,NumImagesInRawFile]) ;
+                 application.processmessages ;
+
                  end;
 
              end ;

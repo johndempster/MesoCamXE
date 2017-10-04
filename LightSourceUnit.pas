@@ -272,12 +272,14 @@ var
   i: Integer;
   SourceLetter : Array[0..3] of string ;
   s,sIntensity : string ;
+  OK : Boolean ;
 begin
 
     SourceLetter[0] := 'CA' ;
     SourceLetter[1] := 'CB' ;
     SourceLetter[2] := 'CC' ;
     SourceLetter[3] := 'CD' ;
+    OK := False ;
     for i := 0 to 3 do if (ControlLines[i] <> LineDisabled) then
         begin
         Intensity[i] := Min(Max(Intensity[i],0.0),100.0);
@@ -285,13 +287,14 @@ begin
         if Length(sIntensity) < 3 then sIntensity := '0' + sIntensity ;
         if Length(sIntensity) < 3 then sIntensity := '0' + sIntensity ;
         s := SourceLetter[i] + 'I' + sIntensity ;
-        SendCommand(s) ;
-        WaitforCompletion ;
+        OK := SendCommand(s) ;
+        if OK then WaitforCompletion ;
         if Active[i] then s := SourceLetter[i] + 'N'
                      else s := SourceLetter[i] + 'F' ;
-        SendCommand(s) ;
-        WaitforCompletion ;
+        OK := SendCommand(s) ;
+        if OK then WaitforCompletion ;
         end ;
+    if not OK then ShowMessage('Unable to contact CoolLED device');
 
     end;
 
