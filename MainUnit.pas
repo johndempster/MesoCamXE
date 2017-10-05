@@ -54,7 +54,7 @@ unit MainUnit;
 //        30.08.17 Sequential multiwavelength imaging tested and working
 // V1.7.3 27.09.17
 // V1.7.4 04.10.17 Display control text reduced to fit everyyhing on screen
-// V1.7.5
+// V1.7.5 05.10.17 Exposure times up to 7s now supported
 
 
 interface
@@ -625,7 +625,7 @@ begin
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 04/10/17';
+     ProgramName := ProgramName + ' 05/10/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
