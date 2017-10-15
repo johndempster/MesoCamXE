@@ -7,6 +7,7 @@ unit SettingsUnit;
 // 16.01.17 ZStage.XScaleFactor and ZStage.YScaleFactor added
 // 22.03.17 USB-controlled CoolLED pE-x support added
 // 10.05.17 ZPositionMin, ZPositionMax limits added
+// 09.10.17 MainFrm.Cam1.CameraTemperatureSetPoint now updated by settings
 
 interface
 
@@ -40,8 +41,6 @@ type
     CameraPanel: TPanel;
     Label77: TLabel;
     cbCameraNames: TComboBox;
-    ckDisableExposureIntervalLimit: TCheckBox;
-    CamTriggerPanel: TPanel;
     LightSourceTab: TTabSheet;
     LEDGrp: TGroupBox;
     Label4: TLabel;
@@ -97,11 +96,6 @@ type
     ComboBox9: TComboBox;
     ValidatedEdit17: TValidatedEdit;
     ValidatedEdit18: TValidatedEdit;
-    GroupBox3: TGroupBox;
-    Label3: TLabel;
-    cbCameraTrigger: TComboBox;
-    rbCameraTriggerActiveHigh: TRadioButton;
-    rbCameraTriggerActiveLow: TRadioButton;
     GroupBox5: TGroupBox;
     Label25: TLabel;
     edImageJPath: TEdit;
@@ -131,6 +125,8 @@ type
     edZPositionMax: TValidatedEdit;
     Label18: TLabel;
     edRawFileFolder: TEdit;
+    edCalibrationBarSize: TValidatedEdit;
+    Label3: TLabel;
     procedure FormShow(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCancelClick(Sender: TObject);
@@ -193,24 +189,6 @@ begin
      // Reset camera
      NewCamera(false) ;
 
-    // Camera trigger output channel
-    cbCameraTrigger.Clear ;
-    cbCameraTrigger.Items.AddObject('Internal',TObject(MaxResources+1)) ;
-    for i := 0 to LabIO.NumResources-1 do
-        begin
-        if (LabIO.Resource[i].ResourceType = DIGOut) then
-           begin
-           // Digital outputs
-           s := format('Dev%d: PO.%d',[LabIO.Resource[i].Device,LabIO.Resource[i].StartChannel]) ;
-           cbCameraTrigger.Items.AddObject(s,TObject(i))
-           end ;
-        end;
-
-     cbCameraTrigger.ItemIndex := Max( 0,
-     cbCameraTrigger.Items.IndexOfObject(TObject(MainFrm.CameraTriggerOutput))) ;
-     rbCameraTriggerActiveHigh.Checked := MainFrm.CameraTriggerActiveHigh ;
-     rbCameraTriggerActiveLow.Checked := not rbCameraTriggerActiveHigh.Checked ;
-
     // Z stage control
     ZStage.GetZStageTypes(cbZStageType.Items);
     cbZStageType.ItemIndex := Min(Max(ZStage.StageType,0),cbZStageType.Items.Count-1) ;
@@ -264,6 +242,8 @@ begin
 
     edRelayLensMagnification.Value := MainFrm.RelayLensMagnification ;
     edCameraPixelSize.Value := MainFrm.CameraPixelSize ;
+    edTemperatureSetPoint.Value := MainFrm.Cam1.CameraTemperatureSetPoint ;
+    edCalibrationBarSize.Value := MainFrm.CalibrationBarSize ;
 
     edImageJPath.Text := MainFrm.ImageJPath ;
     ckSaveAsMultipageTIFF.Checked := MainFrm.SaveAsMultipageTIFF ;
@@ -312,9 +292,6 @@ begin
     GetLightSourcePanel( 6, pnLightSource6 ) ;
     GetLightSourcePanel( 7, pnLightSource7 ) ;
 
-    MainFrm.CameraTriggerOutput := Integer(cbCameraTrigger.Items.Objects[cbCameraTrigger.ItemIndex]) ;
-    MainFrm.CameraTriggerActiveHigh := rbCameraTriggerActiveHigh.Checked ;
-
     ZStage.ControlPort := cbZStagePort.ItemIndex ;
     ZStage.XScaleFactor := edXScaleFactor.Value ;
     ZStage.YScaleFactor := edYScaleFactor.Value ;
@@ -339,6 +316,9 @@ begin
     MainFrm.CameraPixelSize := edCameraPixelSize.Value ;
     MainFrm.MagnifiedCameraPixelSize := MainFrm.CameraPixelSize/
                                         (MainFrm.RelayLensMagnification) ;
+    MainFrm.Cam1.CameraTemperatureSetPoint := edTemperatureSetPoint.Value ;
+
+    MainFrm.CalibrationBarSize := edCalibrationBarSize.Value ;
 
     // Update camera gain list
     MainFrm.Cam1.GetCameraGainList( MainFrm.cbCameraGain.Items );
@@ -495,7 +475,6 @@ procedure TSettingsFrm.NewCamera(Reopen : Boolean) ;
 // Setup up dialog box for newly selected camera
 // ---------------------------------------------
 var
-    i : Integer ;
     iTop : Integer ;
 begin
 
@@ -583,7 +562,6 @@ begin
      //edCameraTriggerOffset.Value := MainFrm.CameraTriggerOffset ;
      //edCameraReadoutTime.Value := MainFrm.Cam1.AdditionalReadoutTime ;
 
-     CamTriggerPanel.Top := iTop ;
 
 end ;
 

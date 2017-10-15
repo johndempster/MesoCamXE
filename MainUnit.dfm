@@ -382,7 +382,7 @@ object MainFrm: TMainFrm
       Hint = 
         'Check to produce separate, sequentially acquired  images for eac' +
         'h light source in use. '
-      Caption = 'Separate Light Source Images'
+      Caption = 'Acquire Multi-wavelength Images'
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
@@ -515,48 +515,9 @@ object MainFrm: TMainFrm
     Height = 139
     Caption = ' Stage Position '
     TabOrder = 2
-    object lbX: TLabel
-      Left = 153
-      Top = 58
-      Width = 24
-      Height = 22
-      Caption = 'X='
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -19
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
-    object lbY: TLabel
-      Left = 153
-      Top = 84
-      Width = 24
-      Height = 22
-      Caption = 'Y='
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -19
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
-    object lbZ: TLabel
-      Left = 154
-      Top = 110
-      Width = 22
-      Height = 22
-      Caption = 'Z='
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -19
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
     object edGotoXPosition: TValidatedEdit
       Left = 177
-      Top = 58
+      Top = 54
       Width = 161
       Height = 21
       Hint = 'Z axis position to move to'
@@ -570,15 +531,15 @@ object MainFrm: TMainFrm
       HiLimit = 1000000.000000000000000000
     end
     object bGotoZPosition: TButton
-      Left = 45
-      Top = 58
-      Width = 95
-      Height = 25
+      Left = 96
+      Top = 106
+      Width = 80
+      Height = 20
       Hint = 'Move stage to specified Z axis position'
-      Caption = 'Go To'
+      Caption = 'GoTo Z='
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
-      Font.Height = -16
+      Font.Height = -15
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentFont = False
@@ -589,7 +550,7 @@ object MainFrm: TMainFrm
     end
     object edGotoYPosition: TValidatedEdit
       Left = 177
-      Top = 84
+      Top = 80
       Width = 161
       Height = 21
       Hint = 'Z axis position to move to'
@@ -604,7 +565,7 @@ object MainFrm: TMainFrm
     end
     object edGotoZPosition: TValidatedEdit
       Left = 178
-      Top = 110
+      Top = 106
       Width = 161
       Height = 21
       Hint = 'Z axis position to move to'
@@ -630,6 +591,42 @@ object MainFrm: TMainFrm
       ParentFont = False
       ReadOnly = True
       TabOrder = 4
+    end
+    object bGoToXPosition: TButton
+      Left = 96
+      Top = 54
+      Width = 80
+      Height = 20
+      Hint = 'Move stage to specified X axis position'
+      Caption = 'GoTo X='
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -15
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 5
+      OnClick = bGoToXPositionClick
+    end
+    object bGoToYPosition: TButton
+      Left = 96
+      Top = 80
+      Width = 80
+      Height = 20
+      Hint = 'Move stage to specified Y axis position'
+      Caption = 'GoTo Y='
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -15
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 6
+      OnClick = bGoToYPositionClick
     end
   end
   object LightSourceGrp: TGroupBox
@@ -1135,7 +1132,7 @@ object MainFrm: TMainFrm
     Top = 875
     Width = 354
     Height = 158
-    Caption = ' Display '
+    Caption = ' Display Contrast '
     TabOrder = 4
     object cbPalette: TComboBox
       Left = 12
@@ -1251,18 +1248,18 @@ object MainFrm: TMainFrm
         Caption = 'Sliders'
         ImageIndex = 1
         ExplicitLeft = 0
-        ExplicitTop = 0
+        ExplicitTop = 26
         ExplicitWidth = 0
         ExplicitHeight = 0
         object Label9: TLabel
           Left = 3
-          Top = 4
-          Width = 66
-          Height = 19
+          Top = 7
+          Width = 61
+          Height = 18
           Caption = 'Contrast'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -16
+          Font.Height = -15
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -1270,12 +1267,12 @@ object MainFrm: TMainFrm
         object Label10: TLabel
           Left = 3
           Top = 36
-          Width = 84
-          Height = 19
+          Width = 78
+          Height = 18
           Caption = 'Brightness'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -16
+          Font.Height = -15
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -1283,59 +1280,59 @@ object MainFrm: TMainFrm
         object Label11: TLabel
           Left = 260
           Top = 4
-          Width = 15
-          Height = 30
+          Width = 11
+          Height = 22
           Caption = '+'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -25
-          Font.Name = 'Arial'
+          Font.Height = -19
+          Font.Name = 'Courier New'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object Label13: TLabel
           Left = 260
-          Top = 36
-          Width = 15
-          Height = 30
+          Top = 34
+          Width = 11
+          Height = 22
           Caption = '+'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -25
-          Font.Name = 'Arial'
+          Font.Height = -19
+          Font.Name = 'Courier New'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object Label12: TLabel
           Left = 110
-          Top = 0
-          Width = 9
-          Height = 29
+          Top = 4
+          Width = 11
+          Height = 22
           Caption = '-'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -25
-          Font.Name = 'Bodoni MT Black'
+          Font.Height = -19
+          Font.Name = 'Courier New'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object Label14: TLabel
           Left = 110
           Top = 36
-          Width = 9
-          Height = 29
+          Width = 11
+          Height = 22
           Caption = '-'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
-          Font.Height = -25
-          Font.Name = 'Bodoni MT Black'
+          Font.Height = -19
+          Font.Name = 'Courier New'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object tbContrast: TTrackBar
           Tag = 2
           Left = 124
-          Top = 4
+          Top = 7
           Width = 133
           Height = 37
           Max = 100

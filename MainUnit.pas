@@ -55,6 +55,9 @@ unit MainUnit;
 // V1.7.3 27.09.17
 // V1.7.4 04.10.17 Display control text reduced to fit everyyhing on screen
 // V1.7.5 05.10.17 Exposure times up to 7s now supported
+// V1.7.6 15.10.17 'CAMERATEMPERATURESETPOINT', Cam1.CameraTemperatureSetPoint added to setting files
+//                 CalibrationBarSize added
+//                 Raw file image now now saved and redisplayed when program restarted
 
 
 interface
@@ -209,10 +212,7 @@ type
     mnHelp: TMenuItem;
     mnContents: TMenuItem;
     mnABout: TMenuItem;
-    lbX: TLabel;
-    lbY: TLabel;
     edGotoYPosition: TValidatedEdit;
-    lbZ: TLabel;
     edGotoZPosition: TValidatedEdit;
     edXYZPosition: TEdit;
     ckAcquireTimeLapseSeries: TCheckBox;
@@ -227,6 +227,8 @@ type
     Label1: TLabel;
     Label15: TLabel;
     Image4: TImage;
+    bGoToXPosition: TButton;
+    bGoToYPosition: TButton;
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -287,6 +289,8 @@ type
     procedure edGotoZPositionKeyPress(Sender: TObject; var Key: Char);
     procedure rbROIModeClick(Sender: TObject);
     procedure rbZoomModeClick(Sender: TObject);
+    procedure bGoToXPositionClick(Sender: TObject);
+    procedure bGoToYPositionClick(Sender: TObject);
   private
 
     { Private declarations }
@@ -311,15 +315,16 @@ type
     NumLenses : Integer ;                   // No. lenses in table
     LensMagnification : Array[0..MaxLenses-1] of Double ;  // Lens magnification
     LensName : Array[0..MaxLenses-1] of String ;           // Lens name
-    LensSelected : Integer ;                               // Lens # selected for use
-    CameraPixelSize : double ;            // Camera pixel size (microns)
-    LiveBinSelected : Integer ;              // Selected live binning option
-    MagnifiedCameraPixelSize : double ;             // Image pixel size (microns)
-    CameraTriggerOutput : Integer ;       // Camera trigger digital output line
-    CameraTriggerActiveHigh : Boolean ;   // TTL high level triggers camera
-    CameraTriggerRequired : Boolean ;     // Camera trigger pulse required
+    LensSelected : Integer ;               // Lens # selected for use
+    CameraPixelSize : double ;             // Camera pixel size (microns)
+    CalibrationBarSize : double ;          // Display calibration bar size (microns)
+    LiveBinSelected : Integer ;            // Selected live binning option
+    MagnifiedCameraPixelSize : double ;    // Image pixel size (microns)
+    CameraTriggerOutput : Integer ;        // Camera trigger digital output line
+    CameraTriggerActiveHigh : Boolean ;    // TTL high level triggers camera
+    CameraTriggerRequired : Boolean ;      // Camera trigger pulse required
     CameraGainIndex : Integer ;
-    CCDShiftCounter : Integer ;           // CCD stage shift counter
+    CCDShiftCounter : Integer ;            // CCD stage shift counter
     Initialising : Boolean ;
     ShowCapturedImage : Boolean ;
     LiveImagingInProgress : Boolean ;
@@ -603,6 +608,11 @@ begin
      CameraTriggerRequired := False ;
      TimerBusy := False ;
      ResizeImage := False ;
+
+     NumImagesInRawFile := 0 ;
+     NumZSectionsAvailable := 0 ;
+     NumTSectionsAvailable := 0 ;
+     NumPanelsAvailable := 0 ;
      end;
 
 
@@ -619,13 +629,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.7.5';
+     ProgramName := 'MesoCam V1.7.6';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 05/10/17';
+     ProgramName := ProgramName + ' 15/10/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -665,9 +675,9 @@ begin
      LiveBinSelected := 0 ;
 
      cbCaptureMode.Clear ;
-     cbCaptureMode.Items.AddObject('Standard (X1)',TObject(1));
-     cbCaptureMode.Items.AddObject('High Res. (X4)',TObject(4));
-     cbCaptureMode.Items.AddObject('High Res. (X9)',TObject(9));
+     cbCaptureMode.Items.AddObject('Standard (1X1)',TObject(1));
+     cbCaptureMode.Items.AddObject('High Res. (2X2)',TObject(4));
+     cbCaptureMode.Items.AddObject('High Res. (3X3)',TObject(9));
      cbCaptureMode.ItemIndex := 0 ;
      NumPixelShiftFrames := Round(Integer(cbCaptureMode.Items.Objects[cbCaptureMode.ItemIndex])) ;
 
@@ -765,7 +775,11 @@ begin
      scTSection.Position := 0 ;
      Page.TabIndex := 0 ;
      TSection := scTSection.Position ;
+
+     if NumImagesInRawFile > 0 then RawImageAvailable := True
+                               else RawImageAvailable := False ;
      LoadRawImage( RawImagesFileName,ZSection,TSection,Page.TabIndex) ;
+     ShowCapturedImage := RawImageAvailable ;
 
      UpdateDisplay := False ;
      SnapRequested := False ;
@@ -775,7 +789,7 @@ begin
      SetImagePanels ;
 
      // Indicate selected frame type selected for contrast update
-     DisplayGrp.Caption := ' Contrast ' ;
+//     DisplayGrp.Caption := ' Display Contrast ' ;
      SetDisplayIntensityRange( GreyLo, GreyHi ) ;
      // Update display look up tables
      UpdateLUT( GreyLevelMax );
@@ -890,8 +904,6 @@ begin
 
      // Set mouse down flag
      MouseDown := True ;
-//     XDown := X ;
-//     YDown := Y ;
      MouseDownAt.X := X ;
      MouseDownAt.Y := Y ;
      TopLeftDown.X := Round(XLeft*FrameWidth) ;
@@ -905,8 +917,6 @@ begin
      if not ROIMode then Screen.Cursor := crSizeAll ;
 
      UpdateDisplay := True ;
-
-//     Screen.Cursor := crSizeAll ;
 
      end;
 
@@ -1938,12 +1948,29 @@ begin
 end;
 
 
+procedure TMainFrm.bGoToXPositionClick(Sender: TObject);
+// -------------------------
+// Go to specified X position
+// --------------------------
+begin
+    ZStage.MoveTo( edGoToXPosition.Value, ZStage.YPosition,ZStage.ZPosition ) ;
+end;
+
+
+procedure TMainFrm.bGoToYPositionClick(Sender: TObject);
+// -------------------------
+// Go to specified Y position
+// --------------------------
+begin
+    ZStage.MoveTo( ZStage.XPosition, edGoToYPosition.Value, ZStage.ZPosition ) ;
+end;
+
 procedure TMainFrm.bGotoZPositionClick(Sender: TObject);
 // -------------------------
 // Go to specified Z position
 // --------------------------
 begin
-    ZStage.MoveTo( edGoToXPosition.Value,edGoToYPosition.Value,edGoToZPosition.Value ) ;
+    ZStage.MoveTo( ZStage.XPosition,ZStage.YPosition,edGoToZPosition.Value ) ;
 end;
 
 
@@ -2882,8 +2909,6 @@ begin
 
      SaveDialog.InitialDir := SaveDirectory ;
 
-
-
      // Create an unused file name
      iNum := 1 ;
      repeat
@@ -3131,9 +3156,9 @@ begin
   IgnorePanelControls := False ;
   LightSourceGrp.ClientHeight := iTop + 10 ;
 
-  ZStageGrp.Top := ImageSizeGrp.Top + ImageSizeGrp.Height + 5 ;
-  LightSourceGrp.Top := ZStageGrp.Top + ZStageGrp.Height + 5 ;
-  DisplayGrp.Top := LightSourceGrp.Top + LightSourceGrp.Height + 5 ;
+  LightSourceGrp.Top := ImageSizeGrp.Top + ImageSizeGrp.Height + 5 ;
+  ZStageGrp.Top := LightSourceGrp.Top + LightSourceGrp.Height + 5 ;
+  DisplayGrp.Top := ZStageGrp.Top + ZStageGrp.Height + 5 ;
   StatusGrp.Top := DisplayGrp.Top +DisplayGrp.Height + 5 ;
 
   UpdateDisplay := True ;
@@ -3318,6 +3343,9 @@ begin
 
       RawImageAvailable := True ;
 
+      // Save settings to INI file (to preserve raw file data settings)
+      SaveSettingsToXMLFile( INIFileName ) ;
+
       end;
 
 
@@ -3496,6 +3524,9 @@ begin
 
     AddElementDouble( ProtNode, 'RELAYLENSMAGNIFICATION', RelayLensMagnification ) ;
     AddElementDouble( ProtNode, 'CAMERAPIXELSIZE', CameraPixelSize ) ;
+    AddElementDouble( ProtNode, 'CALIBRATIONBARSIZE', CalibrationBarSize ) ;
+
+    AddElementDouble( ProtNode, 'CAMERATEMPERATURESETPOINT', Cam1.CameraTemperatureSetPoint ) ;
 
     AddElementText( ProtNode, 'SAVEDIRECTORY', SaveDirectory ) ;
     AddElementText( ProtNode, 'IMAGEJPATH', ImageJPath ) ;
@@ -3506,6 +3537,9 @@ begin
     AddElementInt( ProtNode, 'NUMZSECTIONSAVAILABLE', NumZSectionsAvailable ) ;
     AddElementInt( ProtNode, 'NUMTSECTIONSAVAILABLE', NumTSectionsAvailable ) ;
     AddElementInt( ProtNode, 'NUMPANELSAVAILABLE', NumPanelsAvailable ) ;
+
+    AddElementInt( ProtNode, 'NUMZSECTIONSREQUESTED', NumZSectionsRequested ) ;
+    AddElementInt( ProtNode, 'NUMTSECTIONSREQUESTED', NumTSectionsRequested ) ;
 
     // Image acquisition modes
     AddElementBool( ProtNode, 'SEPARATELIGHTSOURCES', ckSeparateLightSources.Checked ) ;
@@ -3578,7 +3612,7 @@ begin
     HRNumComponentsPerFrame := HRNumComponentsPerPixel*HRFrameHeight*HRFrameWidth ;
     NumBitsPerPixel := GetElementInt( ProtNode, 'NUMBITSPERPIXEL', NumBitsPerPixel ) ;
     NumImagesInRawFile := GetElementInt( ProtNode, 'NUMIMAGESINRAWFILE', NumImagesInRawFile ) ;
-    NumImagesInRawFile := 0 ;
+//    NumImagesInRawFile := 0 ;
 
     cbCaptureMode.ItemIndex := Min(Max(GetElementInt( ProtNode, 'CAPTUREMODE', cbCaptureMode.ItemIndex ),0),cbCaptureMode.Items.Count-1) ;
 
@@ -3674,8 +3708,15 @@ begin
     if RelayLensMagnification <= 0.0 then RelayLensMagnification := 1.0 ;
 
     CameraPixelSize := GetElementDouble( ProtNode, 'CAMERAPIXELSIZE', CameraPixelSize ) ;
+
+    CalibrationBarSize := GetElementDouble( ProtNode, 'CALIBRATIONBARSIZE', CalibrationBarSize ) ;
+
     MagnifiedCameraPixelSize := CameraPixelSize /
                                 Max(RelayLensMagnification*LensMagnification[LensSelected],1E-3) ;
+
+    Cam1.CameraTemperatureSetPoint := GetElementDouble( ProtNode, 'CAMERATEMPERATURESETPOINT', Cam1.CameraTemperatureSetPoint ) ;
+
+
 
     SaveDirectory := GetElementText( ProtNode, 'SAVEDIRECTORY', SaveDirectory ) ;
     ImageJPath := GetElementText( ProtNode, 'IMAGEJPATH', ImageJPath ) ;
@@ -3683,10 +3724,13 @@ begin
     RawImagesFileName := GetElementText( ProtNode, 'RAWIMAGESFILENAME', RawImagesFileName ) ;
 
     NumZSectionsAvailable := GetElementInt( ProtNode, 'NUMZSECTIONSAVAILABLE', NumZSectionsAvailable ) ;
-    scZSection.Max := NumZSectionsAvailable ;
     NumTSectionsAvailable := GetElementInt( ProtNode, 'NUMTSECTIONSAVAILABLE', NumTSectionsAvailable ) ;
-    scTSection.Max := NumTSectionsAvailable ;
     NumPanelsAvailable := GetElementInt( ProtNode, 'NUMPANELSAVAILABLE', NumPanelsAvailable ) ;
+
+    NumZSectionsRequested := Max(GetElementInt( ProtNode, 'NUMZSECTIONSREQUESTED', NumZSectionsRequested ),1) ;
+    scZSection.Max := NumZSectionsRequested - 1 ;
+    NumTSectionsRequested := Max(GetElementInt( ProtNode, 'NUMTSECTIONSREQUESTED', NumTSectionsRequested ),1) ;
+    scTSection.Max := NumTSectionsRequested - 1 ;
 
     // Image acquisition modes
     ckSeparateLightSources.Checked := GetElementBool( ProtNode, 'SEPARATELIGHTSOURCES', ckSeparateLightSources.Checked ) ;

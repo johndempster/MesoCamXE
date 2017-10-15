@@ -4,7 +4,7 @@ object SettingsFrm: TSettingsFrm
   BorderStyle = bsDialog
   Caption = 'Camera/System Settings '
   ClientHeight = 449
-  ClientWidth = 488
+  ClientWidth = 560
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -51,16 +51,18 @@ object SettingsFrm: TSettingsFrm
   object Page: TPageControl
     Left = 8
     Top = 8
-    Width = 464
+    Width = 544
     Height = 406
     ActivePage = CameraTab
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
+      ExplicitLeft = 0
+      ExplicitTop = 28
       object GroupBox4: TGroupBox
         Left = 8
-        Top = 3
-        Width = 210
+        Top = 2
+        Width = 234
         Height = 373
         Caption = ' Camera '
         Font.Charset = ANSI_CHARSET
@@ -71,9 +73,9 @@ object SettingsFrm: TSettingsFrm
         ParentFont = False
         TabOrder = 0
         object Label41: TLabel
-          Left = 15
+          Left = 20
           Top = 319
-          Width = 90
+          Width = 126
           Height = 14
           Alignment = taRightJustify
           Caption = 'Tempr. Set Point'
@@ -81,7 +83,7 @@ object SettingsFrm: TSettingsFrm
         object Label9: TLabel
           Left = 20
           Top = 295
-          Width = 98
+          Width = 126
           Height = 14
           Alignment = taRightJustify
           Caption = 'Camera Pixel Size'
@@ -92,10 +94,24 @@ object SettingsFrm: TSettingsFrm
           Font.Style = [fsBold]
           ParentFont = False
         end
+        object Label3: TLabel
+          Left = 40
+          Top = 270
+          Width = 106
+          Height = 14
+          Alignment = taRightJustify
+          Caption = 'Calibration Bar SIze'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Arial'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
         object cbCamera: TComboBox
           Left = 8
           Top = 16
-          Width = 194
+          Width = 210
           Height = 22
           TabOrder = 0
           Text = 'cbCamera'
@@ -104,12 +120,12 @@ object SettingsFrm: TSettingsFrm
         object ModePanel: TPanel
           Left = 8
           Top = 37
-          Width = 196
+          Width = 217
           Height = 41
           BevelOuter = bvNone
           TabOrder = 1
           object lbCameraMode: TLabel
-            Left = -1
+            Left = 0
             Top = 3
             Width = 31
             Height = 14
@@ -119,7 +135,7 @@ object SettingsFrm: TSettingsFrm
           object cbCameraMode: TComboBox
             Left = 0
             Top = 19
-            Width = 194
+            Width = 210
             Height = 22
             Style = csDropDownList
             TabOrder = 0
@@ -158,21 +174,21 @@ object SettingsFrm: TSettingsFrm
         object ReadoutSpeedPanel: TPanel
           Left = 8
           Top = 88
-          Width = 196
+          Width = 217
           Height = 28
           BevelOuter = bvNone
           TabOrder = 3
           object Label1: TLabel
-            Left = 15
-            Top = 3
+            Left = 27
+            Top = 8
             Width = 83
             Height = 14
             Alignment = taRightJustify
             Caption = 'Readout Speed'
           end
           object cbReadoutSpeed: TComboBox
-            Left = 103
-            Top = 2
+            Left = 116
+            Top = 0
             Width = 91
             Height = 22
             Style = csDropDownList
@@ -180,11 +196,13 @@ object SettingsFrm: TSettingsFrm
           end
         end
         object edTemperatureSetPoint: TValidatedEdit
-          Left = 124
+          Left = 150
           Top = 319
           Width = 75
           Height = 20
+          Hint = 'Target temperature (degrees C) of camera CCD cooler'
           AutoSize = False
+          ShowHint = True
           Text = ' 0 DEGC'
           Scale = 1.000000000000000000
           Units = 'DEGC'
@@ -193,23 +211,23 @@ object SettingsFrm: TSettingsFrm
           HiLimit = 1.000000015047466E30
         end
         object ADCPanel: TPanel
-          Left = 7
+          Left = 3
           Top = 144
-          Width = 195
+          Width = 218
           Height = 28
           BevelOuter = bvNone
           TabOrder = 5
           object Label48: TLabel
-            Left = -2
-            Top = 3
+            Left = 13
+            Top = 6
             Width = 77
             Height = 14
             Alignment = taRightJustify
             Caption = 'A/D Converter'
           end
           object cbCameraADC: TComboBox
-            Left = 80
-            Top = 1
+            Left = 96
+            Top = 3
             Width = 114
             Height = 22
             Style = csDropDownList
@@ -220,12 +238,12 @@ object SettingsFrm: TSettingsFrm
         object CameraPanel: TPanel
           Left = 13
           Top = 178
-          Width = 194
+          Width = 218
           Height = 45
           BevelOuter = bvNone
           TabOrder = 6
           object Label77: TLabel
-            Left = 4
+            Left = 0
             Top = 4
             Width = 102
             Height = 14
@@ -240,7 +258,7 @@ object SettingsFrm: TSettingsFrm
           object cbCameraNames: TComboBox
             Left = 0
             Top = 20
-            Width = 194
+            Width = 210
             Height = 22
             Style = csDropDownList
             Font.Charset = ANSI_CHARSET
@@ -253,36 +271,30 @@ object SettingsFrm: TSettingsFrm
             OnChange = cbCameraNamesChange
           end
         end
-        object ckDisableExposureIntervalLimit: TCheckBox
-          Left = 6
-          Top = 345
-          Width = 192
-          Height = 23
-          Hint = 
-            'Q Imaging cameras only: Tick to allow exposure intervals less th' +
-            'an reported readout time of camera '
-          Alignment = taLeftJustify
-          Caption = 'Disable Exposure Time Checking'
-          Ctl3D = True
-          ParentCtl3D = False
-          ParentShowHint = False
-          ShowHint = True
-          TabOrder = 7
-        end
-        object CamTriggerPanel: TPanel
-          Left = 13
-          Top = 229
-          Width = 194
-          Height = 47
-          BevelOuter = bvNone
-          TabOrder = 8
-        end
         object edCameraPixelSize: TValidatedEdit
-          Left = 124
+          Left = 150
           Top = 295
           Width = 75
           Height = 19
+          Hint = 'Pixel size (microns) of camera CCD sensor'
           AutoSize = False
+          ShowHint = True
+          Text = ' 10 um'
+          Value = 10.000000000000000000
+          Scale = 1.000000000000000000
+          Units = 'um'
+          NumberFormat = '%.4g'
+          LoLimit = 0.100000001490116100
+          HiLimit = 1000000.000000000000000000
+        end
+        object edCalibrationBarSize: TValidatedEdit
+          Left = 150
+          Top = 270
+          Width = 75
+          Height = 19
+          Hint = 'Size (microns) of display calibration bar'
+          AutoSize = False
+          ShowHint = True
           Text = ' 10 um'
           Value = 10.000000000000000000
           Scale = 1.000000000000000000
@@ -292,72 +304,12 @@ object SettingsFrm: TSettingsFrm
           HiLimit = 1000000.000000000000000000
         end
       end
-      object GroupBox3: TGroupBox
-        Left = 224
-        Top = 6
-        Width = 224
-        Height = 75
-        Caption = ' Camera Trigger '
-        TabOrder = 1
-        object Label3: TLabel
-          Left = 11
-          Top = 20
-          Width = 116
-          Height = 14
-          Alignment = taRightJustify
-          Caption = 'Exposure Trigger O/P'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentFont = False
-        end
-        object cbCameraTrigger: TComboBox
-          Left = 133
-          Top = 20
-          Width = 82
-          Height = 21
-          TabOrder = 0
-          Text = 'cbLaserControlComPort'
-        end
-        object rbCameraTriggerActiveHigh: TRadioButton
-          Left = 47
-          Top = 42
-          Width = 75
-          Height = 17
-          Caption = 'Active High'
-          Checked = True
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentFont = False
-          TabOrder = 1
-          TabStop = True
-        end
-        object rbCameraTriggerActiveLow: TRadioButton
-          Left = 133
-          Top = 42
-          Width = 83
-          Height = 17
-          Caption = 'Active Low'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentFont = False
-          TabOrder = 2
-        end
-      end
       object GroupBox5: TGroupBox
-        Left = 224
-        Top = 94
-        Width = 225
+        Left = 248
+        Top = 3
+        Width = 273
         Height = 171
-        TabOrder = 2
+        TabOrder = 1
         object Label25: TLabel
           Left = 8
           Top = 8
@@ -387,14 +339,14 @@ object SettingsFrm: TSettingsFrm
         object edImageJPath: TEdit
           Left = 8
           Top = 25
-          Width = 202
+          Width = 260
           Height = 21
           TabOrder = 0
           Text = 'edImageJPath'
         end
         object ckSaveAsMultipageTIFF: TCheckBox
-          Left = 24
-          Top = 50
+          Left = 80
+          Top = 52
           Width = 186
           Height = 16
           Alignment = taLeftJustify
@@ -410,7 +362,7 @@ object SettingsFrm: TSettingsFrm
         object edRawFileFolder: TEdit
           Left = 8
           Top = 97
-          Width = 202
+          Width = 260
           Height = 21
           TabOrder = 2
           Text = 'edImageJPath'
@@ -420,6 +372,7 @@ object SettingsFrm: TSettingsFrm
     object LightSourceTab: TTabSheet
       Caption = 'Light Source'
       ImageIndex = 1
+      ExplicitWidth = 456
       object lbSourceType: TLabel
         Left = 8
         Top = 8
@@ -940,10 +893,7 @@ object SettingsFrm: TSettingsFrm
     object ZStageTab: TTabSheet
       Caption = 'Z Stage'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
+      ExplicitWidth = 456
       object GroupBox2: TGroupBox
         Left = 3
         Top = 3
@@ -1109,10 +1059,7 @@ object SettingsFrm: TSettingsFrm
       HelpKeyword = 'Lenses'
       Caption = 'Lenses'
       ImageIndex = 3
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
+      ExplicitWidth = 456
       object CalibrationGrp: TGroupBox
         Left = 8
         Top = 3
