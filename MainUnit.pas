@@ -2912,18 +2912,30 @@ begin
      // Create an unused file name
      iNum := 1 ;
      repeat
-        Exists := False ;
         FileName := SaveDialog.InitialDir + '\'
                     + FormatDateTime('yyyy-mm-dd',Now)
                     + format(' %d.tif',[iNum]) ;
         Exists := false ;
-        for iPanel := 0 to NumPanels-1 do
-            for iT  := 0 to Max(NumTSectionsAvailable,1)-1 do
-                for iZ := 0 to Max(NumZSectionsAvailable,1)-1 do
-                    begin
-                    s := SectionFileName(FileName,iPanel,iZ,iT) ;
-                    Exists := Exists or FileExists(s) ;
-                    end;
+
+        iZ := 0 ;
+        iT := 0 ;
+        iPanel := 0 ;
+        for i := 0 to NumImagesInRawFile-1 do
+            begin
+            s := SectionFileName(FileName,iPanel,iZ,iT) ;
+            Exists := Exists or FileExists(s) ;
+            Inc(iPanel) ;
+            if iPanel >= NumPanelsAvailable then
+               begin
+               iPanel := 0 ;
+               Inc(iZ) ;
+               if iZ >= NumZSectionsRequested then
+                  begin
+                  iZ := 0 ;
+                  Inc(iT) ;
+                  end;
+               end;
+            end;
         Inc(iNum) ;
      until not Exists ;
 
@@ -2941,20 +2953,33 @@ begin
 
      // Check if any files exist already and allow user option to quit
      Exists := False ;
-     for iPanel := 0 to NumPanels-1 do
-         for iT  := 0 to Max(NumTSectionsAvailable,1)-1 do
-             for iZ := 0 to Max(NumZSectionsAvailable,1)-1 do
+     iZ := 0 ;
+     iT := 0 ;
+     iPanel := 0 ;
+     for i := 0 to NumImagesInRawFile-1 do
+         begin
+         s := SectionFileName(FileName,iPanel,iZ,iT) ;
+         Exists := Exists or FileExists(s) ;
+         if Exists then
+            begin
+            if MessageDlg( format(
+               'File %s already exists! Do you want to overwrite it? ',[s]),
+                mtWarning,[mbYes,mbNo], 0 ) = mrNo then Exit ;
+                Break ;
+                end ;
+
+           Inc(iPanel) ;
+           if iPanel >= NumPanelsAvailable then
+              begin
+              iPanel := 0 ;
+              Inc(iZ) ;
+              if iZ >= NumZSectionsRequested then
                  begin
-                 s := SectionFileName(FileName,iPanel,iZ,iT) ;
-                 Exists := Exists or FileExists(s) ;
-                 if Exists then
-                    begin
-                    if MessageDlg( format(
-                    'File %s already exists! Do you want to overwrite it? ',[s]),
-                    mtWarning,[mbYes,mbNo], 0 ) = mrNo then Exit ;
-                    Break ;
-                 end ;
-             end;
+                 iZ := 0 ;
+                 Inc(iT) ;
+                 end;
+              end;
+           end;
 
      // Save image
      edStatus.Text := 'Saving to TIF' ;
@@ -2962,19 +2987,17 @@ begin
      NumFramesInFile := 0 ;
      NumFiles := 0 ;
      FileOpen := False ;
-     for iPanel := 0 to NumPanels-1 do
+     for iPanel := 0 to Max(NumPanelsAvailable,1)-1 do
          begin
-         for iT  := 0 to Max(NumTSectionsAvailable,1)-1 do
+         for iT := 0 to Max(NumTSectionsRequested,1)-1 do
              begin
-             for iZ  := 0 to Max(NumZSectionsAvailable,1)-1 do
+             for iZ := 0 to Max(NumZSectionsRequested,1)-1 do
                  begin
+
                  // Get image
                  LoadRawImage( RawImagesFileName,iZ,iT,iPanel) ;
 
-                 // Create file
-                 if (not SaveAsMultipageTIFF) or
-                    ((NumTSectionsAvailable > 1) and (iT = 0)) or
-                    ((iZ = 0) and (NumZSectionsAvailable > 1)) then
+                 if (iZ = 0) or (iT = 0) or (not SaveAsMultipageTIFF) then
                     begin
 
                     if FileOpen then
@@ -2983,24 +3006,29 @@ begin
                        FileOpen := False ;
                        end;
 
-                    if (not SaveAsMultipageTIFF) then nFrames := 1
-                    else if NumZSectionsAvailable > 1 then nFrames := Max(NumZSectionsAvailable,1)
-                    else nFrames := Max(NumTSectionsAvailable,1) ;
-
                     FileNames.Add(SectionFileName(FileName,iPanel,iZ,iT)) ;
+                    if (not SaveAsMultipageTIFF) then nFrames := 1
+                    else if NumZSectionsRequested > 1 then nFrames := Max(NumZSectionsRequested,1)
+                    else nFrames := Max(NumTSectionsRequested,1) ;
+
                     FileOpen := ImageFile.CreateFile( FileNames.Strings[FileNames.Count-1],
-                                                 HRFrameWidth,
-                                                 HRFrameHeight,
-                                                 NumBitsPerPixel,
-                                                 HRNumComponentsPerPixel,
-                                                 nFrames ) ;
+                                                      HRFrameWidth,
+                                                      HRFrameHeight,
+                                                      NumBitsPerPixel,
+                                                      HRNumComponentsPerPixel,
+                                                      nFrames ) ;
                     if not FileOpen then Exit ;
+
 
                     ImageFile.XResolution := MagnifiedCameraPixelSize / sqrt(NumPixelShiftFrames) ;
                     ImageFile.YResolution := ImageFile.XResolution ;
                     ImageFile.ZResolution := ZStep ;
                     ImageFile.SaveFrame32( 1, PImageBuf ) ;
-                    if not SaveAsMultipageTIFF then ImageFile.CloseFile ;
+                    if not SaveAsMultipageTIFF then
+                       begin
+                       ImageFile.CloseFile ;
+                       FileOpen := False ;
+                       end;
                     Inc(NumFiles) ;
                     NumFramesInFile := 1 ;
                     end
@@ -3013,11 +3041,8 @@ begin
 
                  edStatus.Text := format('Saving Image To OME.TIF %d/%d',[NumFramesInFile,NumImagesInRawFile]) ;
                  application.processmessages ;
-
-                 end;
-
+                 end ;
              end ;
-
          end;
 
      // Close file (if a multipage TIFF)
