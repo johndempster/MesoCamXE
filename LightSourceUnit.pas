@@ -275,6 +275,8 @@ var
   OK : Boolean ;
 begin
 
+    if not ComPortOpen then Exit ;
+
     SourceLetter[0] := 'CA' ;
     SourceLetter[1] := 'CB' ;
     SourceLetter[2] := 'CC' ;
@@ -383,6 +385,7 @@ var
    DCB : TDCB ;           { Device control block for COM port }
    CommTimeouts : TCommTimeouts ;
 begin
+
      if ComPortOpen then Exit ;
 
      { Open com port  }
@@ -394,7 +397,12 @@ begin
                      FILE_ATTRIBUTE_NORMAL,
                      0) ;
 
-     if ComHandle < 0 then Exit ;
+     if Integer(ComHandle) < 0 then
+        begin
+        ComPortOpen := False ;
+        ShowMessage(format('CoolLED: Unable to open serial port: COM%d',[FControlPort+1]));
+        Exit ;
+        end;
 
      { Get current state of COM port and fill device control block }
      GetCommState( ComHandle, DCB ) ;
@@ -452,6 +460,7 @@ var
    OK : Boolean ;
 begin
 
+     if not ComPortOpen then Exit ;
      if ComFailed then Exit ;
 
      { Copy command line to be sent to xMit buffer and and a CR character }
@@ -480,6 +489,7 @@ var
   Timeout : Cardinal ;
   EndOfLine : Boolean ;
 begin
+   if not ComPortOpen then Exit ;
    if ComFailed then Exit ;
    TimeOut := timegettime + 1000 ;
    repeat
@@ -502,6 +512,8 @@ var
    NumBytesRead,ComError,NumRead : DWORD ;
 begin
 
+     Result := '' ;
+     if not ComPortOpen then Exit ;
 
      PComState := @ComState ;
      Line := '' ;
@@ -588,13 +600,15 @@ var
     i : Integer ;
 begin
 
+    if not ComPortOpen then Exit ;
+
     // Clear control lines
     for I := 0 to High(ControlLines) do ControlLines[i] := LineDisabled ;
 
     // Request list of wavelengths available
     COMFailed := not SendCommand('LAMS');
 
-    if COMFailed then ShowMessage('CoolLED light source not responding');
+    if COMFailed then ShowMessage('CoolLED Initialization: Device not responding to command!');
 
     end;
 

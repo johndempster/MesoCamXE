@@ -58,6 +58,10 @@ unit MainUnit;
 // V1.7.6 15.10.17 'CAMERATEMPERATURESETPOINT', Cam1.CameraTemperatureSetPoint added to setting files
 //                 CalibrationBarSize added
 //                 Raw file image now now saved and redisplayed when program restarted
+// V1.7.7 18.10.17 File>Save Image now works again.
+//                 Calibration bar added to display
+//                 Light Source and Z stage commands ignored if serial port does not open avoiding timeout delays
+//                 More help pages added
 
 
 interface
@@ -300,6 +304,10 @@ type
         procedure DisplaySquare(
                   X : Integer ;
                   Y : Integer ) ;
+        procedure DisplayCalibrationBar(
+                  X : Integer ;
+                  Y : Integer ) ;
+
 
         procedure FixRectangle( var Rect : TRect ) ;
         function GetSpecialFolder(const ASpecialFolderID: Integer): string;
@@ -629,13 +637,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.7.6';
+     ProgramName := 'MesoCam V1.7.7';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 15/10/17';
+     ProgramName := ProgramName + ' 18/10/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -1171,7 +1179,7 @@ begin
         Images[i].Canvas.TextFlags := 0 ;
         Images[i].Canvas.Pen.Mode := pmXOR ;
         Images[i].Canvas.Font.Name := 'Arial' ;
-        Images[i].Canvas.Font.Size := 8 ;
+        Images[i].Canvas.Font.Size := 12 ;
         Images[i].Canvas.Font.Color := clBlue ;
         end ;
 
@@ -1328,6 +1336,40 @@ begin
 end ;
 
 
+procedure TMainFrm.DisplayCalibrationBar(
+          X : Integer ;
+          Y : Integer ) ;
+Const
+    TickHeight = 10 ;
+var
+    Square : TRect ;
+    PixelsToMicrons : double ;
+    X1,BarWidth : Integer ;
+begin
+
+     PixelsToMicrons := Cam1.BinFactor*MagnifiedCameraPixelSize/sqrt(Cam1.NumPixelShiftFrames) ;
+     ScaleToBM := (BitMap.Width*Magnification[iZoom]) / Max(FrameWidth,1) ;
+     BarWidth := Round( (CalibrationBarSize/PixelsToMicrons)*ScaleToBM ) ;
+
+     Bitmap.Canvas.Pen.Color := clwhite ;
+     Bitmap.Canvas.Brush.Style := bsClear ;
+     Bitmap.Canvas.Pen.Width := 2 ;
+     Bitmap.Canvas.MoveTo( X, Y - TickHeight ) ;
+     Bitmap.Canvas.LineTo(X, Y + TickHeight ) ;
+     Bitmap.Canvas.MoveTo( X, Y ) ;
+     X1 := X + BarWidth ;
+     Bitmap.Canvas.LineTo( X1, Y  ) ;
+     Bitmap.Canvas.MoveTo( X1, Y - TickHeight ) ;
+     Bitmap.Canvas.LineTo( X1, Y + TickHeight ) ;
+
+     Bitmap.Canvas.Font.Color := clWhite ;
+     Bitmap.Canvas.Font.Size := 10 ;
+     Bitmap.Canvas.TextOut( X, Y + TickHeight + 1, format('%.3g um',[CalibrationBarSize]));
+
+end ;
+
+
+
 procedure TMainFrm.UpdateImage ;
 // --------------
 // Display image
@@ -1427,6 +1469,8 @@ begin
      // Display ROI
      DisplayROI(BitMap) ;
 
+     DisplayCalibrationBar(10, BitMap.Height - 50 ) ;
+
      Images[Page.TabIndex].Picture.Assign(BitMap) ;
      Images[Page.TabIndex].Width := BitMap.Width ;
      Images[Page.TabIndex].Height := BitMap.Height ;
@@ -1435,7 +1479,7 @@ begin
      if ckAcquireZStack.Checked and (not bStopImage.Enabled)  then
         begin
         ZSectionPanel.Visible := True ;
-        lbZSection.Caption := format('Section %d/%d',[ZSection+1,NumZSectionsRequested]) ;
+        lbZSection.Caption := format(' %d/%d',[ZSection+1,NumZSectionsRequested]) ;
         end
      else ZSectionPanel.Visible := False ;
 
@@ -1443,7 +1487,7 @@ begin
      if ckAcquireTimeLapseSeries.Checked and (not bStopImage.Enabled)  then
         begin
         TSectionPanel.Visible := True ;
-        lbTSection.Caption := format('T %d/%d',[TSection+1,NumTSectionsRequested]) ;
+        lbTSection.Caption := format(' %d/%d',[TSection+1,NumTSectionsRequested]) ;
         end
      else TSectionPanel.Visible := False ;
 
@@ -1625,8 +1669,6 @@ begin
 
     // Z sections
     ZSection := 0 ;
-
-
     NumZSectionsAvailable := 0 ;
     if ckAcquireZStack.Checked then NumZSectionsRequested := Max(Round(edNumZsections.Value),1)
                                else NumZSectionsRequested := 1 ;
@@ -2905,6 +2947,7 @@ var
     i,iNum,NumFiles,NumFramesInFile : Integer ;
     Exists,FileOpen : boolean ;
     FileNames : TStringList ;
+    NewFileRequired : Boolean ;
 begin
 
      SaveDialog.InitialDir := SaveDirectory ;
@@ -2916,26 +2959,13 @@ begin
                     + FormatDateTime('yyyy-mm-dd',Now)
                     + format(' %d.tif',[iNum]) ;
         Exists := false ;
-
-        iZ := 0 ;
-        iT := 0 ;
-        iPanel := 0 ;
-        for i := 0 to NumImagesInRawFile-1 do
-            begin
-            s := SectionFileName(FileName,iPanel,iZ,iT) ;
-            Exists := Exists or FileExists(s) ;
-            Inc(iPanel) ;
-            if iPanel >= NumPanelsAvailable then
-               begin
-               iPanel := 0 ;
-               Inc(iZ) ;
-               if iZ >= NumZSectionsRequested then
-                  begin
-                  iZ := 0 ;
-                  Inc(iT) ;
-                  end;
-               end;
-            end;
+        for iPanel := 0 to NumPanelsAvailable-1 do
+         for iT := 0 to NumTSectionsRequested-1 do
+             for iZ := 0 to NumZSectionsRequested-1 do
+             begin
+             s := SectionFileName(FileName,iPanel,iZ,iT) ;
+             Exists := Exists or FileExists(s) ;
+             end ;
         Inc(iNum) ;
      until not Exists ;
 
@@ -2953,33 +2983,20 @@ begin
 
      // Check if any files exist already and allow user option to quit
      Exists := False ;
-     iZ := 0 ;
-     iT := 0 ;
-     iPanel := 0 ;
-     for i := 0 to NumImagesInRawFile-1 do
-         begin
-         s := SectionFileName(FileName,iPanel,iZ,iT) ;
-         Exists := Exists or FileExists(s) ;
-         if Exists then
-            begin
-            if MessageDlg( format(
-               'File %s already exists! Do you want to overwrite it? ',[s]),
-                mtWarning,[mbYes,mbNo], 0 ) = mrNo then Exit ;
-                Break ;
-                end ;
-
-           Inc(iPanel) ;
-           if iPanel >= NumPanelsAvailable then
-              begin
-              iPanel := 0 ;
-              Inc(iZ) ;
-              if iZ >= NumZSectionsRequested then
+     for iPanel := 0 to NumPanelsAvailable-1 do
+         for iT := 0 to NumTSectionsRequested-1 do
+             for iZ := 0 to NumZSectionsRequested-1 do
                  begin
-                 iZ := 0 ;
-                 Inc(iT) ;
+                 s := SectionFileName(FileName,iPanel,iZ,iT) ;
+                 Exists := Exists or FileExists(s) ;
+                 if Exists then
+                           begin
+                           if MessageDlg( format(
+                           'File %s already exists! Do you want to overwrite it? ',[s]),
+                           mtWarning,[mbYes,mbNo], 0 ) = mrNo then Exit ;
+                           Break ;
+                           end ;
                  end;
-              end;
-           end;
 
      // Save image
      edStatus.Text := 'Saving to TIF' ;
@@ -2989,28 +3006,33 @@ begin
      FileOpen := False ;
      for iPanel := 0 to Max(NumPanelsAvailable,1)-1 do
          begin
+         NewFileRequired := True ;
          for iT := 0 to Max(NumTSectionsRequested,1)-1 do
              begin
+             if NumZSectionsRequested > 1 then NewFileRequired := True ;
              for iZ := 0 to Max(NumZSectionsRequested,1)-1 do
                  begin
 
                  // Get image
                  LoadRawImage( RawImagesFileName,iZ,iT,iPanel) ;
 
-                 if (iZ = 0) or (iT = 0) or (not SaveAsMultipageTIFF) then
+                 // Create a new file (if required)
+                 if not SaveAsMultipageTIFF then NewFileRequired := True ;
+                 if NewFileRequired then
                     begin
-
+                    // Close open file
                     if FileOpen then
                        begin
                        ImageFile.CloseFile ;
                        FileOpen := False ;
                        end;
-
+                    // Add file name to list
                     FileNames.Add(SectionFileName(FileName,iPanel,iZ,iT)) ;
+                    // No. of images in file
                     if (not SaveAsMultipageTIFF) then nFrames := 1
-                    else if NumZSectionsRequested > 1 then nFrames := Max(NumZSectionsRequested,1)
-                    else nFrames := Max(NumTSectionsRequested,1) ;
-
+                    else if NumZSectionsRequested > 1 then nFrames := NumZSectionsRequested
+                    else nFrames := NumTSectionsRequested ;
+                    // Create new file
                     FileOpen := ImageFile.CreateFile( FileNames.Strings[FileNames.Count-1],
                                                       HRFrameWidth,
                                                       HRFrameHeight,
@@ -3019,18 +3041,13 @@ begin
                                                       nFrames ) ;
                     if not FileOpen then Exit ;
 
-
                     ImageFile.XResolution := MagnifiedCameraPixelSize / sqrt(NumPixelShiftFrames) ;
                     ImageFile.YResolution := ImageFile.XResolution ;
                     ImageFile.ZResolution := ZStep ;
                     ImageFile.SaveFrame32( 1, PImageBuf ) ;
-                    if not SaveAsMultipageTIFF then
-                       begin
-                       ImageFile.CloseFile ;
-                       FileOpen := False ;
-                       end;
                     Inc(NumFiles) ;
                     NumFramesInFile := 1 ;
+                    NewFileRequired := False ;
                     end
                  else
                     begin
@@ -3039,8 +3056,10 @@ begin
                     ImageFile.SaveFrame32( NumFramesInFile, PImageBuf ) ;
                     end;
 
+                 outputdebugstring(pchar(format('Frame %d written to %s',[NumFramesInFile,FileName])));
                  edStatus.Text := format('Saving Image To OME.TIF %d/%d',[NumFramesInFile,NumImagesInRawFile]) ;
                  application.processmessages ;
+
                  end ;
              end ;
          end;

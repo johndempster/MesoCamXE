@@ -16,6 +16,7 @@ unit ZStageUnit;
 //          to TTL triggered list to abort any move commands in progress.
 //          Now operates in standard mode to allow 'R' command responses to be returned immediately after command
 //          Moves can now be changed while in progress.
+// 18.10.17 Now reports if COM port cannot be opened and disables send/recieves to controller
 
 interface
 
@@ -304,7 +305,8 @@ var
    DCB : TDCB ;           { Device control block for COM port }
    CommTimeouts : TCommTimeouts ;
 begin
-     if ComPortOpen then Exit ;
+
+     ComPortOpen := False ;
 
      { Open com port  }
      ComHandle :=  CreateFile( PCHar(format('COM%d',[ControlPort+1])),
@@ -315,7 +317,11 @@ begin
                      FILE_ATTRIBUTE_NORMAL,
                      0) ;
 
-     if ComHandle < 0 then Exit ;
+     if Integer(ComHandle) < 0 then
+        begin
+        ShowMessage( format('Z Stage: Unable to open port COM%d',[ControlPort+1]));
+        Exit ;
+        end;
 
      { Get current state of COM port and fill device control block }
      GetCommState( ComHandle, DCB ) ;
@@ -341,10 +347,10 @@ begin
      SetCommTimeouts( ComHandle, CommTimeouts ) ;
 
      ComPortOpen := True ;
-      Status := '' ;
-    ControlState := csIdle ;
+     Status := '' ;
+     ControlState := csIdle ;
 
-    end ;
+     end ;
 
 
 procedure TZStage.CloseCOMPort ;
@@ -370,6 +376,9 @@ var
    OK : Boolean ;
 begin
 
+     Result := False ;
+     if not ComPortOpen then Exit ;
+
      { Copy command line to be sent to xMit buffer and and a CR character }
      nC := Length(Line) ;
      for i := 1 to nC do xBuf[i-1] := ANSIChar(Line[i]) ;
@@ -394,6 +403,8 @@ var
   Timeout : Cardinal ;
   EndOfLine : Boolean ;
 begin
+
+   if not ComPortOpen then Exit ;
    TimeOut := timegettime + 5000 ;
    repeat
      Status := ReceiveBytes( EndOfLine ) ;
@@ -411,8 +422,12 @@ var
   EndOfLine : Boolean ;
   Timeout : Cardinal ;
 begin
+
+   if not ComPortOpen then Exit ;
+
    Response := '' ;
    TimeOut := timegettime + 5000 ;
+   if not ComPortOpen then Exit ;
    repeat
      Response := Response + ReceiveBytes( EndOfLine ) ;
    until EndOfLine or (TimeGetTime > TimeOut) ;
@@ -435,6 +450,8 @@ var
    PComState : PComStat ;
    NumBytesRead,ComError,NumRead : DWORD ;
 begin
+
+     if not ComPortOpen then Exit ;
 
      PComState := @ComState ;
      Line := '' ;
@@ -470,7 +487,6 @@ var
     OK : Boolean ;
     i,iNum : Integer ;
     c,s : string ;
-    XStep,YStep,ZStep : Double ;
 begin
 
     case ControlState of

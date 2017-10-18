@@ -93,8 +93,8 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
         <Icon_MainIcon>MesoCam_Icon.ico</Icon_MainIcon>
-        <VerInfo_Release>6</VerInfo_Release>
-        <VerInfo_Keys>CompanyName=MesoLens Ltd;FileDescription=;FileVersion=1.7.6.0;InternalName=Mesoscan;LegalCopyright=(c) University of Strathclyde;LegalTrademarks=;OriginalFilename=;ProductName=MesoScan;ProductVersion=1.3.2;Comments=</VerInfo_Keys>
+        <VerInfo_Release>7</VerInfo_Release>
+        <VerInfo_Keys>CompanyName=MesoLens Ltd;FileDescription=;FileVersion=1.7.7.0;InternalName=Mesoscan;LegalCopyright=(c) University of Strathclyde;LegalTrademarks=;OriginalFilename=;ProductName=MesoScan;ProductVersion=1.3.2;Comments=</VerInfo_Keys>
         <VerInfo_MinorVer>7</VerInfo_MinorVer>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <DCC_RemoteDebug>true</DCC_RemoteDebug>
@@ -397,10 +397,10 @@
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="ProjectiOSInfoPList">
-                    <Platform Name="iOSSimulator">
+                    <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
                     </Platform>
-                    <Platform Name="iOSDevice64">
+                    <Platform Name="iOSSimulator">
                         <Operation>1</Operation>
                     </Platform>
                     <Platform Name="iOSDevice32">
@@ -539,13 +539,13 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
-                <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
             </Deployment>
         </BorlandProject>

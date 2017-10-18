@@ -2,7 +2,7 @@ object SettingsFrm: TSettingsFrm
   Left = 0
   Top = 0
   BorderStyle = bsDialog
-  Caption = 'Camera/System Settings '
+  Caption = 'Camera/Microscope Settings '
   ClientHeight = 449
   ClientWidth = 560
   Color = clBtnFace
@@ -53,12 +53,10 @@ object SettingsFrm: TSettingsFrm
     Top = 8
     Width = 544
     Height = 406
-    ActivePage = CameraTab
+    ActivePage = ZStageTab
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
-      ExplicitLeft = 0
-      ExplicitTop = 28
       object GroupBox4: TGroupBox
         Left = 8
         Top = 2
@@ -73,17 +71,17 @@ object SettingsFrm: TSettingsFrm
         ParentFont = False
         TabOrder = 0
         object Label41: TLabel
-          Left = 20
+          Left = 22
           Top = 319
-          Width = 126
+          Width = 124
           Height = 14
           Alignment = taRightJustify
-          Caption = 'Tempr. Set Point'
+          Caption = 'Temperature Set Point'
         end
         object Label9: TLabel
-          Left = 20
+          Left = 48
           Top = 295
-          Width = 126
+          Width = 98
           Height = 14
           Alignment = taRightJustify
           Caption = 'Camera Pixel Size'
@@ -300,7 +298,7 @@ object SettingsFrm: TSettingsFrm
           Scale = 1.000000000000000000
           Units = 'um'
           NumberFormat = '%.4g'
-          LoLimit = 0.100000001490116100
+          LoLimit = -1.000000015047466E30
           HiLimit = 1000000.000000000000000000
         end
       end
@@ -372,7 +370,6 @@ object SettingsFrm: TSettingsFrm
     object LightSourceTab: TTabSheet
       Caption = 'Light Source'
       ImageIndex = 1
-      ExplicitWidth = 456
       object lbSourceType: TLabel
         Left = 8
         Top = 8
@@ -893,13 +890,12 @@ object SettingsFrm: TSettingsFrm
     object ZStageTab: TTabSheet
       Caption = 'Z Stage'
       ImageIndex = 2
-      ExplicitWidth = 456
       object GroupBox2: TGroupBox
         Left = 3
         Top = 3
         Width = 219
         Height = 262
-        Caption = ' Z position Control'
+        Caption = ' Z Position Control'
         TabOrder = 0
         object Label8: TLabel
           Left = 47
@@ -910,36 +906,36 @@ object SettingsFrm: TSettingsFrm
           Caption = 'Control Port'
         end
         object Label10: TLabel
-          Left = 40
+          Left = 37
           Top = 116
-          Width = 65
+          Width = 68
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Z scale factor'
+          Caption = 'Z Scale Factor'
         end
         object Label13: TLabel
-          Left = 52
+          Left = 48
           Top = 143
-          Width = 53
+          Width = 57
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Z step rate'
+          Caption = 'Z Step Rate'
         end
         object Label12: TLabel
-          Left = 40
+          Left = 37
           Top = 66
-          Width = 65
+          Width = 68
           Height = 13
           Alignment = taRightJustify
-          Caption = 'X scale factor'
+          Caption = 'X Scale Factor'
         end
         object Label14: TLabel
-          Left = 40
+          Left = 37
           Top = 92
-          Width = 65
+          Width = 68
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Y scale factor'
+          Caption = 'Y Scale Factor'
         end
         object Label16: TLabel
           Left = 3
@@ -1059,7 +1055,6 @@ object SettingsFrm: TSettingsFrm
       HelpKeyword = 'Lenses'
       Caption = 'Lenses'
       ImageIndex = 3
-      ExplicitWidth = 456
       object CalibrationGrp: TGroupBox
         Left = 8
         Top = 3
