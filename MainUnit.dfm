@@ -536,7 +536,7 @@ object MainFrm: TMainFrm
       Width = 80
       Height = 20
       Hint = 'Move stage to specified Z axis position'
-      Caption = 'GoTo Z='
+      Caption = 'Go to Z='
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -598,7 +598,7 @@ object MainFrm: TMainFrm
       Width = 80
       Height = 20
       Hint = 'Move stage to specified X axis position'
-      Caption = 'GoTo X='
+      Caption = 'Go to X='
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -616,7 +616,7 @@ object MainFrm: TMainFrm
       Width = 80
       Height = 20
       Hint = 'Move stage to specified Y axis position'
-      Caption = 'GoTo Y='
+      Caption = 'Go to Y='
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
       Font.Height = -15

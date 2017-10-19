@@ -62,7 +62,11 @@ unit MainUnit;
 //                 Calibration bar added to display
 //                 Light Source and Z stage commands ignored if serial port does not open avoiding timeout delays
 //                 More help pages added
-
+// V1.7.8 19.10.17 Intermittent failure to start camera when Capture Image pressed fixed by changing to
+//                 Free Run trigger mode instead of Trigger Pulse (IMAQ_SnapImage).
+//                 Correct max. grey level now selected when program started
+//                 Image stored in raw file on start up now resized correctly
+//                 .T0 and .Z0 eliminated from TIF file name when only single Z or T images.
 
 interface
 
@@ -637,13 +641,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.7.7';
+     ProgramName := 'MesoCam V1.7.8';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 18/10/17';
+     ProgramName := ProgramName + ' 19/10/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -663,9 +667,6 @@ begin
     TimeLapseInterval := 10.0 ;
 
      DeviceNum := 1 ;
-     GreyLo := 0 ;
-     GreyLevelMax := Cam1.GreyLevelMax ;
-     GreyHi := GreyLevelMax ;
 
      //StatusBar.SimpleText := LabIO.DeviceName[1] ;
      Magnification[0] := 1 ;
@@ -728,22 +729,15 @@ begin
      edNumPixelsPerZStep.Value := 1.0 ;
      edNumZSections.Value := 10.0 ;
 
-     NumLenses := 5 ;
+     NumLenses := 1 ;
      LensSelected := 0 ;
      LensMagnification[0] := 4.0 ;
      LensName[0] := '4X' ;
-     LensMagnification[1] := 10.0 ;
-     LensName[1] := '10X' ;
-     LensMagnification[2] := 20.0 ;
-     LensName[2] := '20X' ;
-     LensMagnification[3] := 40.0 ;
-     LensName[3] := '40X' ;
-     LensMagnification[4] := 60.0 ;
-     LensName[4] := '60X' ;
      SetLensMenu ;
 
      RelayLensMagnification := 1.0 ;
      CameraPixelSize := 1.0 ;
+     CalibrationBarSize := 100.0 ;
 
      MagnifiedCameraPixelSize := CameraPixelSize /
                                  Max(RelayLensMagnification*LensMagnification[LensSelected],1E-3) ;
@@ -772,6 +766,9 @@ begin
      Application.HelpFile := ProgDirectory + 'mesocam.chm';
 
      Cam1.OpenCamera(CameraType);
+     GreyLo := 0 ;
+     GreyLevelMax := Cam1.GreyLevelMax ;
+     GreyHi := GreyLevelMax ;
 
      // Set camera gain list
      Cam1.GetCameraGainList( cbCameraGain.Items );
@@ -834,7 +831,8 @@ begin
 
      IgnorePanelControls := False ;
 
-     Resize ;
+     // Request a form resize
+     ResizeImage := True ;
 
      end;
 
@@ -2707,7 +2705,7 @@ begin
     Cam1.StopCapture ;
 
     // Move Z stage back to starting position
-    if ckAcquireZStack.Checked then
+    if ckAcquireZStack.Checked and (not LiveImagingInProgress) then
        begin
        ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStartingPosition );
        scZSection.Position := 0 ;
@@ -3105,8 +3103,7 @@ var
 begin
 
      s := '.' + PanelName[iPanel] + '.' ;
-     if ((NumTSectionsAvailable > 1) and (not SaveAsMultipageTIFF)) or
-        (NumZSectionsAvailable > 1) then
+     if ((NumTSectionsAvailable > 1) and (not SaveAsMultipageTIFF)) then
         s := s + format('T%d.',[iTSection]) ;
 
      if ((NumZSectionsAvailable > 1) and (not SaveAsMultipageTIFF)) then

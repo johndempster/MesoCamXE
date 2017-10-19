@@ -21,7 +21,7 @@ unit ZStageUnit;
 interface
 
 uses
-  System.SysUtils, System.Classes, Windows, FMX.Dialogs, math ;
+  System.SysUtils, System.Classes, Windows, FMX.Dialogs, math, strutils ;
 
 type
   TZStage = class(TDataModule)
@@ -541,11 +541,16 @@ begin
                    if (c = ',') or (i = Length(Status)) then
                       begin
                       if c <> ',' then s := s + Status[i] ;
-                      case iNum of
-                          0 : XPosition := StrToInt64(s)/XScaleFactor ;
-                          1 : YPosition := StrToInt64(s)/YScaleFactor ;
-                          2 : ZPosition := StrToInt64(s)/ZScaleFactor ;
-                          end ;
+                      // Remove error flag (if represent)
+                      s := ReplaceText(s,'R','');
+                      if (not ContainsText(s,'R')) and (s<>'') then
+                         begin
+                         case iNum of
+                            0 : XPosition := StrToInt64(s)/XScaleFactor ;
+                            1 : YPosition := StrToInt64(s)/YScaleFactor ;
+                            2 : ZPosition := StrToInt64(s)/ZScaleFactor ;
+                            end ;
+                         end;
                       Inc(INum) ;
                       s := '' ;
                       end
