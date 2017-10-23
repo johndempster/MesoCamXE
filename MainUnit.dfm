@@ -34,12 +34,6 @@ object MainFrm: TMainFrm
     Font.Style = [fsBold]
     ParentFont = False
   end
-  object Image4: TImage
-    Left = 696
-    Top = 744
-    Width = 105
-    Height = 105
-  end
   object ControlGrp: TGroupBox
     Left = 8
     Top = 8
@@ -1248,7 +1242,7 @@ object MainFrm: TMainFrm
         Caption = 'Sliders'
         ImageIndex = 1
         ExplicitLeft = 0
-        ExplicitTop = 26
+        ExplicitTop = 0
         ExplicitWidth = 0
         ExplicitHeight = 0
         object Label9: TLabel

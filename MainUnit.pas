@@ -67,6 +67,7 @@ unit MainUnit;
 //                 Correct max. grey level now selected when program started
 //                 Image stored in raw file on start up now resized correctly
 //                 .T0 and .Z0 eliminated from TIF file name when only single Z or T images.
+// V1.7.9 23.10.17 NI Boards: If error detecting board name no. of devices set to zero avoiding repeated error loop
 
 interface
 
@@ -234,7 +235,6 @@ type
     scTSection: TScrollBar;
     Label1: TLabel;
     Label15: TLabel;
-    Image4: TImage;
     bGoToXPosition: TButton;
     bGoToYPosition: TButton;
     procedure FormShow(Sender: TObject);
@@ -641,13 +641,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.7.8';
+     ProgramName := 'MesoCam V1.7.9';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 19/10/17';
+     ProgramName := ProgramName + ' 23/10/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
