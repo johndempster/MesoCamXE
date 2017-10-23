@@ -141,7 +141,7 @@ begin
     ZPosition := 0.0 ;
     ZPositionMax := 10000.0 ;
     ZPositionMin := -10000.0 ;
-    ZScaleFactor := 1.0 ;
+    ZScaleFactor := 10.0 ;
     RequestedXPos := 0.0 ;
     RequestedYPos := 0.0 ;
     RequestedZPos := 0.0 ;

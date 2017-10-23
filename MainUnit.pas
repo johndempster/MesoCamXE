@@ -68,6 +68,8 @@ unit MainUnit;
 //                 Image stored in raw file on start up now resized correctly
 //                 .T0 and .Z0 eliminated from TIF file name when only single Z or T images.
 // V1.7.9 23.10.17 NI Boards: If error detecting board name no. of devices set to zero avoiding repeated error loop
+// V1.8.0 23.10.17 Auto contrast adjust now operational. Image now moves when dragged with left mouse button down (ratehr
+//                 moving oonly when button released.
 
 interface
 
@@ -641,7 +643,7 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.7.9';
+     ProgramName := 'MesoCam V1.8.0';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
@@ -1003,7 +1005,7 @@ begin
         if (Abs(XShift) >= 2) or (Abs(YShift) >= 2) then
            begin
   //         Image0.Cursor := crDrag ;
-
+             UpdateDisplay := True ;
            end;
         if SelectedEdge.Left = 1 then
            begin
@@ -1054,7 +1056,6 @@ begin
             YTop := YTop/FrameHeight ;
             end;
          end ;
-//     UpdateDisplay := True ;
 
      end ;
 
@@ -2234,7 +2235,7 @@ begin
         // Read images from camera
     if Cam1.CameraActive then Cam1.ReadCamera ;
 
-    if Cam1.CameraActive and (not LiveImagingInProgress) {and (not bCaptureImage.Enabled)} then
+    if Cam1.CameraActive and (not LiveImagingInProgress) then
        Begin
          // Update CCD XY stage position
          if Cam1.FrameCount >= 1 then
@@ -2335,6 +2336,12 @@ begin
 
     if UpdateDisplay then
        begin ;
+       // if auto contrast on
+       if ckAutoOptimise.Checked then
+          begin
+          CalculateMaxContrast ;
+          SetDisplayIntensityRange( GreyLo,GreyHi ) ;
+          end;
        UpdateImage ;
        UpdateDisplay := False ;
        PlotHistogram ;
