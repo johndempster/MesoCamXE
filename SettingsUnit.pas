@@ -8,6 +8,7 @@ unit SettingsUnit;
 // 22.03.17 USB-controlled CoolLED pE-x support added
 // 10.05.17 ZPositionMin, ZPositionMax limits added
 // 09.10.17 MainFrm.Cam1.CameraTemperatureSetPoint now updated by settings
+// 06.11.17 Cam1.CCDTapOffsetLT etc. CCD tap black offset adjustment properties added and can be changed by user
 
 interface
 
@@ -127,6 +128,15 @@ type
     edRawFileFolder: TEdit;
     edCalibrationBarSize: TValidatedEdit;
     Label3: TLabel;
+    BlackLevelOffsetsGrp: TGroupBox;
+    Label19: TLabel;
+    Label20: TLabel;
+    edCCDTapOffsetRT: TValidatedEdit;
+    Label21: TLabel;
+    Label22: TLabel;
+    edCCDTapOffsetLB: TValidatedEdit;
+    edCCDTapOffsetLT: TValidatedEdit;
+    edCCDTapOffsetRB: TValidatedEdit;
     procedure FormShow(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCancelClick(Sender: TObject);
@@ -245,6 +255,12 @@ begin
     edTemperatureSetPoint.Value := MainFrm.Cam1.CameraTemperatureSetPoint ;
     edCalibrationBarSize.Value := MainFrm.CalibrationBarSize ;
 
+    // CCD tap black level offsets
+    edCCDTapOffsetLT.Value := MainFRm.Cam1.CCDTapOffsetLT ;
+    edCCDTapOffsetRT.Value := MainFRm.Cam1.CCDTapOffsetRT ;
+    edCCDTapOffsetLB.Value := MainFRm.Cam1.CCDTapOffsetLB ;
+    edCCDTapOffsetRB.Value := MainFRm.Cam1.CCDTapOffsetRB ;
+
     edImageJPath.Text := MainFrm.ImageJPath ;
     ckSaveAsMultipageTIFF.Checked := MainFrm.SaveAsMultipageTIFF ;
     edRawFileFolder.Text := ExtractFilePath(MainFrm.RawImagesFileName) ;
@@ -319,6 +335,12 @@ begin
     MainFrm.Cam1.CameraTemperatureSetPoint := edTemperatureSetPoint.Value ;
 
     MainFrm.CalibrationBarSize := edCalibrationBarSize.Value ;
+
+    // CCD tap black level offsets
+    MainFRm.Cam1.CCDTapOffsetLT := Round(edCCDTapOffsetLT.Value) ;
+    MainFRm.Cam1.CCDTapOffsetRT := Round(edCCDTapOffsetRT.Value) ;
+    MainFRm.Cam1.CCDTapOffsetLB := Round(edCCDTapOffsetLB.Value) ;
+    MainFRm.Cam1.CCDTapOffsetRB := Round(edCCDTapOffsetRB.Value) ;
 
     // Update camera gain list
     MainFrm.Cam1.GetCameraGainList( MainFrm.cbCameraGain.Items );

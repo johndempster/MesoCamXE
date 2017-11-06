@@ -3,8 +3,8 @@ object SettingsFrm: TSettingsFrm
   Top = 0
   BorderStyle = bsDialog
   Caption = 'Camera/Microscope Settings '
-  ClientHeight = 449
-  ClientWidth = 560
+  ClientHeight = 517
+  ClientWidth = 563
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -18,7 +18,7 @@ object SettingsFrm: TSettingsFrm
   TextHeight = 13
   object bOK: TButton
     Left = 8
-    Top = 420
+    Top = 486
     Width = 61
     Height = 23
     Caption = 'OK'
@@ -34,7 +34,7 @@ object SettingsFrm: TSettingsFrm
   end
   object bCancel: TButton
     Left = 74
-    Top = 420
+    Top = 486
     Width = 67
     Height = 18
     Caption = 'Cancel'
@@ -52,16 +52,17 @@ object SettingsFrm: TSettingsFrm
     Left = 8
     Top = 8
     Width = 544
-    Height = 406
+    Height = 457
     ActivePage = CameraTab
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
+      ExplicitHeight = 378
       object GroupBox4: TGroupBox
         Left = 8
         Top = 2
         Width = 234
-        Height = 373
+        Height = 424
         Caption = ' Camera '
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
@@ -71,16 +72,16 @@ object SettingsFrm: TSettingsFrm
         ParentFont = False
         TabOrder = 0
         object Label41: TLabel
-          Left = 22
-          Top = 319
+          Left = 12
+          Top = 279
           Width = 124
           Height = 14
           Alignment = taRightJustify
           Caption = 'Temperature Set Point'
         end
         object Label9: TLabel
-          Left = 48
-          Top = 295
+          Left = 38
+          Top = 255
           Width = 98
           Height = 14
           Alignment = taRightJustify
@@ -93,8 +94,8 @@ object SettingsFrm: TSettingsFrm
           ParentFont = False
         end
         object Label3: TLabel
-          Left = 40
-          Top = 270
+          Left = 30
+          Top = 230
           Width = 106
           Height = 14
           Alignment = taRightJustify
@@ -194,8 +195,8 @@ object SettingsFrm: TSettingsFrm
           end
         end
         object edTemperatureSetPoint: TValidatedEdit
-          Left = 150
-          Top = 319
+          Left = 140
+          Top = 279
           Width = 75
           Height = 20
           Hint = 'Target temperature (degrees C) of camera CCD cooler'
@@ -270,8 +271,8 @@ object SettingsFrm: TSettingsFrm
           end
         end
         object edCameraPixelSize: TValidatedEdit
-          Left = 150
-          Top = 295
+          Left = 140
+          Top = 255
           Width = 75
           Height = 19
           Hint = 'Pixel size (microns) of camera CCD sensor'
@@ -286,8 +287,8 @@ object SettingsFrm: TSettingsFrm
           HiLimit = 1000000.000000000000000000
         end
         object edCalibrationBarSize: TValidatedEdit
-          Left = 150
-          Top = 270
+          Left = 140
+          Top = 230
           Width = 75
           Height = 19
           Hint = 'Size (microns) of display calibration bar'
@@ -300,6 +301,127 @@ object SettingsFrm: TSettingsFrm
           NumberFormat = '%.4g'
           LoLimit = -1.000000015047466E30
           HiLimit = 1000000.000000000000000000
+        end
+        object BlackLevelOffsetsGrp: TGroupBox
+          Left = 8
+          Top = 305
+          Width = 217
+          Height = 104
+          Caption = ' Black Level CCD Tap Offsets '
+          TabOrder = 9
+          object Label19: TLabel
+            Left = 8
+            Top = 20
+            Width = 46
+            Height = 14
+            Alignment = taRightJustify
+            Caption = 'Left-Top'
+            Font.Charset = ANSI_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Arial'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object Label20: TLabel
+            Left = 126
+            Top = 19
+            Width = 52
+            Height = 14
+            Alignment = taRightJustify
+            Caption = 'Right-Top'
+            Font.Charset = ANSI_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Arial'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object Label21: TLabel
+            Left = 8
+            Top = 60
+            Width = 66
+            Height = 14
+            Caption = 'Left-Bottom'
+            Font.Charset = ANSI_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Arial'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object Label22: TLabel
+            Left = 126
+            Top = 60
+            Width = 72
+            Height = 14
+            Caption = 'Right-Bottom'
+            Font.Charset = ANSI_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Arial'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object edCCDTapOffsetLT: TValidatedEdit
+            Left = 8
+            Top = 36
+            Width = 75
+            Height = 19
+            Hint = 'Black level offset adjustment of top-left CCD tap'
+            AutoSize = False
+            ShowHint = True
+            Text = ' 10 '
+            Value = 10.000000000000000000
+            Scale = 1.000000000000000000
+            NumberFormat = '%.4g'
+            HiLimit = 100.000000000000000000
+          end
+          object edCCDTapOffsetRT: TValidatedEdit
+            Left = 126
+            Top = 36
+            Width = 75
+            Height = 19
+            Hint = 'Black level offset adjustment of right-top CCD tap'
+            AutoSize = False
+            ShowHint = True
+            Text = ' 10 '
+            Value = 10.000000000000000000
+            Scale = 1.000000000000000000
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 100.000000000000000000
+          end
+          object edCCDTapOffsetRB: TValidatedEdit
+            Left = 126
+            Top = 74
+            Width = 75
+            Height = 19
+            Hint = 'Black level offset adjustment of top-left CCD tap'
+            AutoSize = False
+            ShowHint = True
+            Text = ' 10 '
+            Value = 10.000000000000000000
+            Scale = 1.000000000000000000
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 100.000000000000000000
+          end
+          object edCCDTapOffsetLB: TValidatedEdit
+            Left = 8
+            Top = 74
+            Width = 75
+            Height = 19
+            Hint = 'Black level offset adjustment of right-top CCD tap'
+            AutoSize = False
+            ShowHint = True
+            Text = ' 10 '
+            Value = 10.000000000000000000
+            Scale = 1.000000000000000000
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 100.000000000000000000
+          end
         end
       end
       object GroupBox5: TGroupBox
@@ -370,10 +492,7 @@ object SettingsFrm: TSettingsFrm
     object LightSourceTab: TTabSheet
       Caption = 'Light Source'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
+      ExplicitHeight = 378
       object lbSourceType: TLabel
         Left = 8
         Top = 8
@@ -894,6 +1013,7 @@ object SettingsFrm: TSettingsFrm
     object ZStageTab: TTabSheet
       Caption = 'Z Stage'
       ImageIndex = 2
+      ExplicitHeight = 378
       object GroupBox2: TGroupBox
         Left = 3
         Top = 3
@@ -1059,10 +1179,7 @@ object SettingsFrm: TSettingsFrm
       HelpKeyword = 'Lenses'
       Caption = 'Lenses'
       ImageIndex = 3
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
+      ExplicitHeight = 378
       object CalibrationGrp: TGroupBox
         Left = 8
         Top = 3

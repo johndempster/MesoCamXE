@@ -1,7 +1,7 @@
 CameraFile (6.72) {
    Manufacturer (Vieworks)
    Model (VA-29MC-5M)
-   CreationDate (20170823104647)
+   CreationDate (20171106145606)
    InterfaceInfo (1433) {
       AcquisitionWindow (0, 0, 6576, 4384)
       BinaryThreshold (0, 200)
@@ -1275,6 +1275,82 @@ CameraFile (6.72) {
          Action (Serial) {
             Command (stt %d\r\n)
             Response (stt %d\r\nOK\r\n>)
+         }
+      }
+   }
+   Attribute (CCDTapOffsetLT) {
+      Value (Integer) {
+         Min (0)
+         Max (100)
+         Increment (1)
+         Display {
+            Multiplier (1.000000)
+            Offset (0.000000)
+            Precision (0)
+            Units (units)
+         }
+         Default (0)
+         Current (0)
+         Action (Serial) {
+            Command (soo 1 %d \r \n)
+            Response (soo 1 %d \r\nOK\r\n>)
+         }
+      }
+   }
+   Attribute (CCDTapOffsetRT) {
+      Value (Integer) {
+         Min (0)
+         Max (100)
+         Increment (1)
+         Display {
+            Multiplier (1.000000)
+            Offset (0.000000)
+            Precision (0)
+            Units (units)
+         }
+         Default (0)
+         Current (0)
+         Action (Serial) {
+            Command (soo 2 %d \r \n)
+            Response (soo 2 %d \r\nOK\r\n>)
+         }
+      }
+   }
+   Attribute (CCDTapOffsetLB) {
+      Value (Integer) {
+         Min (0)
+         Max (100)
+         Increment (1)
+         Display {
+            Multiplier (1.000000)
+            Offset (0.000000)
+            Precision (0)
+            Units (units)
+         }
+         Default (0)
+         Current (0)
+         Action (Serial) {
+            Command (soo 3 %d \r \n)
+            Response (soo 3 %d \r\nOK\r\n>)
+         }
+      }
+   }
+   Attribute (CCDTapOffsetRB) {
+      Value (Integer) {
+         Min (0)
+         Max (100)
+         Increment (1)
+         Display {
+            Multiplier (1.000000)
+            Offset (0.000000)
+            Precision (0)
+            Units (units)
+         }
+         Default (0)
+         Current (0)
+         Action (Serial) {
+            Command (soo 4 %d \r \n)
+            Response (soo 4 %d \r\nOK\r\n>)
          }
       }
    }

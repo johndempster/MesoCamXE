@@ -70,6 +70,8 @@ unit MainUnit;
 // V1.7.9 23.10.17 NI Boards: If error detecting board name no. of devices set to zero avoiding repeated error loop
 // V1.8.0 23.10.17 Auto contrast adjust now operational. Image now moves when dragged with left mouse button down (ratehr
 //                 moving oonly when button released.
+// V1.8.1 06.11.17 Timeout added which forces camera restart if frames capture ceases
+//                 Cam1.CCDTapOffsetLT etc. CCD tap black offset adjustment properties added and saved in ini file
 
 interface
 
@@ -358,8 +360,11 @@ type
     TStart : Integer  ;
     NumFramesAcquired : Integer ;     // No. of frames acquired by camera
     NumFramesRequired : Integer ;     //  No. of frames required to be captured
-    OldNumFramesAcquired : Integer ;
+//    OldNumFramesAcquired : Integer ;
     NextCameraTrigger : Integer ;
+
+    LastFrameCount : Cardinal ;        // Last camera frame count
+    TTimeOut : Cardinal ;              // Camera live frame capture timeout
 
     TimeLapseNumPoints : Integer ;    // No. points in time lapse series
     TimeLapseInterval : Double ;      // Interval between time lapse images
@@ -643,13 +648,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.8.0';
+     ProgramName := 'MesoCam V1.8.1';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 23/10/17';
+     ProgramName := ProgramName + ' 06/11/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -1341,7 +1346,6 @@ procedure TMainFrm.DisplayCalibrationBar(
 Const
     TickHeight = 10 ;
 var
-    Square : TRect ;
     PixelsToMicrons : double ;
     X1,BarWidth : Integer ;
 begin
@@ -1814,7 +1818,10 @@ begin
 
     TStart := TimeGetTime ;
     NumFramesAcquired := 0 ;
-    OldNumFramesAcquired := 0 ;
+
+    // Initialise frame timeout variables
+    LastFrameCount := 0 ;
+    TTimeOut := TimeGetTime + Round(edExposureTime.Value*1000)+1000 ;
 
     CCDShiftCounter := -1 ;
 
@@ -2315,6 +2322,17 @@ begin
                                 else FrameRate := 0.0 ;
        edStatus.Text := format('Live: Frame %2d/%2d (%5.2f FPS)',
                         [Cam1.FrameCount mod Cam1.NumFramesInBuffer,Cam1.NumFramesInBuffer,FrameRate]);
+
+       // Camera frame capture time out
+       // Restart camera if no frame captured within time period
+       if Cam1.FrameCount <> LastFrameCount then TTimeOut := TimeGetTime + Round(edExposureTime.Value*1000)+1000 ;
+       if TimeGetTime > TTimeOut then
+          begin
+          Outputdebugstring(pchar('Camera frame count timeout. Camera Restarted'));
+          SnapRequested := True ;
+          StopCamera ;
+          end;
+       LastFrameCount := Cam1.FrameCount ;
 
        end ;
 
@@ -3576,6 +3594,11 @@ begin
 
     AddElementDouble( ProtNode, 'CAMERATEMPERATURESETPOINT', Cam1.CameraTemperatureSetPoint ) ;
 
+    AddElementInt( ProtNode, 'CCDTAPOFFSETLT',Cam1.CCDTapOffsetLT) ;
+    AddElementInt( ProtNode, 'CCDTAPOFFSETRT',Cam1.CCDTapOffsetRT) ;
+    AddElementInt( ProtNode, 'CCDTAPOFFSETLB',Cam1.CCDTapOffsetLB) ;
+    AddElementInt( ProtNode, 'CCDTAPOFFSETRB',Cam1.CCDTapOffsetRB) ;
+
     AddElementText( ProtNode, 'SAVEDIRECTORY', SaveDirectory ) ;
     AddElementText( ProtNode, 'IMAGEJPATH', ImageJPath ) ;
     AddElementBool( ProtNode, 'SAVEASMULTIPAGETIFF', SaveAsMultipageTIFF ) ;
@@ -3764,7 +3787,10 @@ begin
 
     Cam1.CameraTemperatureSetPoint := GetElementDouble( ProtNode, 'CAMERATEMPERATURESETPOINT', Cam1.CameraTemperatureSetPoint ) ;
 
-
+    Cam1.CCDTapOffsetLT := GetElementInt( ProtNode, 'CCDTAPOFFSETLT',Cam1.CCDTapOffsetLT) ;
+    Cam1.CCDTapOffsetRT := GetElementInt( ProtNode, 'CCDTAPOFFSETRT',Cam1.CCDTapOffsetRT) ;
+    Cam1.CCDTapOffsetLB := GetElementInt( ProtNode, 'CCDTAPOFFSETLB',Cam1.CCDTapOffsetLB) ;
+    Cam1.CCDTapOffsetRB := GetElementInt( ProtNode, 'CCDTAPOFFSETRB',Cam1.CCDTapOffsetRB) ;
 
     SaveDirectory := GetElementText( ProtNode, 'SAVEDIRECTORY', SaveDirectory ) ;
     ImageJPath := GetElementText( ProtNode, 'IMAGEJPATH', ImageJPath ) ;
