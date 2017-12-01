@@ -7,6 +7,8 @@ unit LightSourceUnit;
 // 14.06.17 USB serial communication working but not complete
 // 38.08.17 Now uses correct COM port settings for CoolLED
 //          Detects and reports failure to communicate with CoolLED
+// 01.12.17 Wavelength list requested from CoolLED at 1 second intervals.
+//          NamesChanged flag added indicating a wavelength name has changed
 
 interface
 
@@ -43,6 +45,7 @@ const
   dcb_RtsControlToggle = $00003000;
   dcb_AbortOnError = $00004000;
   dcb_Reserveds = $FFFF8000;
+  CoolLEDRequestWavelengthsAtTick = 10 ;
 
 
 
@@ -63,6 +66,8 @@ type
     OverLapStructure : POVERLAPPED ;
     ReplyBuf : string ;
     ComFailed : Boolean ;
+    TickCounter : Integer ;  // Timer tick counter
+    OldNames : Array[0..MaxLightSources-1] of string ; // Previous list of light source names
 
     procedure OpenCOMPort ;
     procedure CloseCOMPort ;
@@ -84,6 +89,7 @@ type
     Intensity : Array[0..MaxLightSources-1] of Double ;
     ControlLines : Array[0..MaxLightSources-1] of Integer ;
     Names : Array[0..MaxLightSources-1] of string ;
+    NamesChanged : Boolean ;
     MinLevel : Array[0..MaxLightSources-1] of Double ;
     MaxLevel : Array[0..MaxLightSources-1] of Double ;
     List : Array[0..MaxLightSources-1] of Integer ;
@@ -146,9 +152,12 @@ begin
     ControlState := csIdle ;
     ReplyBuf := '' ;
     ComFailed := False ;
+    TickCounter := 0 ;
+    NamesChanged := False ;
 
     for I := 0 to High(Names) do begin
         Names[i] := format('LS%d',[i]) ;
+        OldNames[i] := '' ;
         ControlLines[i] := LineDisabled ;
         MinLevel[i] := 0.0 ;
         MaxLevel[i] := 5.0 ;
@@ -318,11 +327,22 @@ procedure TLightSource.TimerTimer(Sender: TObject);
 // --------------------------------------------
 // Timed interval light source monitoring tasks
 // --------------------------------------------
+var
+    i : Integer ;
 begin
 
    case SourceType of
         lsCoolLED : CoolLEDHandleMessages ;
    end;
+
+   // Set flag if names have changed
+   NamesChanged := False ;
+   for i := 0 to High(Names) do
+       begin
+       if Names[i] <> OldNames[i] then NamesChanged := True ;
+       OldNames[i] := Names[i] ;
+       end;
+
 end ;
 
 
@@ -338,11 +358,20 @@ begin
 
     if not ComPortOpen then Exit ;
 
+    // Request list of wavelengths available every CoolLEDRequestWavelengthsAtTick ticks
+    if TickCounter > CoolLEDRequestWavelengthsAtTick then
+       begin
+       SendCommand('LAMS');
+       TickCounter := 0 ;
+       Exit ;
+       end
+    else Inc(TickCounter) ;
+
     // Disable unsupported lines
     ControlLines[4] := LineDisabled ;
     ControlLines[5] := LineDisabled ;
-    ControlLines[6]:= LineDisabled ;
-    ControlLines[7]:= LineDisabled ;
+    ControlLines[6] := LineDisabled ;
+    ControlLines[7] := LineDisabled ;
 
     ReplyBuf := ReplyBuf + ReceiveBytes( EndOfLine ) ;
     if EndOfLine then
@@ -609,6 +638,8 @@ begin
     COMFailed := not SendCommand('LAMS');
 
     if COMFailed then ShowMessage('CoolLED Initialization: Device not responding to command!');
+
+    TickCounter := 0 ; // Set tick counter to zero to ensure 1 second deley before next wavelength request
 
     end;
 

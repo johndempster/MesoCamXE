@@ -280,9 +280,9 @@ else
   [OFFLINE CONTENT]
   Install Files C:\Users\John\Documents\Embarcadero\Studio\Projects\MesoCamXE\MesoCam.exe to $TARGETDIR$
   Get Folder Location Start Menu->Start Menu Group into SHORTCUTROOT
-  Create Shortcut $SHORTCUTROOT$\MesoCam V1.8.0 to $TARGETDIR$\MesoCam.exe
-  Create Shortcut $SHORTCUTFOLDER$\MesoCam V1.8.0 to $TARGETDIR$\MesoCam.exe
-  Create Shortcut $DESKTOPDIR$\MesoCam V1.8.0 to $TARGETDIR$\MesoCam.exe
+  Create Shortcut $SHORTCUTROOT$\MesoCam V1.8.2 to $TARGETDIR$\MesoCam.exe
+  Create Shortcut $SHORTCUTFOLDER$\MesoCam V1.8.2 to $TARGETDIR$\MesoCam.exe
+  Create Shortcut $DESKTOPDIR$\MesoCam V1.8.2 to $TARGETDIR$\MesoCam.exe
   Install Files C:\Users\John\Documents\Embarcadero\Studio\Projects\MesoCamXE\MesoCam.chm to $TARGETDIR$
   Install Files C:\Users\John\Documents\Embarcadero\Studio\Projects\MesoCamXE\ProScan III_ Manual.pdf to $TARGETDIR$
   Create Shortcut $SHORTCUTFOLDER$\ProScan III_ Manual to $TARGETDIR$\ProScan III_ Manual.pdf

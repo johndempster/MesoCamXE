@@ -3,8 +3,8 @@ object SettingsFrm: TSettingsFrm
   Top = 0
   BorderStyle = bsDialog
   Caption = 'Camera/Microscope Settings '
-  ClientHeight = 517
-  ClientWidth = 563
+  ClientHeight = 501
+  ClientWidth = 560
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -18,7 +18,7 @@ object SettingsFrm: TSettingsFrm
   TextHeight = 13
   object bOK: TButton
     Left = 8
-    Top = 486
+    Top = 470
     Width = 61
     Height = 23
     Caption = 'OK'
@@ -34,7 +34,7 @@ object SettingsFrm: TSettingsFrm
   end
   object bCancel: TButton
     Left = 74
-    Top = 486
+    Top = 470
     Width = 67
     Height = 18
     Caption = 'Cancel'
@@ -57,7 +57,10 @@ object SettingsFrm: TSettingsFrm
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
-      ExplicitHeight = 378
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object GroupBox4: TGroupBox
         Left = 8
         Top = 2
@@ -71,42 +74,6 @@ object SettingsFrm: TSettingsFrm
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 0
-        object Label41: TLabel
-          Left = 12
-          Top = 279
-          Width = 124
-          Height = 14
-          Alignment = taRightJustify
-          Caption = 'Temperature Set Point'
-        end
-        object Label9: TLabel
-          Left = 38
-          Top = 255
-          Width = 98
-          Height = 14
-          Alignment = taRightJustify
-          Caption = 'Camera Pixel Size'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentFont = False
-        end
-        object Label3: TLabel
-          Left = 30
-          Top = 230
-          Width = 106
-          Height = 14
-          Alignment = taRightJustify
-          Caption = 'Calibration Bar SIze'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentFont = False
-        end
         object cbCamera: TComboBox
           Left = 8
           Top = 16
@@ -194,28 +161,13 @@ object SettingsFrm: TSettingsFrm
             TabOrder = 0
           end
         end
-        object edTemperatureSetPoint: TValidatedEdit
-          Left = 140
-          Top = 279
-          Width = 75
-          Height = 20
-          Hint = 'Target temperature (degrees C) of camera CCD cooler'
-          AutoSize = False
-          ShowHint = True
-          Text = ' 0 DEGC'
-          Scale = 1.000000000000000000
-          Units = 'DEGC'
-          NumberFormat = '%.4g'
-          LoLimit = -1.000000015047466E30
-          HiLimit = 1.000000015047466E30
-        end
         object ADCPanel: TPanel
           Left = 3
           Top = 144
           Width = 218
           Height = 28
           BevelOuter = bvNone
-          TabOrder = 5
+          TabOrder = 4
           object Label48: TLabel
             Left = 13
             Top = 6
@@ -240,7 +192,7 @@ object SettingsFrm: TSettingsFrm
           Width = 218
           Height = 45
           BevelOuter = bvNone
-          TabOrder = 6
+          TabOrder = 5
           object Label77: TLabel
             Left = 0
             Top = 4
@@ -270,45 +222,13 @@ object SettingsFrm: TSettingsFrm
             OnChange = cbCameraNamesChange
           end
         end
-        object edCameraPixelSize: TValidatedEdit
-          Left = 140
-          Top = 255
-          Width = 75
-          Height = 19
-          Hint = 'Pixel size (microns) of camera CCD sensor'
-          AutoSize = False
-          ShowHint = True
-          Text = ' 10 um'
-          Value = 10.000000000000000000
-          Scale = 1.000000000000000000
-          Units = 'um'
-          NumberFormat = '%.4g'
-          LoLimit = 0.100000001490116100
-          HiLimit = 1000000.000000000000000000
-        end
-        object edCalibrationBarSize: TValidatedEdit
-          Left = 140
-          Top = 230
-          Width = 75
-          Height = 19
-          Hint = 'Size (microns) of display calibration bar'
-          AutoSize = False
-          ShowHint = True
-          Text = ' 10 um'
-          Value = 10.000000000000000000
-          Scale = 1.000000000000000000
-          Units = 'um'
-          NumberFormat = '%.4g'
-          LoLimit = -1.000000015047466E30
-          HiLimit = 1000000.000000000000000000
-        end
         object BlackLevelOffsetsGrp: TGroupBox
           Left = 8
-          Top = 305
+          Top = 313
           Width = 217
           Height = 104
           Caption = ' Black Level CCD Tap Offsets '
-          TabOrder = 9
+          TabOrder = 6
           object Label19: TLabel
             Left = 8
             Top = 20
@@ -375,6 +295,7 @@ object SettingsFrm: TSettingsFrm
             Value = 10.000000000000000000
             Scale = 1.000000000000000000
             NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
             HiLimit = 100.000000000000000000
           end
           object edCCDTapOffsetRT: TValidatedEdit
@@ -421,6 +342,102 @@ object SettingsFrm: TSettingsFrm
             NumberFormat = '%.4g'
             LoLimit = -1.000000015047466E30
             HiLimit = 100.000000000000000000
+          end
+        end
+        object GroupBox1: TGroupBox
+          Left = 8
+          Top = 222
+          Width = 217
+          Height = 89
+          TabOrder = 7
+          object Label3: TLabel
+            Left = 32
+            Top = 60
+            Width = 106
+            Height = 14
+            Alignment = taRightJustify
+            Caption = 'Calibration Bar SIze'
+            Font.Charset = ANSI_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Arial'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object Label9: TLabel
+            Left = 40
+            Top = 12
+            Width = 98
+            Height = 14
+            Alignment = taRightJustify
+            Caption = 'Camera Pixel Size'
+            Font.Charset = ANSI_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Arial'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object Label41: TLabel
+            Left = 14
+            Top = 36
+            Width = 124
+            Height = 14
+            Alignment = taRightJustify
+            Caption = 'Temperature Set Point'
+            Font.Charset = ANSI_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Arial'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object edCalibrationBarSize: TValidatedEdit
+            Left = 144
+            Top = 36
+            Width = 65
+            Height = 19
+            Hint = 'Size (microns) of display calibration bar'
+            AutoSize = False
+            ShowHint = True
+            Text = ' 10 um'
+            Value = 10.000000000000000000
+            Scale = 1.000000000000000000
+            Units = 'um'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1000000.000000000000000000
+          end
+          object edCameraPixelSize: TValidatedEdit
+            Left = 144
+            Top = 12
+            Width = 65
+            Height = 19
+            Hint = 'Pixel size (microns) of camera CCD sensor'
+            AutoSize = False
+            ShowHint = True
+            Text = ' 10 um'
+            Value = 10.000000000000000000
+            Scale = 1.000000000000000000
+            Units = 'um'
+            NumberFormat = '%.4g'
+            LoLimit = 0.100000001490116100
+            HiLimit = 1000000.000000000000000000
+          end
+          object edTemperatureSetPoint: TValidatedEdit
+            Left = 144
+            Top = 60
+            Width = 65
+            Height = 20
+            Hint = 'Target temperature (degrees C) of camera CCD cooler'
+            AutoSize = False
+            ShowHint = True
+            Text = ' 0 DEGC'
+            Scale = 1.000000000000000000
+            Units = 'DEGC'
+            NumberFormat = '%.4g'
+            LoLimit = -1.000000015047466E30
+            HiLimit = 1.000000015047466E30
           end
         end
       end
@@ -492,7 +509,10 @@ object SettingsFrm: TSettingsFrm
     object LightSourceTab: TTabSheet
       Caption = 'Light Source'
       ImageIndex = 1
-      ExplicitHeight = 378
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object lbSourceType: TLabel
         Left = 8
         Top = 8
@@ -1013,7 +1033,10 @@ object SettingsFrm: TSettingsFrm
     object ZStageTab: TTabSheet
       Caption = 'Z Stage'
       ImageIndex = 2
-      ExplicitHeight = 378
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object GroupBox2: TGroupBox
         Left = 3
         Top = 3
@@ -1179,7 +1202,10 @@ object SettingsFrm: TSettingsFrm
       HelpKeyword = 'Lenses'
       Caption = 'Lenses'
       ImageIndex = 3
-      ExplicitHeight = 378
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object CalibrationGrp: TGroupBox
         Left = 8
         Top = 3

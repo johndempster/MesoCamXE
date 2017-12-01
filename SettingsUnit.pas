@@ -24,7 +24,6 @@ type
     Page: TPageControl;
     CameraTab: TTabSheet;
     GroupBox4: TGroupBox;
-    Label41: TLabel;
     cbCamera: TComboBox;
     ModePanel: TPanel;
     lbCameraMode: TLabel;
@@ -35,7 +34,6 @@ type
     ReadoutSpeedPanel: TPanel;
     Label1: TLabel;
     cbReadoutSpeed: TComboBox;
-    edTemperatureSetPoint: TValidatedEdit;
     ADCPanel: TPanel;
     Label48: TLabel;
     cbCameraADC: TComboBox;
@@ -101,8 +99,6 @@ type
     Label25: TLabel;
     edImageJPath: TEdit;
     ckSaveAsMultipageTIFF: TCheckBox;
-    Label9: TLabel;
-    edCameraPixelSize: TValidatedEdit;
     LensTab: TTabSheet;
     CalibrationGrp: TGroupBox;
     Label2: TLabel;
@@ -126,8 +122,6 @@ type
     edZPositionMax: TValidatedEdit;
     Label18: TLabel;
     edRawFileFolder: TEdit;
-    edCalibrationBarSize: TValidatedEdit;
-    Label3: TLabel;
     BlackLevelOffsetsGrp: TGroupBox;
     Label19: TLabel;
     Label20: TLabel;
@@ -137,6 +131,13 @@ type
     edCCDTapOffsetLB: TValidatedEdit;
     edCCDTapOffsetLT: TValidatedEdit;
     edCCDTapOffsetRB: TValidatedEdit;
+    GroupBox1: TGroupBox;
+    Label3: TLabel;
+    Label9: TLabel;
+    Label41: TLabel;
+    edCalibrationBarSize: TValidatedEdit;
+    edCameraPixelSize: TValidatedEdit;
+    edTemperatureSetPoint: TValidatedEdit;
     procedure FormShow(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCancelClick(Sender: TObject);
@@ -180,7 +181,6 @@ procedure TSettingsFrm.FormShow(Sender: TObject);
 // --------------------------
 var
     i : Integer ;
-    s : string ;
 begin
 
      if MainFrm.Cam1.CameraActive then MainFrm.Cam1.StopCapture ;

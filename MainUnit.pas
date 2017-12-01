@@ -72,6 +72,8 @@ unit MainUnit;
 //                 moving oonly when button released.
 // V1.8.1 06.11.17 Timeout added which forces camera restart if frames capture ceases
 //                 Cam1.CCDTapOffsetLT etc. CCD tap black offset adjustment properties added and saved in ini file
+// V1.8.2 01.12.17 CoolLED wavelength list now updated every second to monitor changes in selected wavelength
+//                 Timeout which forces camera restart if frames capture ceases renoved
 
 interface
 
@@ -364,7 +366,6 @@ type
     NextCameraTrigger : Integer ;
 
     LastFrameCount : Cardinal ;        // Last camera frame count
-    TTimeOut : Cardinal ;              // Camera live frame capture timeout
 
     TimeLapseNumPoints : Integer ;    // No. points in time lapse series
     TimeLapseInterval : Double ;      // Interval between time lapse images
@@ -648,13 +649,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.8.1';
+     ProgramName := 'MesoCam V1.8.2';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 06/11/17';
+     ProgramName := ProgramName + ' 01/12/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -1194,7 +1195,7 @@ begin
      tbChan1.TabVisible := False ;
      tbChan2.TabVisible := False ;
      tbChan3.TabVisible := False ;
-     //GetAllLightSourcePanels ;
+
      for i := 0 to High(LightSource.Active) do if LightSource.Active[i] then
          begin
          case NumPanels of
@@ -1410,7 +1411,7 @@ begin
 
     if pImBuf = Nil then Exit ;
 
-    if ResizeImage then SetImagePanels ;//Resize ;
+    if ResizeImage then SetImagePanels ;
     ResizeImage := False ;
 
     ScaleToBM := (BitMap.Width*Magnification[iZoom]) / Max(FrameWidth,1) ;
@@ -1821,7 +1822,6 @@ begin
 
     // Initialise frame timeout variables
     LastFrameCount := 0 ;
-    TTimeOut := TimeGetTime + Round(edExposureTime.Value*1000)+1000 ;
 
     CCDShiftCounter := -1 ;
 
@@ -2232,10 +2232,8 @@ var
     s : string ;
     NextZTStepRequested : Boolean ;
 begin
-    //if pImageBuf = Nil then Exit ;
 
     if TimerBusy then Exit ;
-
 
     NextZTStepRequested := False ;
 
@@ -2323,15 +2321,6 @@ begin
        edStatus.Text := format('Live: Frame %2d/%2d (%5.2f FPS)',
                         [Cam1.FrameCount mod Cam1.NumFramesInBuffer,Cam1.NumFramesInBuffer,FrameRate]);
 
-       // Camera frame capture time out
-       // Restart camera if no frame captured within time period
-       if Cam1.FrameCount <> LastFrameCount then TTimeOut := TimeGetTime + Round(edExposureTime.Value*1000)+1000 ;
-       if TimeGetTime > TTimeOut then
-          begin
-          Outputdebugstring(pchar('Camera frame count timeout. Camera Restarted'));
-          SnapRequested := True ;
-          StopCamera ;
-          end;
        LastFrameCount := Cam1.FrameCount ;
 
        end ;
@@ -2364,6 +2353,13 @@ begin
        UpdateDisplay := False ;
        PlotHistogram ;
        end ;
+
+    // Update lightsource panels if names have changed
+    if LightSource.NamesChanged then
+       begin
+       ResizeImage := True ;
+       LightSource.NamesChanged := False ;
+       end;
 
     // Update light source settings (if requested)
     if UpdateLightSource then
