@@ -9,6 +9,7 @@ unit LightSourceUnit;
 //          Detects and reports failure to communicate with CoolLED
 // 01.12.17 Wavelength list requested from CoolLED at 1 second intervals.
 //          NamesChanged flag added indicating a wavelength name has changed
+// 05.12.17 NamesChanged flag now also set if ControlLines changed
 
 interface
 
@@ -68,6 +69,7 @@ type
     ComFailed : Boolean ;
     TickCounter : Integer ;  // Timer tick counter
     OldNames : Array[0..MaxLightSources-1] of string ; // Previous list of light source names
+    OldControlLines : Array[0..MaxLightSources-1] of Integer ;
 
     procedure OpenCOMPort ;
     procedure CloseCOMPort ;
@@ -159,6 +161,7 @@ begin
         Names[i] := format('LS%d',[i]) ;
         OldNames[i] := '' ;
         ControlLines[i] := LineDisabled ;
+        OldControlLines[i] := -1 ;
         MinLevel[i] := 0.0 ;
         MaxLevel[i] := 5.0 ;
         end;
@@ -170,7 +173,13 @@ procedure TLightSource.Open ;
 // -------------------------------
 // Open light source for operation
 // -------------------------------
+var
+    i : Integer ;
 begin
+
+    // Clear old name list
+    for i := 0 to High(OldNames) do OldNames[i] := '' ;
+
     // Close COM port (if open)
     if ComPortOpen then CloseComPort ;
 
@@ -180,6 +189,9 @@ begin
           CoolLEDInit ;
           end ;
         end;
+
+    for i := 0 to High(OldNames) do OldNames[i] := '' ;
+
     end;
 
 
@@ -340,7 +352,9 @@ begin
    for i := 0 to High(Names) do
        begin
        if Names[i] <> OldNames[i] then NamesChanged := True ;
+       if ControlLines[i] <> OldControlLines[i] then NamesChanged := True ;
        OldNames[i] := Names[i] ;
+       OldControlLines[i]:= ControlLines[i] ;
        end;
 
 end ;

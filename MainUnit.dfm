@@ -1663,11 +1663,7 @@ object MainFrm: TMainFrm
     NumPixelShiftFrames = 1
     DisableExposureIntervalLimit = False
     MonochromeImage = False
-    CCDTapOffsetLT = 0
-    CCDTapOffsetRT = 0
-    CCDTapOffsetLB = 0
-    CCDTapOffsetRB = 0
-    Left = 704
-    Top = 576
+    Left = 688
+    Top = 560
   end
 end

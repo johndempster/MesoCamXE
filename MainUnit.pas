@@ -74,6 +74,7 @@ unit MainUnit;
 //                 Cam1.CCDTapOffsetLT etc. CCD tap black offset adjustment properties added and saved in ini file
 // V1.8.2 01.12.17 CoolLED wavelength list now updated every second to monitor changes in selected wavelength
 //                 Timeout which forces camera restart if frames capture ceases renoved
+// V1.8.3 05.12.17 CoolLED wavelength list update now works.
 
 interface
 
@@ -151,7 +152,6 @@ type
     StatusGrp: TGroupBox;
     bLiveImage: TButton;
     mnSaveImage: TMenuItem;
-    Cam1: TSESCam;
     cbCaptureMode: TComboBox;
     edExposureTime: TValidatedEdit;
     Label7: TLabel;
@@ -243,6 +243,7 @@ type
     Label15: TLabel;
     bGoToXPosition: TButton;
     bGoToYPosition: TButton;
+    Cam1: TSESCam;
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -649,13 +650,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.8.2';
+     ProgramName := 'MesoCam V1.8.3';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 01/12/17';
+     ProgramName := ProgramName + ' 05/12/17';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -2357,7 +2358,7 @@ begin
     // Update lightsource panels if names have changed
     if LightSource.NamesChanged then
        begin
-       ResizeImage := True ;
+       Resize ;
        LightSource.NamesChanged := False ;
        end;
 
