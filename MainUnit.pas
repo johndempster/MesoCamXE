@@ -75,6 +75,7 @@ unit MainUnit;
 // V1.8.2 01.12.17 CoolLED wavelength list now updated every second to monitor changes in selected wavelength
 //                 Timeout which forces camera restart if frames capture ceases renoved
 // V1.8.3 05.12.17 CoolLED wavelength list update now works.
+// V1.8.4 17.05.18 IMAQUNit.pas Camera start now tried repeatedly to overcome random failure to start camera acquisition
 
 interface
 
@@ -650,13 +651,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.8.3';
+     ProgramName := 'MesoCam V1.8.4';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 05/12/17';
+     ProgramName := ProgramName + ' 17/05/18';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -2268,7 +2269,7 @@ begin
             else
                begin
                // Save to raw image file
-               edStatus.Text := s + ' Saving' ;
+               edStatus.Text := edStatus.Text + ' Saving' ;
                Application.ProcessMessages ;
                Inc(NumImagesInRawFile) ;
                SaveRawImage( RawImagesFileName, NumImagesInRawFile-1 ) ;
