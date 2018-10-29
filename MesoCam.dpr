@@ -9,7 +9,8 @@ uses
   ZStageUnit in 'ZStageUnit.pas' {ZStage: TDataModule},
   LightSourceUnit in 'LightSourceUnit.pas' {LightSource: TDataModule},
   SetCCDReadoutUnit in 'SetCCDReadoutUnit.pas' {SetCCDReadoutFrm},
-  about in 'about.pas' {AboutBox};
+  about in 'about.pas' {AboutBox},
+  LightSourceComThreadUnit in 'LightSourceComThreadUnit.pas';
 
 {$R *.res}
 

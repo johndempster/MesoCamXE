@@ -17,7 +17,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, Windows, FMX.Dialogs, math, Vcl.ExtCtrls,
-  system.StrUtils, System.Character ;
+  system.StrUtils, System.Character, LightSourceComThreadUnit ;
 
 const
   MaxLightSources = 8 ;
@@ -60,7 +60,7 @@ type
     FSourceType : Integer ;   // Type of light source
     ComHandle : THandle ;     // Com port handle
     ComPortOpen : Boolean ;   // Com port open flag
-    FControlPort : DWord ;    // Control port number
+
     FBaudRate : DWord ;       // Com port baud rate
     Status : String ;         // Status report
     ControlState : Integer ;  // Control state
@@ -70,6 +70,8 @@ type
     TickCounter : Integer ;  // Timer tick counter
     OldNames : Array[0..MaxLightSources-1] of string ; // Previous list of light source names
     OldControlLines : Array[0..MaxLightSources-1] of Integer ;
+
+    ComThread : TLightSourceComThread ;
 
     procedure OpenCOMPort ;
     procedure CloseCOMPort ;
@@ -97,6 +99,10 @@ type
     List : Array[0..MaxLightSources-1] of Integer ;
     NumList : Integer ;
     ListIndex : Integer ;
+    FControlPort : DWord ;    // Control port number
+    CommandList : TstringList ;  // Light Source command list
+    ReplyList : TstringList ;    // Light source replies
+
     procedure GetSourceTypes( List : TStrings ) ;
     procedure GetControlLineNames( List : TStrings ) ;
     procedure Update ;
@@ -166,6 +172,10 @@ begin
         MaxLevel[i] := 5.0 ;
         end;
 
+    CommandList := TStringList.Create ;
+    ReplyList := TStringList.Create ;
+    ComThread := Nil ;
+
     end;
 
 
@@ -181,11 +191,11 @@ begin
     for i := 0 to High(OldNames) do OldNames[i] := '' ;
 
     // Close COM port (if open)
-    if ComPortOpen then CloseComPort ;
+    if ComThread <> Nil then FreeAndNil(ComThread); ;
 
     case FSourceType of
         lsCoolLED : begin
-          OpenComPort ;
+          ComThread := TLightSourceComThread.Create ;
           CoolLEDInit ;
           end ;
         end;
@@ -302,22 +312,17 @@ begin
     SourceLetter[1] := 'CB' ;
     SourceLetter[2] := 'CC' ;
     SourceLetter[3] := 'CD' ;
-    OK := False ;
     for i := 0 to 3 do if (ControlLines[i] <> LineDisabled) then
         begin
         Intensity[i] := Min(Max(Intensity[i],0.0),100.0);
         sIntensity := format('%d',[Round(Intensity[i])]) ;
         if Length(sIntensity) < 3 then sIntensity := '0' + sIntensity ;
         if Length(sIntensity) < 3 then sIntensity := '0' + sIntensity ;
-        s := SourceLetter[i] + 'I' + sIntensity ;
-        OK := SendCommand(s) ;
-        if OK then WaitforCompletion ;
+        CommandList.Add(SourceLetter[i] + 'I' + sIntensity ) ;
         if Active[i] then s := SourceLetter[i] + 'N'
                      else s := SourceLetter[i] + 'F' ;
-        OK := SendCommand(s) ;
-        if OK then WaitforCompletion ;
+        CommandList.Add(s) ;
         end ;
-    if not OK then ShowMessage('Unable to contact CoolLED device');
 
     end;
 
@@ -375,7 +380,7 @@ begin
     // Request list of wavelengths available every CoolLEDRequestWavelengthsAtTick ticks
     if TickCounter > CoolLEDRequestWavelengthsAtTick then
        begin
-       SendCommand('LAMS');
+       CommandList.Add('LAMS');
        TickCounter := 0 ;
        Exit ;
        end
@@ -387,37 +392,40 @@ begin
     ControlLines[6] := LineDisabled ;
     ControlLines[7] := LineDisabled ;
 
-    ReplyBuf := ReplyBuf + ReceiveBytes( EndOfLine ) ;
-    if EndOfLine then
-       sNum := '' ;
-       for i := 1 to Length(ReplyBuf) do
-           if IsNumber(ReplyBuf[i]) then sNum := sNum + ReplyBuf[i] ;
-
+    if ReplyList.Count > 0 then
        begin
-       if ANSIContainsStr( ReplyBuf, 'LAM:A' ) then
+       if ANSIContainsStr( ReplyList[0], 'LAM:' ) then
           begin
-          Names[0] := sNum + 'nm' ;
-          ControlLines[0] := 0 ;
+          ReplyBuf := ReplyList[0] ;
+          sNum := '' ;
+          for i := 1 to Length(ReplyBuf) do
+              if IsNumber(ReplyBuf[i]) then sNum := sNum + ReplyBuf[i] ;
+
+          if ANSIContainsStr( ReplyBuf, 'LAM:A' ) then
+             begin
+             Names[0] := sNum + 'nm' ;
+             ControlLines[0] := 0 ;
+             end;
+          if ANSIContainsStr( ReplyBuf, 'LAM:B' ) then
+             begin
+             Names[1] := sNum + 'nm' ;
+             ControlLines[1] := 1 ;
+             end;
+           if ANSIContainsStr( ReplyBuf, 'LAM:C' ) then
+              begin
+              Names[2] := sNum + 'nm' ;
+              ControlLines[2] := 2 ;
+              end;
+            if ANSIContainsStr( ReplyBuf, 'LAM:D' ) then
+               begin
+               Names[3] := sNum + 'nm' ;
+               ControlLines[3] := 3 ;
+               end;
+          ReplyList.Delete(0);
           end;
-       if ANSIContainsStr( ReplyBuf, 'LAM:B' ) then
-          begin
-          Names[1] := sNum + 'nm' ;
-          ControlLines[1] := 1 ;
-          end;
-       if ANSIContainsStr( ReplyBuf, 'LAM:C' ) then
-          begin
-          Names[2] := sNum + 'nm' ;
-          ControlLines[2] := 2 ;
-          end;
-       if ANSIContainsStr( ReplyBuf, 'LAM:D' ) then
-          begin
-          Names[3] := sNum + 'nm' ;
-          ControlLines[3] := 3 ;
-          end;
-       ReplyBuf := '' ;
        end;
 
-end;
+    end;
 
 
 procedure TLightSource.OpenCOMPort ;
@@ -432,7 +440,7 @@ begin
      if ComPortOpen then Exit ;
 
      { Open com port  }
-     ComHandle :=  CreateFile( PCHar(format('COM%d',[FControlPort+1])),
+     ComHandle :=  CreateFile( PCHar(format('COM%d',[FControlPort])),
                      GENERIC_READ or GENERIC_WRITE,
                      0,
                      Nil,
@@ -443,7 +451,7 @@ begin
      if Integer(ComHandle) < 0 then
         begin
         ComPortOpen := False ;
-        ShowMessage(format('CoolLED: Unable to open serial port: COM%d',[FControlPort+1]));
+        ShowMessage(format('CoolLED: Unable to open serial port: COM%d',[FControlPort]));
         Exit ;
         end;
 
@@ -512,7 +520,7 @@ begin
      xBuf[nC] := #13 ;
      Inc(nC) ;
 
-//    outputdebugstring( pchar('Send:'+line));
+     outputdebugstring( pchar('Send:'+line));
 
     Overlapped := Nil ;
     OK := WriteFile( ComHandle, xBuf, nC, nWritten, Overlapped ) ;
@@ -538,7 +546,8 @@ begin
    repeat
      Status := ReceiveBytes( EndOfLine ) ;
      Until EndOfLine or (timegettime > TimeOut) ;
-     end ;
+   outputdebugstring( pchar('WaitForCompletion:'+status));
+   end ;
 
 
 function TLightSource.ReceiveBytes(
@@ -571,14 +580,15 @@ begin
      ClearCommError( ComHandle, ComError, PComState )  ;
 
      // Read characters until CR is encountered
-     while (NumRead < ComState.cbInQue) and (RBuf[0] <> #13) do begin
+     NumRead := ComState.cbInQue ;
+     while (NumRead > 0 ) and not EndOfLine do begin
          ReadFile( ComHandle,rBuf,1,NumBytesRead,OverlapStructure ) ;
          if (rBuf[0] <> #13) and (rBuf[0] <> #10) then Line := Line + String(rBuf[0]) ;
          if (rBuf[0] = #13) then EndOfLine := True ;
-         Inc( NumRead ) ;
+         Dec( NumRead ) ;
      end ;
 
-//     if line <> '' then outputdebugstring( pchar('Rec:'+line));
+     if line <> '' then outputdebugstring( pchar('Rec:'+line));
      Result := Line ;
 
      end ;
@@ -613,10 +623,10 @@ begin
     case FSourceType of
         lsCoolLED :
           begin
-          if ComPortOpen then
+          if ComThread <> Nil then
              begin
-             CloseComPort ;
-             OpenComPort ;
+             FreeAndNil(ComThread);
+             ComThread := TLightSourceCOMThread.Create ;
              end;
           end;
         end;
@@ -649,9 +659,9 @@ begin
     for I := 0 to High(ControlLines) do ControlLines[i] := LineDisabled ;
 
     // Request list of wavelengths available
-    COMFailed := not SendCommand('LAMS');
+    CommandList.Add('LAMS');
 
-    if COMFailed then ShowMessage('CoolLED Initialization: Device not responding to command!');
+//    if COMFailed then ShowMessage('CoolLED Initialization: Device not responding to command!');
 
     TickCounter := 0 ; // Set tick counter to zero to ensure 1 second deley before next wavelength request
 

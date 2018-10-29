@@ -213,7 +213,7 @@ begin
 
     // COM port list
     LightSource.GetControlPorts(cbLightSourceControlPort.Items);
-    cbLightSourceControlPort.ItemIndex := Min(Max(LightSource.ControlPort,0),
+    cbLightSourceControlPort.ItemIndex := Min(Max(LightSource.ControlPort-1,0),
                                           cbLightSourceControlPort.Items.Count-1) ;
 
     SetLightSourcePanel( 0, pnLightSource0 ) ;
@@ -316,7 +316,7 @@ begin
     ZStage.ZPositionMin := edZPositionMin.Value ;
     ZStage.ZPositionMax := edZPositionMax.Value ;
 
-    LightSource.ControlPort := cbLightSourceControlPort.ItemIndex ;
+    LightSource.ControlPort := cbLightSourceControlPort.ItemIndex + 1 ;
     LightSource.Close ;
     LightSource.Open ;
 
