@@ -10,6 +10,7 @@ unit LightSourceUnit;
 // 01.12.17 Wavelength list requested from CoolLED at 1 second intervals.
 //          NamesChanged flag added indicating a wavelength name has changed
 // 05.12.17 NamesChanged flag now also set if ControlLines changed
+// 30.10.18 Now used ComThread for COM I/O to CoolLED
 
 interface
 
@@ -55,16 +56,13 @@ type
     Timer: TTimer;
     procedure DataModuleCreate(Sender: TObject);
     procedure TimerTimer(Sender: TObject);
+    procedure DataModuleDestroy(Sender: TObject);
   private
     { Private declarations }
     FSourceType : Integer ;   // Type of light source
-    ComHandle : THandle ;     // Com port handle
-    ComPortOpen : Boolean ;   // Com port open flag
-
-    FBaudRate : DWord ;       // Com port baud rate
     Status : String ;         // Status report
     ControlState : Integer ;  // Control state
-    OverLapStructure : POVERLAPPED ;
+    FOn : Boolean ;           // TRUE = Light source(s) on
     ReplyBuf : string ;
     ComFailed : Boolean ;
     TickCounter : Integer ;  // Timer tick counter
@@ -73,12 +71,8 @@ type
 
     ComThread : TLightSourceComThread ;
 
-    procedure OpenCOMPort ;
-    procedure CloseCOMPort ;
     procedure ResetCOMPort ;
-    function SendCommand( const Line : string ) : Boolean ;
-    procedure WaitforCompletion ;
-    function ReceiveBytes( var EndOfLine : Boolean ) : string ;
+
     procedure SetBaudRate( Value : DWord ) ;
     procedure SetControlPort( Value : DWord ) ;
     procedure SetSourceType( Value : Integer ) ;
@@ -109,10 +103,11 @@ type
     procedure Open ;
     procedure Close ;
     procedure GetControlPorts( List : TStrings ) ;
+    procedure SetOn( Value : Boolean ) ;
 
     Property ControlPort : DWORD read FControlPort write SetControlPort ;
-    Property BaudRate : DWORD read FBaudRate write SetBaudRate ;
     Property SourceType : Integer read FSourceType write SetSourceType ;
+    Property On : Boolean read FOn write SetOn ;
 
   end;
 
@@ -153,9 +148,7 @@ var
 begin
 
     FSourceType := lsNone ;
-    ComPortOpen := False ;
     FControlPort := 0 ;
-    FBaudRate := 9600 ;
     Status := '' ;
     ControlState := csIdle ;
     ReplyBuf := '' ;
@@ -179,6 +172,17 @@ begin
     end;
 
 
+procedure TLightSource.DataModuleDestroy(Sender: TObject);
+// ---------------------------
+// Tidy up when form destroyed
+// ---------------------------
+begin
+    if ComThread <> Nil then FreeAndNil(ComThread);
+    CommandList.Free ;
+    ReplyList.Free ;
+    end;
+
+
 procedure TLightSource.Open ;
 // -------------------------------
 // Open light source for operation
@@ -191,7 +195,7 @@ begin
     for i := 0 to High(OldNames) do OldNames[i] := '' ;
 
     // Close COM port (if open)
-    if ComThread <> Nil then FreeAndNil(ComThread); ;
+    if ComThread <> Nil then FreeAndNil(ComThread);
 
     case FSourceType of
         lsCoolLED : begin
@@ -210,7 +214,9 @@ procedure TLightSource.Close ;
 // Close down Z stage operation
 // ---------------------------
 begin
-    if ComPortOpen then CloseComPort ;
+    // Close COM thread (if active)
+    if ComThread <> Nil then FreeAndNil(ComThread); ;
+
     end;
 
 
@@ -247,6 +253,16 @@ begin
      end;
 
 
+procedure TLightSource.SetOn( Value : Boolean ) ;
+// -------------------------
+// Turn light sources On/Off
+// -------------------------
+begin
+      FOn := Value ;
+      Update ;
+end;
+
+
 procedure TLightSource.Update ;
 // --------------------
 // Update light sources
@@ -265,27 +281,44 @@ procedure TLightSource.LEDUpdate ;
 // --------------------------------------------------
 var
     V : Single ;
-    i,Dev,Chan  : Integer ;
+    i,Dev,Chan,OnState,OffState  : Integer ;
     ResourceType : TResourceType ;
 begin
      for i := 0 to High(ControlLines) do if ControlLines[i] < LineDisabled then
         begin
+
         Dev := LabIO.Resource[ControlLines[i]].Device ;
         Chan := LabIO.Resource[ControlLines[i]].StartChannel ;
         ResourceType := LabIO.Resource[ControlLines[i]].ResourceType ;
+
+
         if ResourceType = DACOut then
            begin
            // Analogue outputs
-           if Active[i] then V := (MaxLevel[i] - MinLevel[i])*(Intensity[i]/100.0) + MinLevel[i]
-                        else V := MinLevel[i] ;
+           // Set LED level
+           if Active[i] and FOn then V := (MaxLevel[i] - MinLevel[i])*(Intensity[i]/100.0) + MinLevel[i]
+                                else V := MinLevel[i] ;
            LabIO.DACOutState[Dev][Chan] := V ;
            LabIO.WriteDAC(Dev,V,Chan);
            end
         else if ResourceType = DIGOut then
            begin
            // Digital outputs
-           if Active[i] then LabIO.SetBit(LabIO.DigOutState[Dev],Chan,0)
-                        else LabIO.SetBit(LabIO.DigOutState[Dev],Chan,1) ;
+           // Set On/Off state depending on polarity of MaxLevel - MinLevel
+           if MaxLevel[i] >= MinLevel[i] then
+              begin
+              // Active High
+              OnState := 1 ;
+              OffState := 0 ;
+              end
+           else
+              begin
+              // Active Low
+              OnState := 0 ;
+              OffState := 1 ;
+              end ;
+           if Active[i] and FOn then LabIO.SetBit(LabIO.DigOutState[Dev],Chan,OnState)
+                                else LabIO.SetBit(LabIO.DigOutState[Dev],Chan,OffState) ;
            end;
         end;
 
@@ -306,8 +339,6 @@ var
   OK : Boolean ;
 begin
 
-    if not ComPortOpen then Exit ;
-
     SourceLetter[0] := 'CA' ;
     SourceLetter[1] := 'CB' ;
     SourceLetter[2] := 'CC' ;
@@ -319,8 +350,8 @@ begin
         if Length(sIntensity) < 3 then sIntensity := '0' + sIntensity ;
         if Length(sIntensity) < 3 then sIntensity := '0' + sIntensity ;
         CommandList.Add(SourceLetter[i] + 'I' + sIntensity ) ;
-        if Active[i] then s := SourceLetter[i] + 'N'
-                     else s := SourceLetter[i] + 'F' ;
+        if Active[i] and FOn then s := SourceLetter[i] + 'N'
+                             else s := SourceLetter[i] + 'F' ;
         CommandList.Add(s) ;
         end ;
 
@@ -375,12 +406,10 @@ var
     i : Integer ;
 begin
 
-    if not ComPortOpen then Exit ;
-
     // Request list of wavelengths available every CoolLEDRequestWavelengthsAtTick ticks
     if TickCounter > CoolLEDRequestWavelengthsAtTick then
        begin
-       CommandList.Add('LAMS');
+//       CommandList.Add('LAMS');
        TickCounter := 0 ;
        Exit ;
        end
@@ -428,170 +457,6 @@ begin
     end;
 
 
-procedure TLightSource.OpenCOMPort ;
-// ----------------------------------------
-// Establish communications with COM port
-// ----------------------------------------
-var
-   DCB : TDCB ;           { Device control block for COM port }
-   CommTimeouts : TCommTimeouts ;
-begin
-
-     if ComPortOpen then Exit ;
-
-     { Open com port  }
-     ComHandle :=  CreateFile( PCHar(format('COM%d',[FControlPort])),
-                     GENERIC_READ or GENERIC_WRITE,
-                     0,
-                     Nil,
-                     OPEN_EXISTING,
-                     FILE_ATTRIBUTE_NORMAL,
-                     0) ;
-
-     if Integer(ComHandle) < 0 then
-        begin
-        ComPortOpen := False ;
-        ShowMessage(format('CoolLED: Unable to open serial port: COM%d',[FControlPort]));
-        Exit ;
-        end;
-
-     { Get current state of COM port and fill device control block }
-     GetCommState( ComHandle, DCB ) ;
-     { Change settings to those required for CoolLED }
-     DCB.BaudRate := CBR_9600 ;
-     DCB.ByteSize := 8 ;
-     DCB.Parity := NOPARITY ;
-     DCB.StopBits := ONESTOPBIT ;
-     // Settings required to activate remote mode of CoolLED
-     DCB.Flags := dcb_Binary or dcb_DtrControlEnable or dcb_RtsControlEnable ;
-
-     { Update COM port }
-     SetCommState( ComHandle, DCB ) ;
-
-     { Initialise Com port and set size of transmit/receive buffers }
-     SetupComm( ComHandle, 4096, 4096 ) ;
-
-     { Set Com port timeouts }
-     GetCommTimeouts( ComHandle, CommTimeouts ) ;
-     CommTimeouts.ReadIntervalTimeout := $FFFFFFFF ;
-     CommTimeouts.ReadTotalTimeoutMultiplier := 0 ;
-     CommTimeouts.ReadTotalTimeoutConstant := 0 ;
-     CommTimeouts.WriteTotalTimeoutMultiplier := 0 ;
-     CommTimeouts.WriteTotalTimeoutConstant := 5000 ;
-     SetCommTimeouts( ComHandle, CommTimeouts ) ;
-
-     ComPortOpen := True ;
-      Status := '' ;
-    ControlState := csIdle ;
-    ComFailed := False ;
-
-    end ;
-
-
-procedure TLightSource.CloseCOMPort ;
-// ----------------------
-// Close serial COM port
-// ----------------------
-begin
-     if ComPortOpen then CloseHandle( ComHandle ) ;
-     ComPortOpen := False ;
-     end ;
-
-function TLightSource.SendCommand(
-          const Line : string   { Text to be sent to Com port }
-          ) : Boolean ;
-{ --------------------------------------
-  Write a line of ASCII text to Com port
-  --------------------------------------}
-var
-   i : Integer ;
-   nWritten,nC : DWORD ;
-   xBuf : array[0..258] of ansichar ;
-   Overlapped : Pointer ;
-   OK : Boolean ;
-begin
-
-     if not ComPortOpen then Exit ;
-     if ComFailed then Exit ;
-
-     { Copy command line to be sent to xMit buffer and and a CR character }
-     nC := Length(Line) ;
-     for i := 1 to nC do xBuf[i-1] := ANSIChar(Line[i]) ;
-     xBuf[nC] := #13 ;
-     Inc(nC) ;
-
-     outputdebugstring( pchar('Send:'+line));
-
-    Overlapped := Nil ;
-    OK := WriteFile( ComHandle, xBuf, nC, nWritten, Overlapped ) ;
-    if (not OK) or (nWRitten <> nC) then
-        begin
- //      ShowMessage( ' Error writing to COM port ' ) ;
-        Result := False ;
-        end
-     else Result := True ;
-
-     end ;
-
-
-procedure TLightSource.WaitforCompletion ;
-var
-  Status : string ;
-  Timeout : Cardinal ;
-  EndOfLine : Boolean ;
-begin
-   if not ComPortOpen then Exit ;
-   if ComFailed then Exit ;
-   TimeOut := timegettime + 1000 ;
-   repeat
-     Status := ReceiveBytes( EndOfLine ) ;
-     Until EndOfLine or (timegettime > TimeOut) ;
-   outputdebugstring( pchar('WaitForCompletion:'+status));
-   end ;
-
-
-function TLightSource.ReceiveBytes(
-          var EndOfLine : Boolean
-          ) : string ;          { bytes received }
-{ -------------------------------------------------------
-  Read bytes from Com port until a line has been received
-  -------------------------------------------------------}
-var
-   Line : string ;
-   rBuf : array[0..255] of ansichar ;
-   ComState : TComStat ;
-   PComState : PComStat ;
-   NumBytesRead,ComError,NumRead : DWORD ;
-begin
-
-     Result := '' ;
-     if not ComPortOpen then Exit ;
-
-     PComState := @ComState ;
-     Line := '' ;
-     rBuf[0] := ' ' ;
-     NumRead := 0 ;
-     EndOfLine := False ;
-     Result := '' ;
-
-     if ComFailed then Exit ;
-
-     { Find out if there are any characters in receive buffer }
-     ClearCommError( ComHandle, ComError, PComState )  ;
-
-     // Read characters until CR is encountered
-     NumRead := ComState.cbInQue ;
-     while (NumRead > 0 ) and not EndOfLine do begin
-         ReadFile( ComHandle,rBuf,1,NumBytesRead,OverlapStructure ) ;
-         if (rBuf[0] <> #13) and (rBuf[0] <> #10) then Line := Line + String(rBuf[0]) ;
-         if (rBuf[0] = #13) then EndOfLine := True ;
-         Dec( NumRead ) ;
-     end ;
-
-     if line <> '' then outputdebugstring( pchar('Rec:'+line));
-     Result := Line ;
-
-     end ;
 
 
 procedure TLightSource.SetControlPort( Value : DWord ) ;
@@ -610,7 +475,7 @@ procedure TLightSource.SetBaudRate( Value : DWord ) ;
 //-----------------------
 begin
     if Value <= 0 then Exit ;
-    FBaudRate := Value ;
+//    FBaudRate := Value ;
 //    ResetCOMPort ;
     end;
 
@@ -652,8 +517,6 @@ procedure TLightSource.CoolLEDInit ;
 var
     i : Integer ;
 begin
-
-    if not ComPortOpen then Exit ;
 
     // Clear control lines
     for I := 0 to High(ControlLines) do ControlLines[i] := LineDisabled ;

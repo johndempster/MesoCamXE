@@ -17,6 +17,7 @@ unit ZStageUnit;
 //          Now operates in standard mode to allow 'R' command responses to be returned immediately after command
 //          Moves can now be changed while in progress.
 // 18.10.17 Now reports if COM port cannot be opened and disables send/recieves to controller
+// 14.11.17 Conversion to Threaded COM I/O in progress
 
 interface
 
@@ -32,7 +33,7 @@ type
     FStageType : Integer ;    // Type of stage
     ComHandle : THandle ;     // Com port handle
     ComPortOpen : Boolean ;   // Com port open flag
-    FControlPort : DWord ;    // Control port number
+//    FControlPort : DWord ;    // Control port number
     FBaudRate : DWord ;       // Com port baud rate
     ControlState : Integer ;  // Z stage control state
     Status : String ;         // Z stage status report
@@ -81,6 +82,11 @@ type
     ZPositionMin : Double ;  // Z position lower limit (um)
     ZScaleFactor : Double ;  // Z step scaling factor
     ZStepTime : Double ;     // Time to perform Z step (s)
+
+    FControlPort : DWord ;    // Control port number
+    CommandList : TstringList ;  // Light Source command list
+    ReplyList : TstringList ;    // Light source replies
+
     procedure Open ;
     procedure Close ;
     procedure UpdateZPosition ;

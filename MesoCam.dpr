@@ -10,7 +10,8 @@ uses
   LightSourceUnit in 'LightSourceUnit.pas' {LightSource: TDataModule},
   SetCCDReadoutUnit in 'SetCCDReadoutUnit.pas' {SetCCDReadoutFrm},
   about in 'about.pas' {AboutBox},
-  LightSourceComThreadUnit in 'LightSourceComThreadUnit.pas';
+  LightSourceComThreadUnit in 'LightSourceComThreadUnit.pas',
+  ZStageComThreadUnit in 'ZStageComThreadUnit.pas';
 
 {$R *.res}
 

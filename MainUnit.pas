@@ -451,6 +451,7 @@ type
     SnapRequested : Boolean ;
     SnapRequestedAfterInterval : Boolean ;
     ScanStartAt : Cardinal ;                       // Time to acquire next image (time lapse mode)
+    LightSourceOnAt : Cardinal ;                   // Time to turn light source(s) on
 
     UpdateLightSource : Boolean ;                  // Update light source flag
 
@@ -474,7 +475,7 @@ type
 
     MemUsed : Integer ;
     procedure SetImagePanels ;
-    procedure StartNewScan ;
+    procedure StartImageCapture ;
     procedure StartCamera ;
     procedure StopCamera ;
     procedure NextZTStep ;
@@ -1611,8 +1612,9 @@ begin
     LiveImagingInProgress := True ;
     ShowCapturedImage := False ;
     ShowCameraImage := True ;
-    StartNewScan ;
+    StartImageCapture ;
 end ;
+
 
 procedure TMainFrm.bCaptureImageClick(Sender: TObject);
 // ----------------------------
@@ -1630,7 +1632,7 @@ begin
     bStopImage.Enabled := True ;
     NumFramesRequired := 1 ;
     ShowCameraImage := True ;
-    StartNewScan ;
+    StartImageCapture ;
 end ;
 
 
@@ -1652,7 +1654,7 @@ begin
 end;
 
 
-procedure TMainFrm.StartNewScan ;
+procedure TMainFrm.StartImageCapture ;
 // ----------------------------------
 // Start new image capture sequence
 // ----------------------------------
@@ -1690,6 +1692,7 @@ begin
 
     // Initialise light source used in SeparateLightSources mode
     SelectNextLightSource(true) ;
+    LightSource.On := True ;
 
     SetImagePanels ;
 
@@ -2333,6 +2336,8 @@ begin
 
     // Re-start image acquisition
 
+    if SnapRequestedAfterInterval and (timegettime > LightSourceOnAt) then LightSource.On := True ;
+
     if SnapRequestedAfterInterval and (timegettime > ScanStartAt) then SnapRequested := True ;
 
     if SnapRequested then
@@ -2619,6 +2624,8 @@ begin
                 end;
              SnapRequestedAfterInterval := True ;
              ScanStartAt := ScanStartAt + Round(1000*edTimeLapseInterval.Value) ;
+             LightSourceOnAt := ScanStartAt - 200 ;
+             LightSource.On := False ;
              end;
           end ;
 
@@ -2674,7 +2681,7 @@ begin
 
     // Update selected light source
     for i := 0 to High(LightSource.Active) do LightSource.Active[i] := False ;
-    LightSource.Active[LightSource.List[LightSource.ListIndex]] := True ;
+//    LightSource.Active[LightSource.List[LightSource.ListIndex]] := True ;
     LightSource.Update ;
 
     end;
@@ -2733,6 +2740,9 @@ begin
        ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStartingPosition );
        scZSection.Position := 0 ;
        end;
+
+    // Turn illumination off
+    LightSource.On := False ;
 
     GetAllLightSourcePanels ;
     SetImagePanels ;
@@ -3543,7 +3553,7 @@ begin
 
     AddElementInt( ProtNode, 'LIGHTSOURCETYPE', LightSource.SourceType ) ;
     AddElementInt( ProtNode, 'LIGHTSOURCECONTROLPORT', LightSource.ControlPort ) ;
-    AddElementInt( ProtNode, 'LIGHTSOURCEBAUDRATE', LightSource.BaudRate ) ;
+//    AddElementInt( ProtNode, 'LIGHTSOURCEBAUDRATE', LightSource.BaudRate ) ;
 
     for i := 0 to High(LightSource.ControlLines) do begin
         iNode := ProtNode.AddChild( 'LIGHTSOURCE' ) ;
@@ -3704,7 +3714,7 @@ begin
     // Light source control
     // Note. LightSource.SourceType must be loaded last to avoid port being opened with incorrect serial port
     LightSource.ControlPort := GetElementInt( ProtNode, 'LIGHTSOURCECONTROLPORT', LightSource.ControlPort ) ;
-    LightSource.BaudRate := GetElementInt( ProtNode, 'LIGHTSOURCEBAUDRATE', LightSource.BaudRate ) ;
+//    LightSource.BaudRate := GetElementInt( ProtNode, 'LIGHTSOURCEBAUDRATE', LightSource.BaudRate ) ;
     LightSource.SourceType := GetElementInt( ProtNode, 'LIGHTSOURCETYPE', LightSource.SourceType ) ;
 
     NodeIndex := 0 ;
