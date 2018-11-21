@@ -91,7 +91,8 @@ begin
          Reply := Reply + ReceiveBytes(EndOfLine) ;
          if EndOfLine then
            begin
-           LightSource.ReplyList.Add(Reply);
+           if Reply <> '' then LightSource.ReplyList.Add(Reply);
+           outputdebugstring(pchar(format('rx: %s',[Reply])));
            Reply := '' ;
            end ;
          end );
@@ -246,7 +247,7 @@ begin
      ClearCommError( FComHandle, ComError, PComState )  ;
 
      // Read characters until CR is encountered
-     while (NumRead < ComState.cbInQue) and (RBuf[0] <> #10) and (RBuf[0] <> #13) do
+     while (NumRead < ComState.cbInQue) and {(RBuf[0] <> #10) and} (RBuf[0] <> #13) do
          begin
          ReadFile( FComHandle,rBuf,1,NumBytesRead,OverlapStructure ) ;
          if (rBuf[0] <> #10) and (rBuf[0] <> #13) then Line := Line + String(rBuf[0])

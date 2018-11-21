@@ -11,6 +11,8 @@ unit LightSourceUnit;
 //          NamesChanged flag added indicating a wavelength name has changed
 // 05.12.17 NamesChanged flag now also set if ControlLines changed
 // 30.10.18 Now used ComThread for COM I/O to CoolLED
+// 21.11.18 CoolLED light source list now obtained once after initialisation
+//          .Update blocked until initialisation completed
 
 interface
 
@@ -96,6 +98,7 @@ type
     FControlPort : DWord ;    // Control port number
     CommandList : TstringList ;  // Light Source command list
     ReplyList : TstringList ;    // Light source replies
+    Initialised : Boolean ;      // TRUE indicates light is initalised
 
     procedure GetSourceTypes( List : TStrings ) ;
     procedure GetControlLineNames( List : TStrings ) ;
@@ -202,6 +205,9 @@ begin
           ComThread := TLightSourceComThread.Create ;
           CoolLEDInit ;
           end ;
+        lsLED : begin
+          Initialised := True ;
+          end;
         end;
 
     for i := 0 to High(OldNames) do OldNames[i] := '' ;
@@ -268,10 +274,14 @@ procedure TLightSource.Update ;
 // Update light sources
 // --------------------
 begin
+
+   if not Initialised then Exit ;
+
    case SourceType of
         lsLED : LEDUpdate ;
         lsCoolLED : CoolLEDUpdate ;
-   end;
+        end;
+
 end;
 
 
@@ -401,19 +411,12 @@ procedure TLightSource.CoolLEDHandleMessages ;
 // Handle CoolLED reply messages
 // -----------------------------
 var
-    EndOfLine : Boolean ;
+    EndOfLine,OldInitialised : Boolean ;
     sNum : string ;
     i : Integer ;
 begin
 
-    // Request list of wavelengths available every CoolLEDRequestWavelengthsAtTick ticks
-    if TickCounter > CoolLEDRequestWavelengthsAtTick then
-       begin
-//       CommandList.Add('LAMS');
-       TickCounter := 0 ;
-       Exit ;
-       end
-    else Inc(TickCounter) ;
+    OldInitialised := Initialised ;
 
     // Disable unsupported lines
     ControlLines[4] := LineDisabled ;
@@ -449,10 +452,19 @@ begin
                begin
                Names[3] := sNum + 'nm' ;
                ControlLines[3] := 3 ;
+               Initialised := True ;
                end;
-          ReplyList.Delete(0);
           end;
+       ReplyList.Delete(0);
        end;
+
+    // Increment init counter
+    Inc(TickCounter) ;
+    // Initialise light source after 20 ticks (2 seconds) if not already init'd
+    if TickCounter > 20 then Initialised := True ;
+
+    // Update light source when initialised
+    if Initialised <> OldInitialised then Update ;
 
     end;
 
@@ -527,6 +539,7 @@ begin
 //    if COMFailed then ShowMessage('CoolLED Initialization: Device not responding to command!');
 
     TickCounter := 0 ; // Set tick counter to zero to ensure 1 second deley before next wavelength request
+    Initialised := False ;
 
     end;
 
