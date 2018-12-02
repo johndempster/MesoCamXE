@@ -451,7 +451,7 @@ type
 
     SnapRequested : Boolean ;
     SnapRequestedAfterInterval : Boolean ;
-    ScanStartAt : Cardinal ;                       // Time to acquire next image (time lapse mode)
+    SnapStartAt : Cardinal ;                       // Time to acquire next image (time lapse mode)
     LightSourceOnAt : Cardinal ;                   // Time to turn light source(s) on
 
     UpdateLightSource : Boolean ;                  // Update light source flag
@@ -1495,7 +1495,7 @@ begin
      if ckAcquireTimeLapseSeries.Checked and (not bStopImage.Enabled)  then
         begin
         TSectionPanel.Visible := True ;
-        lbTSection.Caption := format(' %d/%d',[TSection+1,NumTSectionsRequested]) ;
+        lbTSection.Caption := format(' %d/%d',[TSection+1,scTSection.Max+1]) ;
         end
      else TSectionPanel.Visible := False ;
 
@@ -1618,9 +1618,9 @@ end ;
 
 
 procedure TMainFrm.bCaptureImageClick(Sender: TObject);
-// ----------------------------
-// Scan currently selected area
-// ----------------------------
+// -----------------------------------
+// Capture currently selected CCD area
+// -----------------------------------
 begin
     bCaptureImage.Enabled := False ;
     if LiveImagingInProgress then
@@ -1661,14 +1661,28 @@ procedure TMainFrm.StartImageCapture ;
 // ----------------------------------
 begin
 
-    if UnsavedRawImage then
+    if UnsavedRawImage and
+       (MessageDlg( 'Current image(s) not saved! Do you want to overwrite?',mtWarning,[mbYes,mbNo], 0 ) = mrYes) then UnsavedRawImage := False ;
+
+    // Clear image counters
+    if not UnsavedRawImage then
        begin
-       if MessageDlg( 'Current Image not saved! Do you want to overwrite image?',
-           mtWarning,[mbYes,mbNo], 0 ) = mrNo then Exit ;
+       // Z sections
+       ZSection := 0 ;
+       NumZSectionsAvailable := 0 ;
+       if ckAcquireZStack.Checked then NumZSectionsRequested := Max(Round(edNumZsections.Value),1)
+                                  else NumZSectionsRequested := 1 ;
+
+       TSection := 0 ;
+       NumTSectionsAvailable := 0 ;
+       if ckAcquireTimeLapseSeries.Checked then NumTSectionsRequested := Max(Round(edNumTimeLapsePoints.Value),1)
+                                           else NumTSectionsRequested := 1 ;
+
+       NumImagesInRawFile := 0 ;
        end;
 
     SnapRequested := True ;
-    ScanStartAt := timegettime ;      // Start time.
+    SnapStartAt := timegettime ;      // Start time.
 
     FixRectangle( SelectedRectBM ) ;
 
@@ -1676,18 +1690,6 @@ begin
     PixelsToMicronsX := 1.0 ;
     PixelsToMicronsY := PixelsToMicronsX ;
 
-    // Z sections
-    ZSection := 0 ;
-    NumZSectionsAvailable := 0 ;
-    if ckAcquireZStack.Checked then NumZSectionsRequested := Max(Round(edNumZsections.Value),1)
-                               else NumZSectionsRequested := 1 ;
-
-    TSection := 0 ;
-    NumTSectionsAvailable := 0 ;
-    if ckAcquireTimeLapseSeries.Checked then NumTSectionsRequested := Max(Round(edNumTimeLapsePoints.Value),1)
-                                        else NumTSectionsRequested := 1 ;
-
-    NumImagesInRawFile := 0 ;
     RawImageAvailable := False ;
     ZStep := edMicronsPerZStep.Value ;
 
@@ -1821,7 +1823,7 @@ begin
     LastFrameDisplayed := MostRecentFrame ;
     GetImageInProgress := false ;
 
-    bStopImage.Enabled := True ;
+//    bStopImage.Enabled := True ;
 
     TStart := TimeGetTime ;
     NumFramesAcquired := 0 ;
@@ -2339,7 +2341,7 @@ begin
 
     if SnapRequestedAfterInterval and (timegettime > LightSourceOnAt) then LightSource.On := True ;
 
-    if SnapRequestedAfterInterval and (timegettime > ScanStartAt) then SnapRequested := True ;
+    if SnapRequestedAfterInterval and (timegettime > SnapStartAt) then SnapRequested := True ;
 
     if SnapRequested then
        begin
@@ -2377,7 +2379,11 @@ begin
        end;
 
     // Next Z or T step requested
-    if NextZTStepRequested then NextZTStep ;
+    if NextZTStepRequested then
+       begin
+       if bStopImage.Enabled then NextZTStep ;
+       NextZTStepRequested := False ;
+       end;
 
     // Acquire and display current stage position
     ZStage.UpdateZPosition ;
@@ -2602,7 +2608,7 @@ begin
              if NumZSectionsAvailable = 1 then ZStackStartingPosition := ZStage.ZPosition ;
              ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStage.ZPosition + ZStep );
              SnapRequestedAfterInterval := True ;
-             ScanStartAt := timegettime + Round(1000*ZStage.ZStepTime*Max(Abs(ZStep),1.0)) ;
+             SnapStartAt := timegettime + Round(1000*ZStage.ZStepTime*Max(Abs(ZStep),1.0)) ;
              end ;
           end ;
 
@@ -2612,9 +2618,9 @@ begin
        if ckAcquireTimeLapseSeries.Checked then
           begin
           Inc(NumTSectionsAvailable) ;
-          scTSection.Max := Max(Round(edNumTimeLapsePoints.Value)-1,0) ; ;
+          scTSection.Max := Max({Round(edNumTimeLapsePoints.Value)}NumTSectionsAvailable-1,0) ;
           scTSection.Position := 0 ;
-          lbTSection.Caption := Format('%d/%d',[NumTSectionsAvailable,Round(edNumTimeLapsePoints.Value)]);
+          lbTSection.Caption := Format('%d/%d',[NumTSectionsAvailable,scTSection.Max+1]);
           if NumTSectionsAvailable < Round(edNumTimeLapsePoints.Value) then
              begin
              // Reset Z stack if Z stack being collected
@@ -2624,8 +2630,8 @@ begin
                 ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStackStartingPosition );
                 end;
              SnapRequestedAfterInterval := True ;
-             ScanStartAt := ScanStartAt + Round(1000*edTimeLapseInterval.Value) ;
-             LightSourceOnAt := ScanStartAt - 200 ;
+             SnapStartAt := SnapStartAt + Round(1000*edTimeLapseInterval.Value) ;
+             LightSourceOnAt := SnapStartAt - 200 ;
              LightSource.On := False ;
              end;
           end ;
@@ -3417,6 +3423,7 @@ begin
       FreeMem(pBufW) ;
 
       RawImageAvailable := True ;
+      UnsavedRawImage := True ;
 
       // Save settings to INI file (to preserve raw file data settings)
       SaveSettingsToXMLFile( INIFileName ) ;

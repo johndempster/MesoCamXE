@@ -103,8 +103,8 @@ object MainFrm: TMainFrm
       OnClick = bCaptureImageClick
     end
     object bStopImage: TButton
-      Left = 9
-      Top = 147
+      Left = 3
+      Top = 148
       Width = 198
       Height = 31
       Hint = 'Stop Image Capture'
@@ -1241,10 +1241,6 @@ object MainFrm: TMainFrm
       object SlidersTab: TTabSheet
         Caption = 'Sliders'
         ImageIndex = 1
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object Label9: TLabel
           Left = 3
           Top = 7
@@ -1424,10 +1420,6 @@ object MainFrm: TMainFrm
     OnChange = PageChange
     object tbChan0: TTabSheet
       Caption = 'Channel 0'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image0: TImage
         Left = 3
         Top = 3
@@ -1447,10 +1439,6 @@ object MainFrm: TMainFrm
     object tbChan1: TTabSheet
       Caption = 'Channel 1'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image1: TImage
         Left = 3
         Top = 3
@@ -1489,10 +1477,6 @@ object MainFrm: TMainFrm
     object tbChan3: TTabSheet
       Caption = 'tbChan3'
       ImageIndex = 3
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image3: TImage
         Left = -4
         Top = 3
@@ -1591,7 +1575,7 @@ object MainFrm: TMainFrm
       ParentFont = False
     end
     object scTSection: TScrollBar
-      Left = 22
+      Left = 23
       Top = 0
       Width = 180
       Height = 24
@@ -1679,6 +1663,11 @@ object MainFrm: TMainFrm
     NumPixelShiftFrames = 1
     DisableExposureIntervalLimit = False
     MonochromeImage = False
+    CCDTapOffsetLT = 0
+    CCDTapOffsetRT = 0
+    CCDTapOffsetLB = 0
+    CCDTapOffsetRB = 0
+    LightSpeedMode = False
     Left = 688
     Top = 560
   end
