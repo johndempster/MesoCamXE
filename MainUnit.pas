@@ -2386,7 +2386,6 @@ begin
        end;
 
     // Acquire and display current stage position
-    ZStage.UpdateZPosition ;
     edXYZPosition.Text := format('X=%.2f, Y=%.2f, Z=%.2f um',
                           [ZStage.XPosition,ZStage.YPosition,ZStage.ZPosition]) ;
 
@@ -2609,6 +2608,7 @@ begin
              ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStage.ZPosition + ZStep );
              SnapRequestedAfterInterval := True ;
              SnapStartAt := timegettime + Round(1000*ZStage.ZStepTime*Max(Abs(ZStep),1.0)) ;
+//             outputdebugstring(pchar(format('step time %.4g %.4g',[ZStage.ZStepTime,ZStage.ZStepTime*Max(Abs(ZStep),1.0)])));
              end ;
           end ;
 
@@ -2688,7 +2688,7 @@ begin
 
     // Update selected light source
     for i := 0 to High(LightSource.Active) do LightSource.Active[i] := False ;
-//    LightSource.Active[LightSource.List[LightSource.ListIndex]] := True ;
+    LightSource.Active[LightSource.List[LightSource.ListIndex]] := True ;
     LightSource.Update ;
 
     end;

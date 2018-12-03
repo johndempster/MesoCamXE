@@ -17,7 +17,8 @@ unit ZStageUnit;
 //          Now operates in standard mode to allow 'R' command responses to be returned immediately after command
 //          Moves can now be changed while in progress.
 // 18.10.17 Now reports if COM port cannot be opened and disables send/recieves to controller
-// 14.11.17 Conversion to Threaded COM I/O in progress
+// 14.11.18 Conversion to Threaded COM I/O in progress
+// 03.12.18 Now tested and working with threaded COM I/O
 
 interface
 
@@ -39,12 +40,12 @@ type
     ControlState : Integer ;  // Z stage control state
     Status : String ;         // Z stage status report
     MoveToRequest : Boolean ;   // Go to Final flag
-    MoveToPosition : Double ;   // Position (um) to go to
     RequestedXPos : Double ;   // Intermediate X position
     RequestedYPos : Double ;   // Intermediate Y position
     RequestedZPos : Double ;   // Intermediate Z position
 
     StageInitRequired : Boolean ; // Stage needs to be initialised
+    WaitingForPositionUpdate : Boolean ;
 
     ComThread : TZStageComThread ;
 
@@ -53,7 +54,6 @@ type
     procedure SetBaudRate( Value : DWord ) ;
     procedure SetStageType( Value : Integer ) ;
 
-    procedure UpdateZPositionPZ ;
     procedure MoveToPrior( X : Double ; // New X pos.
                           Y : Double ; // NEw Y pos.
                           Z : Double  // New Z pos.
@@ -61,8 +61,6 @@ type
 
     procedure MoveToPZ( Position : Double ) ;
     function GetScaleFactorUnits : string ;
-    procedure ProScanEnableZStageTTLAction ;
-    procedure Wait( Delay : double ) ;
   public
     { Public declarations }
     XPosition : Double ;     // X position (um)
@@ -79,11 +77,11 @@ type
     CommandList : TstringList ;  // Light Source command list
     ReplyList : TstringList ;    // Light source replies
     TickCounter : Integer ;      // Timer tick counter
+    ReplyZeroCount : Integer ;   // No. of '0' replies to wait for before init complete
     Initialised : Boolean ;      // TRUE = stage initialised
 
     procedure Open ;
     procedure Close ;
-    procedure UpdateZPosition ;
     procedure MoveTo( X : Double ; // New X pos.
                       Y : Double ; // NEw Y pos.
                       Z : Double  // New Z pos.
@@ -151,6 +149,7 @@ begin
     ComThread := Nil ;
     TickCounter := 0 ;
     Initialised := False ;
+    WaitingForPositionUpdate := False ;
 
     MoveToRequest := False ;
     StageInitRequired := False ;
@@ -191,6 +190,7 @@ begin
      case FStageType of
         stOptiscanII,stProScanIII : begin
           // COM ports
+          List.Add(format('None',[0]));
           for i := 1 to 16 do List.Add(format('COM%d',[i]));
           end ;
         stPiezo : begin
@@ -225,8 +225,16 @@ begin
         stProScanIII :
           begin
           ComThread := TZStageComThread.Create ;
+          // Download stage protection handler
+          // (Returns stage to Z=0 when stage microswitch triggered)
           CommandList.Add('COMP 0') ;
-          ProScanEnableZStageTTLAction ;
+          CommandList.Add('SMZ 20') ;           // Set Z stage speed to 20% of maximum
+          CommandList.Add( 'TTLDEL,1') ;
+          CommandList.Add( 'TTLTP,1,1') ;       // Enable trigger on input #1 going high
+          CommandList.Add( 'TTLACT,1,70,0,0,0') ; // Stop all movement
+          CommandList.Add( 'TTLACT,1,31,0,0,0') ; // Move Z axis to zero position
+          CommandList.Add( 'TTLTRG,1') ;         // Enable triggers
+          ReplyZeroCount := 6 ;
           StageInitRequired := True ;
           end ;
         stPiezo :
@@ -257,40 +265,6 @@ begin
     if ComThread <> Nil then FreeAndNil(ComThread);
     end;
 
-
-procedure TZStage.UpdateZPosition ;
-// ---------------------------
-// Update position of Z stage
-// ---------------------------
-begin
-    case FStageType of
-        stOptiscanII :
-          begin
-          if StageInitRequired then
-             begin
-             // Set into standard mode (command responses return immediately)
-//             SendCommand('COMP 0') ;
-//             CommandList.Add('COMP 0') ;
-//             WaitforResponse('0') ;
-             end;
-//          UpdateZPositionPrior ;
-          end;
-        stProScanIII :
-          begin
-          if StageInitRequired then
-             begin
-             // Set into standard mode (command responses return immediately)
-//             CommandList.Add('COMP 0') ;
-             //WaitforResponse('0') ;
-             // Set up stage protection action
-//             ProScanEnableZStageTTLAction ;
-             StageInitRequired := False ;
-             end;
-//          UpdateZPositionPrior ;
-          end;
-        stPiezo : UpdateZPositionPZ ;
-        end;
-    end;
 
 procedure TZStage.MoveTo( X : Double ; // New X pos.
                           Y : Double ; // New Y pos.
@@ -404,16 +378,27 @@ procedure TZStage.PriorHandleMessages ;
 // -----------------------------------
 var
     OldInitialised : Boolean ;
-    sNum,Reply,s,c : string ;
+    Reply,s,c : string ;
     i,iNum : Integer ;
 begin
 
     OldInitialised := Initialised ;
 
+    if Initialised and (not WaitingForPositionUpdate) then
+       begin
+       CommandList.Add('P') ;
+       WaitingForPositionUpdate := True ;
+       end;
+
     if ReplyList.Count > 0 then
        begin
-       if (ReplyList[0] = 'R') or (ReplyList[0] = 'O') then
+       if (ReplyList[0] = 'R') {or (ReplyList[0] = 'O')} then
           begin
+          end
+       else if ReplyList[0] = '0' then
+          begin
+          Dec(ReplyZeroCount) ;
+          if ReplyZeroCount = 0 then Initialised := True ;
           end
        else
           begin
@@ -427,27 +412,30 @@ begin
 
           while i <= Length(Reply) do
                 begin
-               c := Reply[i] ;
-              if (c = ',') or (i = Length(Reply)) then
-                 begin
-                 if c <> ',' then s := s + Reply[i] ;
-                 // Remove error flag (if represent)
-                 s := ReplaceText(s,'R','');
-                if (not ContainsText(s,'R')) and (s<>'') then
+                c := Reply[i] ;
+                if (c = ',') or (i = Length(Reply)) then
                    begin
-                   case iNum of
-                        0 : XPosition := StrToInt64(s)/XScaleFactor ;
-                        1 : YPosition := StrToInt64(s)/YScaleFactor ;
-                        2 : ZPosition := StrToInt64(s)/ZScaleFactor ;
-                        end ;
+                   if c <> ',' then s := s + Reply[i] ;
+                   // Remove error flag (if represent)
+                   s := ReplaceText(s,'R','');
+                   if (not ContainsText(s,'R')) and (s<>'') then
+                     begin
+                     case iNum of
+                          0 : XPosition := StrToInt64(s)/XScaleFactor ;
+                          1 : YPosition := StrToInt64(s)/YScaleFactor ;
+                          2 : begin
+                              ZPosition := StrToInt64(s)/ZScaleFactor ;
+                              end;
+                          end ;
                    end;
                 Inc(INum) ;
                 s := '' ;
                 end
-            else s := s + Reply[i] ;
-            Inc(i) ;
-            end;
-       end;
+                else s := s + Reply[i] ;
+                Inc(i) ;
+                end;
+          WaitingForPositionUpdate := False ;
+          end;
 
        ReplyList.Delete(0);
        end;
@@ -455,17 +443,9 @@ begin
     // Increment init counter
     Inc(TickCounter) ;
     // Initialise light source after 20 ticks (2 seconds) if not already init'd
-    if TickCounter > 20 then Initialised := True ;
+    if TickCounter > 40 then Initialised := True ;
 
     end;
-
-
-procedure TZStage.UpdateZPositionPZ ;
-// ----------------------------------
-// Update position of Z stage (Piezo)
-// ----------------------------------
-begin
-     end;
 
 
 procedure TZStage.MoveToPZ( Position : Double ) ;
@@ -490,33 +470,5 @@ begin
             end;
     end ;
 
-
-procedure TZStage.ProScanEnableZStageTTLAction ;
-// ---------------------------------------------------------------
-// Enable action to be taken when TTL hard limit trigger activated
-// ---------------------------------------------------------------
-begin
-     CommandList.Add( 'TTLDEL,1') ;
-//     WaitforResponse('0') ;
-     CommandList.Add( 'TTLTP,1,1') ;       // Enable trigger on input #1 going high
-//     WaitforResponse('0') ;
-     CommandList.Add( 'TTLACT,1,70,0,0,0') ; // Stop all movement
-//     WaitforResponse('0') ;
-     CommandList.Add( 'TTLACT,1,31,0,0,0') ; // Move Z axis to zero position
-//     WaitforResponse('0') ;
-     CommandList.Add( 'TTLTRG,1') ;         // Enable triggers
-//     WaitforResponse('0') ;
-     end;
-
-
-procedure TZStage.Wait( Delay : double ) ;
-var
-    TEndWait,T : Cardinal ;
-begin
-    TEndWait := TimeGetTime + Round(Delay*1000.0) ;
-    repeat
-      t := TimeGetTime ;
-    until t >= TEndWait ;
-end;
 
 end.

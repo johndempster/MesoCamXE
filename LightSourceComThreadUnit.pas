@@ -92,7 +92,7 @@ begin
          if EndOfLine then
            begin
            if Reply <> '' then LightSource.ReplyList.Add(Reply);
-           outputdebugstring(pchar(format('rx: %s',[Reply])));
+//           outputdebugstring(pchar(format('rx: %s',[Reply])));
            Reply := '' ;
            end ;
          end );
@@ -198,7 +198,7 @@ begin
      if not FComPortOpen then Exit ;
      if ComFailed then Exit ;
 
-     outputdebugstring(pchar('tx: ' + Line));
+//     outputdebugstring(pchar('tx: ' + Line));
 
      { Copy command line to be sent to xMit buffer and and a CR character }
      nC := Length(Line) ;

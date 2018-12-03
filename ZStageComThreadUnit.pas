@@ -16,7 +16,6 @@ type
     FComPort : Integer ;              // Com port #
     FComHandle : THandle ;            // Com port handle
     FComPortOpen : Boolean ;          // Com port open flag
-    FBaudRate : DWord ;               // Com port baud rate
     ComFailed : Boolean ;             // COM port communications failed flag
 
     OverLapStructure : POVERLAPPED ;
@@ -92,6 +91,7 @@ begin
          if EndOfLine then
            begin
            ZStage.ReplyList.Add(Reply);
+//           outputdebugstring(pchar('rx:'+reply));
            Reply := '' ;
            end ;
          end );
@@ -197,7 +197,7 @@ begin
      if not FComPortOpen then Exit ;
      if ComFailed then Exit ;
 
-     outputdebugstring(pchar('tx: ' + Line));
+//     outputdebugstring(pchar('tx: ' + Line));
 
      { Copy command line to be sent to xMit buffer and and a CR character }
      nC := Length(Line) ;
