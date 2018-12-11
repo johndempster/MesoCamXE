@@ -464,6 +464,8 @@ type
     SettingsDirectory : String ;
     RawImagesFileName : String ;
     NumImagesInRawFile : Integer ;        // Num images in file
+    TPointCounter : Integer ;             // Time lapse point counter
+    ZSectionCounter : Integer ;           // Z section counter
 
     UnsavedRawImage : Boolean ;      // TRUE indicates raw images file contains an unsaved hi res. image
     SaveAsMultipageTIFF : Boolean ;  // TRUE = save as multi-page TIFF, FALSE=separate files
@@ -634,6 +636,8 @@ begin
      ResizeImage := False ;
 
      NumImagesInRawFile := 0 ;
+     ZSectionCounter := 0 ;
+     TPointCounter := 0 ;
      NumZSectionsAvailable := 0 ;
      NumTSectionsAvailable := 0 ;
      NumPanelsAvailable := 0 ;
@@ -2285,9 +2289,9 @@ begin
             // Update status
             s := '' ;
             if ckAcquireTimeLapseSeries.Checked then
-               s := s + format('T:%d/%d, ',[NumTSectionsAvailable+1,NumTSectionsRequested]);
+               s := s + format('T:%d/%d, ',[TPointCounter+1,NumTSectionsRequested]);
             if ckAcquireZStack.Checked then
-               s := s + format('Z:%d/%d, ',[NumZSectionsAvailable+1,NumZSectionsRequested]);
+               s := s + format('Z:%d/%d, ',[ZSectionCounter+1,NumZSectionsRequested]);
             if ckSeparateLightSources.Checked then
                s := s + format(' F(%s):',[LightSource.Names[LightSource.List[LightSource.ListIndex]]])
             else s := s + 'F:' ;
@@ -2593,23 +2597,20 @@ begin
        NumPanelsAvailable := LightSource.NumList ;
        if SnapRequested then Exit ;
 
+       ZSectionCounter := ((NumImagesInRawFile-1) div (LightSource.NumList)) mod NumZSectionsRequested ;
+       TPointCounter := (NumImagesInRawFile-1) div (NumZSectionsRequested*LightSource.NumList) ;
+
        // Z stage control
        if ckAcquireZStack.Checked then
           begin
-          scZSection.Max := NumZSectionsRequested-1 ;
+          scZSection.Max := Max(scZSection.Max,ZSectionCounter);
           scZSection.Position := 0 ;
-          Inc(NumZSectionsAvailable) ;
-          lbZSection.Caption := Format('Section %d/%d',[NumZSectionsAvailable,NumZSectionsRequested]);
-
-          if NumZSectionsAvailable < Round(edNumZSections.Value) then
-             begin
-             // Increment Z position to next section
-             if NumZSectionsAvailable = 1 then ZStackStartingPosition := ZStage.ZPosition ;
-             ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStage.ZPosition + ZStep );
-             SnapRequestedAfterInterval := True ;
-             SnapStartAt := timegettime + Round(1000*ZStage.ZStepTime*Max(Abs(ZStep),1.0)) ;
+          lbZSection.Caption := Format('Section %d/%d',[ZSectionCounter+1,NumZSectionsRequested]);
+          // Increment Z position to next section
+          ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZSectionCounter + ZStep*ZSectionCounter );
+          SnapRequestedAfterInterval := True ;
+          SnapStartAt := timegettime + Round(1000*ZStage.ZStepTime*Max(Abs(ZStep),1.0)) ;
 //             outputdebugstring(pchar(format('step time %.4g %.4g',[ZStage.ZStepTime,ZStage.ZStepTime*Max(Abs(ZStep),1.0)])));
-             end ;
           end ;
 
        if SnapRequestedAfterInterval then Exit ;
@@ -2617,11 +2618,10 @@ begin
        // Time lapse control
        if ckAcquireTimeLapseSeries.Checked then
           begin
-          Inc(NumTSectionsAvailable) ;
-          scTSection.Max := Max({Round(edNumTimeLapsePoints.Value)}NumTSectionsAvailable-1,0) ;
+          scTSection.Max := Max(TPointCounter,0) ;
           scTSection.Position := 0 ;
-          lbTSection.Caption := Format('%d/%d',[NumTSectionsAvailable,scTSection.Max+1]);
-          if NumTSectionsAvailable < Round(edNumTimeLapsePoints.Value) then
+          lbTSection.Caption := Format('%d/%d',[TPointCounter+1,scTSection.Max+1]);
+          if TPointCounter < Round(edNumTimeLapsePoints.Value) then
              begin
              // Reset Z stack if Z stack being collected
              if ckAcquireZStack.Checked then
@@ -3022,8 +3022,8 @@ begin
      // Check if any files exist already and allow user option to quit
      Exists := False ;
      for iPanel := 0 to NumPanelsAvailable-1 do
-         for iT := 0 to NumTSectionsRequested-1 do
-             for iZ := 0 to NumZSectionsRequested-1 do
+         for iT := 0 to scTSection.Max do
+             for iZ := 0 to scZSection.Max do
                  begin
                  s := SectionFileName(FileName,iPanel,iZ,iT) ;
                  Exists := Exists or FileExists(s) ;
@@ -3045,10 +3045,10 @@ begin
      for iPanel := 0 to Max(NumPanelsAvailable,1)-1 do
          begin
          NewFileRequired := True ;
-         for iT := 0 to Max(NumTSectionsRequested,1)-1 do
+         for iT := 0 to Max(scTSection.Max,0) do
              begin
-             if NumZSectionsRequested > 1 then NewFileRequired := True ;
-             for iZ := 0 to Max(NumZSectionsRequested,1)-1 do
+             if scZSection.Max > 0 then NewFileRequired := True ;
+             for iZ := 0 to Max(scZSection.Max,0) do
                  begin
 
                  // Get image
@@ -3068,8 +3068,8 @@ begin
                     FileNames.Add(SectionFileName(FileName,iPanel,iZ,iT)) ;
                     // No. of images in file
                     if (not SaveAsMultipageTIFF) then nFrames := 1
-                    else if NumZSectionsRequested > 1 then nFrames := NumZSectionsRequested
-                    else nFrames := NumTSectionsRequested ;
+                    else if scZSection.Max > 0 then nFrames := scZSection.Max + 1
+                    else nFrames := scTSection.Max + 1;
                     // Create new file
                     FileOpen := ImageFile.CreateFile( FileNames.Strings[FileNames.Count-1],
                                                       HRFrameWidth,
