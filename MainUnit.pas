@@ -408,7 +408,6 @@ type
     // Z axis control
     ZSection : Integer ;                // Current Z Section being acquired
     ZStep : Double ;                  // Spacing between Z Sections (microns)
-    NumZSectionsAvailable : Integer ;   // No. of Sections in Z stack
     NumZSectionsRequested : Integer ;   // No. of sections in Z stack requested
 
     ZStackStartingPosition : Double ;   // Starting position of Z stack series
@@ -638,7 +637,6 @@ begin
      NumImagesInRawFile := 0 ;
      ZSectionCounter := 0 ;
      TPointCounter := 0 ;
-     NumZSectionsAvailable := 0 ;
      NumTSectionsAvailable := 0 ;
      NumPanelsAvailable := 0 ;
      end;
@@ -1673,7 +1671,6 @@ begin
        begin
        // Z sections
        ZSection := 0 ;
-       NumZSectionsAvailable := 0 ;
        if ckAcquireZStack.Checked then NumZSectionsRequested := Max(Round(edNumZsections.Value),1)
                                   else NumZSectionsRequested := 1 ;
 
@@ -1696,6 +1693,7 @@ begin
 
     RawImageAvailable := False ;
     ZStep := edMicronsPerZStep.Value ;
+    ZStackStartingPosition := ZStage.ZPosition ;
 
     // Initialise light source used in SeparateLightSources mode
     SelectNextLightSource(true) ;
@@ -1766,7 +1764,7 @@ begin
     Cam1.CCDYShift := 0.0 ;
 
     // Save current positoion of Z stage
-    ZStartingPosition := ZStage.ZPosition ;
+    //ZStartingPosition := ZStage.ZPosition ;
 
     if not bLiveImage.Enabled then
        begin
@@ -2586,6 +2584,8 @@ procedure TMainFrm.NextZTStep ;
 // ---------------------
 // Get and process image
 // ---------------------
+var
+    OldZSectionCounter : Integer ;
 begin
 
        // Exit if capture not in progress
@@ -2597,38 +2597,31 @@ begin
        NumPanelsAvailable := LightSource.NumList ;
        if SnapRequested then Exit ;
 
-       ZSectionCounter := ((NumImagesInRawFile-1) div (LightSource.NumList)) mod NumZSectionsRequested ;
-       TPointCounter := (NumImagesInRawFile-1) div (NumZSectionsRequested*LightSource.NumList) ;
+       OldZSectionCounter  := ZSectionCounter ;
+       ZSectionCounter := (NumImagesInRawFile div LightSource.NumList) mod NumZSectionsRequested ;
+       TPointCounter := (NumImagesInRawFile) div (NumZSectionsRequested*LightSource.NumList) ;
 
        // Z stage control
        if ckAcquireZStack.Checked then
           begin
-          scZSection.Max := Max(scZSection.Max,ZSectionCounter);
+          scZSection.Max := Max(NumZSectionsRequested-1,ZSectionCounter);
           scZSection.Position := 0 ;
-          lbZSection.Caption := Format('Section %d/%d',[ZSectionCounter+1,NumZSectionsRequested]);
+          lbZSection.Caption := Format('Section %d/%d',[ZSectionCounter,NumZSectionsRequested]);
           // Increment Z position to next section
-          ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZSectionCounter + ZStep*ZSectionCounter );
-          SnapRequestedAfterInterval := True ;
+          ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStackStartingPosition + ZStep*(ZSectionCounter));
+          if ZSectionCounter >= OldZSectionCounter then SnapRequestedAfterInterval := True ;
           SnapStartAt := timegettime + Round(1000*ZStage.ZStepTime*Max(Abs(ZStep),1.0)) ;
 //             outputdebugstring(pchar(format('step time %.4g %.4g',[ZStage.ZStepTime,ZStage.ZStepTime*Max(Abs(ZStep),1.0)])));
           end ;
 
-       if SnapRequestedAfterInterval then Exit ;
-
        // Time lapse control
-       if ckAcquireTimeLapseSeries.Checked then
+       if ckAcquireTimeLapseSeries.Checked and (not SnapRequestedAfterInterval) then
           begin
           scTSection.Max := Max(TPointCounter,0) ;
           scTSection.Position := 0 ;
           lbTSection.Caption := Format('%d/%d',[TPointCounter+1,scTSection.Max+1]);
           if TPointCounter < Round(edNumTimeLapsePoints.Value) then
              begin
-             // Reset Z stack if Z stack being collected
-             if ckAcquireZStack.Checked then
-                begin
-                NumZSectionsAvailable := 0 ;
-                ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStackStartingPosition );
-                end;
              SnapRequestedAfterInterval := True ;
              SnapStartAt := SnapStartAt + Round(1000*edTimeLapseInterval.Value) ;
              LightSourceOnAt := SnapStartAt - 200 ;
@@ -2636,13 +2629,14 @@ begin
              end;
           end ;
 
-       if SnapRequestedAfterInterval then Exit ;
-
-       // All images captured - stop
-       ShowCameraImage := False ;
-       ShowCapturedImage := True ;
-       UpdateImage ;
-       bStopImage.Click ;
+       // No more images requested - stop capture
+       if not SnapRequestedAfterInterval then
+          begin
+          ShowCameraImage := False ;
+          ShowCapturedImage := True ;
+          UpdateImage ;
+          bStopImage.Click ;
+          end ;
 
        end ;
 
@@ -2744,7 +2738,7 @@ begin
     // Move Z stage back to starting position
     if ckAcquireZStack.Checked and (not LiveImagingInProgress) then
        begin
-       ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStartingPosition );
+       ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStackStartingPosition );
        scZSection.Position := 0 ;
        end;
 
@@ -3143,10 +3137,10 @@ var
 begin
 
      s := '.' + PanelName[iPanel] + '.' ;
-     if ((NumTSectionsAvailable > 1) and (not SaveAsMultipageTIFF)) then
+     if ckAcquireTimeLapseSeries.Checked and (not SaveAsMultipageTIFF) then
         s := s + format('T%d.',[iTSection]) ;
 
-     if ((NumZSectionsAvailable > 1) and (not SaveAsMultipageTIFF)) then
+     if ckAcquireZStack.Checked and (not SaveAsMultipageTIFF) then
         s := s + format('Z%d.',[iZSection]) ;
 
      FileName := ANSIReplaceText( FileName, '.tif', s + '.tif' ) ;
@@ -3621,7 +3615,6 @@ begin
     AddElementText( ProtNode, 'RAWIMAGESFILENAME', RawImagesFileName ) ;
 
     // Images available in raw file
-    AddElementInt( ProtNode, 'NUMZSECTIONSAVAILABLE', NumZSectionsAvailable ) ;
     AddElementInt( ProtNode, 'NUMTSECTIONSAVAILABLE', NumTSectionsAvailable ) ;
     AddElementInt( ProtNode, 'NUMPANELSAVAILABLE', NumPanelsAvailable ) ;
 
@@ -3813,7 +3806,6 @@ begin
     SaveAsMultipageTIFF := GetElementBool( ProtNode, 'SAVEASMULTIPAGETIFF', SaveAsMultipageTIFF ) ;
     RawImagesFileName := GetElementText( ProtNode, 'RAWIMAGESFILENAME', RawImagesFileName ) ;
 
-    NumZSectionsAvailable := GetElementInt( ProtNode, 'NUMZSECTIONSAVAILABLE', NumZSectionsAvailable ) ;
     NumTSectionsAvailable := GetElementInt( ProtNode, 'NUMTSECTIONSAVAILABLE', NumTSectionsAvailable ) ;
     NumPanelsAvailable := GetElementInt( ProtNode, 'NUMPANELSAVAILABLE', NumPanelsAvailable ) ;
 
