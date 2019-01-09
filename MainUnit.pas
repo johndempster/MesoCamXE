@@ -246,6 +246,7 @@ type
     bGoToXPosition: TButton;
     bGoToYPosition: TButton;
     Cam1: TSESCam;
+    lbSaveFilename: TLabel;
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -3005,9 +3006,6 @@ begin
      SaveDialog.FileName := ExtractFileName(FileName) ;
      if not SaveDialog.Execute then Exit ;
 
-     edStatus.Text := 'Saving Image To OME.TIF' ;
-     application.processmessages ;
-
      // Ensure extension is set
      FileName := ChangeFileExt(SaveDialog.FileName, '.tif' ) ;
      Filename := ReplaceText( FileName, '.ome.tif', '.tif' ) ;
@@ -3031,7 +3029,6 @@ begin
                  end;
 
      // Save image
-     edStatus.Text := 'Saving to TIF' ;
      FileNames := TStringList.Create ;
      NumFramesInFile := 0 ;
      NumFiles := 0 ;
@@ -3073,6 +3070,9 @@ begin
                                                       nFrames ) ;
                     if not FileOpen then Exit ;
 
+                    lbSaveFileName.Caption := 'Saving to ' + FileNames.Strings[FileNames.Count-1] ;
+                    application.processmessages ;
+
                     ImageFile.XResolution := MagnifiedCameraPixelSize / sqrt(NumPixelShiftFrames) ;
                     ImageFile.YResolution := ImageFile.XResolution ;
                     ImageFile.ZResolution := ZStep ;
@@ -3089,7 +3089,7 @@ begin
                     end;
 
                  outputdebugstring(pchar(format('Frame %d written to %s',[NumFramesInFile,FileName])));
-                 edStatus.Text := format('Saving Image To OME.TIF %d/%d',[NumFramesInFile,NumImagesInRawFile]) ;
+//                 edStatus.Text := format('Saving Image To OME.TIF %d/%d',[NumFramesInFile,NumImagesInRawFile]) ;
                  application.processmessages ;
 
                  end ;

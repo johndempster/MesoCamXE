@@ -34,6 +34,18 @@ object MainFrm: TMainFrm
     Font.Style = [fsBold]
     ParentFont = False
   end
+  object lbSaveFilename: TLabel
+    Left = 744
+    Top = 440
+    Width = 4
+    Height = 20
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -16
+    Font.Name = 'Arial Narrow'
+    Font.Style = []
+    ParentFont = False
+  end
   object ControlGrp: TGroupBox
     Left = 9
     Top = 9
@@ -1127,6 +1139,12 @@ object MainFrm: TMainFrm
     Width = 389
     Height = 174
     Caption = ' Display Contrast '
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
+    Font.Style = []
+    ParentFont = False
     TabOrder = 4
     object cbPalette: TComboBox
       Left = 13
@@ -1350,10 +1368,16 @@ object MainFrm: TMainFrm
   end
   object StatusGrp: TGroupBox
     Left = 9
-    Top = 1189
+    Top = 1143
     Width = 389
     Height = 217
     Caption = ' Pixel Intensity Histogram '
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
+    Font.Style = []
+    ParentFont = False
     TabOrder = 5
     object plHistogram: TXYPlotDisplay
       Left = 13
@@ -1399,11 +1423,11 @@ object MainFrm: TMainFrm
       Left = 13
       Top = 163
       Width = 359
-      Height = 32
+      Height = 24
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
-      Font.Height = -21
-      Font.Name = 'Arial'
+      Font.Height = -13
+      Font.Name = 'Arial Narrow'
       Font.Style = [fsBold]
       ParentFont = False
       ReadOnly = True
@@ -1415,7 +1439,7 @@ object MainFrm: TMainFrm
     Top = 13
     Width = 940
     Height = 414
-    ActivePage = tbChan2
+    ActivePage = tbChan3
     TabOrder = 6
     OnChange = PageChange
     object tbChan0: TTabSheet
@@ -1501,7 +1525,13 @@ object MainFrm: TMainFrm
     Height = 31
     BevelOuter = bvNone
     DoubleBuffered = False
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
+    Font.Style = []
     ParentDoubleBuffered = False
+    ParentFont = False
     TabOrder = 7
     object lbZSection: TLabel
       Left = 209
@@ -1546,7 +1576,13 @@ object MainFrm: TMainFrm
     Height = 31
     BevelOuter = bvNone
     DoubleBuffered = False
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
+    Font.Style = []
     ParentDoubleBuffered = False
+    ParentFont = False
     TabOrder = 8
     object lbTSection: TLabel
       Left = 209
@@ -1663,11 +1699,6 @@ object MainFrm: TMainFrm
     NumPixelShiftFrames = 1
     DisableExposureIntervalLimit = False
     MonochromeImage = False
-    CCDTapOffsetLT = 0
-    CCDTapOffsetRT = 0
-    CCDTapOffsetLB = 0
-    CCDTapOffsetRB = 0
-    LightSpeedMode = False
     Left = 688
     Top = 560
   end
