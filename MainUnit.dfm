@@ -1259,6 +1259,10 @@ object MainFrm: TMainFrm
       object SlidersTab: TTabSheet
         Caption = 'Sliders'
         ImageIndex = 1
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label9: TLabel
           Left = 3
           Top = 7
@@ -1435,7 +1439,7 @@ object MainFrm: TMainFrm
     end
   end
   object Page: TPageControl
-    Left = 410
+    Left = 404
     Top = 13
     Width = 940
     Height = 414
@@ -1444,6 +1448,10 @@ object MainFrm: TMainFrm
     OnChange = PageChange
     object tbChan0: TTabSheet
       Caption = 'Channel 0'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image0: TImage
         Left = 3
         Top = 3
@@ -1463,6 +1471,10 @@ object MainFrm: TMainFrm
     object tbChan1: TTabSheet
       Caption = 'Channel 1'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image1: TImage
         Left = 3
         Top = 3
@@ -1482,6 +1494,10 @@ object MainFrm: TMainFrm
     object tbChan2: TTabSheet
       Caption = 'Channel 2'
       ImageIndex = 2
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image2: TImage
         Left = 3
         Top = 3
@@ -1502,8 +1518,8 @@ object MainFrm: TMainFrm
       Caption = 'tbChan3'
       ImageIndex = 3
       object Image3: TImage
-        Left = -4
-        Top = 3
+        Left = -3
+        Top = 0
         Width = 932
         Height = 342
         Hint = 
@@ -1519,7 +1535,7 @@ object MainFrm: TMainFrm
     end
   end
   object ZSectionPanel: TPanel
-    Left = 418
+    Left = 425
     Top = 439
     Width = 297
     Height = 31
@@ -1620,6 +1636,20 @@ object MainFrm: TMainFrm
       OnChange = scTSectionChange
     end
   end
+  object edSaveFileStatus: TEdit
+    Left = 728
+    Top = 433
+    Width = 617
+    Height = 24
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Arial'
+    Font.Style = [fsBold]
+    ParentFont = False
+    TabOrder = 9
+    Text = 'edSaveFileStatus'
+  end
   object Timer: TTimer
     Enabled = False
     Interval = 60
@@ -1699,6 +1729,11 @@ object MainFrm: TMainFrm
     NumPixelShiftFrames = 1
     DisableExposureIntervalLimit = False
     MonochromeImage = False
+    CCDTapOffsetLT = 0
+    CCDTapOffsetRT = 0
+    CCDTapOffsetLB = 0
+    CCDTapOffsetRB = 0
+    LightSpeedMode = False
     Left = 688
     Top = 560
   end

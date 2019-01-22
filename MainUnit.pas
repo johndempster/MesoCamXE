@@ -247,6 +247,7 @@ type
     bGoToYPosition: TButton;
     Cam1: TSESCam;
     lbSaveFilename: TLabel;
+    edSaveFileStatus: TEdit;
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -321,6 +322,7 @@ type
         procedure DisplayCalibrationBar(
                   X : Integer ;
                   Y : Integer ) ;
+       procedure DisplayCursorReadout ;
 
 
         procedure FixRectangle( var Rect : TRect ) ;
@@ -388,6 +390,7 @@ type
     MouseDownAt : TPoint ;                     // Mouse position when button depressed
     MouseDownButton : TMouseButton ;           // Button pressed
     MouseUpCursor : Integer ;                  // Cursor icon when button released
+    CursorReadoutText : string ;               // X,Y position of mouse cursor on display and intensity
 
     ZTop : Double ;
     FrameWidth : Integer ;                // Width of image on display
@@ -640,6 +643,8 @@ begin
      TPointCounter := 0 ;
      NumTSectionsAvailable := 0 ;
      NumPanelsAvailable := 0 ;
+     CursorReadoutText := '' ;
+     edSaveFileStatus.Visible := False ;
      end;
 
 
@@ -788,6 +793,9 @@ begin
      // Set camera gain list
      Cam1.GetCameraGainList( cbCameraGain.Items );
      cbCameraGain.ItemIndex := CameraGainIndex ;
+
+     // Open Z stage
+     ZStage.Open ;
 
      // Load first image from existing raw images file
      scZSection.Position := 0 ;
@@ -969,10 +977,11 @@ begin
 
      if (i > 0) and (i < FrameWidth*FrameHeight) then
         begin
-        lbReadout.Caption := format('X=%.6g um, Y=%.6g um, I=%d',
-                           [XImage*PixelsToMicronsX,
-                            YImage*PixelsToMicronsY,
-                            pDisplayBuf[i]]) ;
+        CursorReadoutText := format('X=%.6g um, Y=%.6g um, I=%d',
+                             [XImage*PixelsToMicronsX,
+                              YImage*PixelsToMicronsY,
+                              pDisplayBuf[i]]) ;
+        UpdateDisplay := True ;
         end ;
 
      if not MouseDown then
@@ -1241,7 +1250,6 @@ procedure TMainFrm.SetDisplayIntensityRange(
 // Set display contrast range and sliders
 // --------------------------------------
 begin
-
      edDisplayIntensityRange.LoLimit := 0.0  ;
      edDisplayIntensityRange.HiLimit := GreyLevelMax  ;
      edDisplayIntensityRange.LoValue := LoValue  ;
@@ -1259,8 +1267,10 @@ procedure TMainFrm.FormClose(Sender: TObject; var Action: TCloseAction);
 // ------------
 begin
 
+     // Close Z stage
+     ZStage.Close ;
+     // Close NI interface
      LabIO.Close ;
-
      // Close camera
      Cam1.CloseCamera ;
 
@@ -1351,6 +1361,9 @@ end ;
 procedure TMainFrm.DisplayCalibrationBar(
           X : Integer ;
           Y : Integer ) ;
+// --------------------------------
+// Display calibration bar on image
+// --------------------------------
 Const
     TickHeight = 10 ;
 var
@@ -1380,6 +1393,23 @@ begin
 end ;
 
 
+procedure TMainFrm.DisplayCursorReadout ;
+// ----------------------------------------
+// Display X,Y,intensity at cursor position
+// ----------------------------------------
+Const
+    TickHeight = 10 ;
+begin
+
+
+     Bitmap.Canvas.Pen.Color := clwhite ;
+     Bitmap.Canvas.Brush.Style := bsClear ;
+     Bitmap.Canvas.Pen.Width := 2 ;
+     Bitmap.Canvas.Font.Color := clWhite ;
+     Bitmap.Canvas.Font.Size := 12 ;
+     if CursorReadoutText <> '' then Bitmap.Canvas.TextOut( 0,0, CursorReadoutText );
+
+end ;
 
 procedure TMainFrm.UpdateImage ;
 // --------------
@@ -1480,7 +1510,11 @@ begin
      // Display ROI
      DisplayROI(BitMap) ;
 
+     // Display calibration bar
      DisplayCalibrationBar(10, BitMap.Height - 50 ) ;
+
+     // Display cursor readout text at top,left of image
+     DisplayCursorReadout ;
 
      Images[Page.TabIndex].Picture.Assign(BitMap) ;
      Images[Page.TabIndex].Width := BitMap.Width ;
@@ -1506,8 +1540,10 @@ begin
      if TSectionPanel.Visible then ZSectionPanel.Left := TSectionPanel.Left + TSectionPanel.Width
                               else ZSectionPanel.Left := TSectionPanel.Left ;
 
-     lbReadout.Left := ZSectionPanel.Left ;
-     if TSectionPanel.Visible or ZSectionPanel.Visible then lbReadout.Left := lbReadout.Left + ZSectionPanel.Width ;
+     edSaveFileStatus.Left := ZSectionPanel.Left ;
+     edSaveFileStatus.Top := ZSectionPanel.Top ;
+     if TSectionPanel.Visible or ZSectionPanel.Visible then edSaveFileStatus.Left := edSaveFileStatus.Left + ZSectionPanel.Width ;
+     edSaveFileStatus.Width := Page.Width + Page.Left - edSaveFileStatus.Left ;
 
      FreeMem(XMap) ;
      FreeMem(YMap) ;
@@ -3070,8 +3106,8 @@ begin
                                                       nFrames ) ;
                     if not FileOpen then Exit ;
 
-                    lbSaveFileName.Caption := 'Saving to ' + FileNames.Strings[FileNames.Count-1] ;
-                    application.processmessages ;
+
+                    if SaveAsMultipageTIFF then
 
                     ImageFile.XResolution := MagnifiedCameraPixelSize / sqrt(NumPixelShiftFrames) ;
                     ImageFile.YResolution := ImageFile.XResolution ;
@@ -3090,6 +3126,11 @@ begin
 
                  outputdebugstring(pchar(format('Frame %d written to %s',[NumFramesInFile,FileName])));
 //                 edStatus.Text := format('Saving Image To OME.TIF %d/%d',[NumFramesInFile,NumImagesInRawFile]) ;
+                 edSaveFileStatus.Visible := True ;
+                 edSaveFileStatus.text := 'Saving to ' + FileNames.Strings[FileNames.Count-1] ;
+                 if nFrames > 1 then edSaveFileStatus.text := edSaveFileStatus.text +
+                                                              format(' (%d/%d)',[NumFramesInFile,nFrames]);
+
                  application.processmessages ;
 
                  end ;
@@ -3572,6 +3613,7 @@ begin
     iNode := ProtNode.AddChild( 'ZSTAGE' ) ;
     AddElementInt( iNode, 'STAGETYPE', ZStage.StageType ) ;
     AddElementInt( iNode, 'CONTROLPORT', ZStage.ControlPort ) ;
+    AddElementText( iNode, 'SERIALNUMBER', ZStage.SerialNumber ) ;
     AddElementInt( iNode, 'BAUDRATE', ZStage.BaudRate ) ;
     AddElementDouble( iNode, 'XSCALEFACTOR', ZStage.XScaleFactor ) ;
     AddElementDouble( iNode, 'YSCALEFACTOR', ZStage.YScaleFactor ) ;
@@ -3741,6 +3783,7 @@ begin
       begin
       ZStage.StageType := GetElementInt( iNode, 'STAGETYPE', Round(ZStage.StageType) ) ;
       ZStage.ControlPort := GetElementInt( iNode, 'CONTROLPORT', Round(ZStage.ControlPort) ) ;
+      ZStage.SerialNumber := GetElementText( iNode, 'SERIALNUMBER', ZStage.SerialNumber ) ;
       ZStage.BaudRate := GetElementInt( iNode, 'BAUDRATE', Round(ZStage.BaudRate)  ) ;
       ZStage.XScaleFactor := GetElementDouble( iNode, 'XSCALEFACTOR', ZStage.XScaleFactor ) ;
       ZStage.YScaleFactor := GetElementDouble( iNode, 'YSCALEFACTOR', ZStage.YScaleFactor ) ;

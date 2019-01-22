@@ -19,6 +19,7 @@ unit ZStageUnit;
 // 18.10.17 Now reports if COM port cannot be opened and disables send/recieves to controller
 // 14.11.18 Conversion to Threaded COM I/O in progress
 // 03.12.18 Now tested and working with threaded COM I/O
+// 15.01.19 Adding support for Thorlabs TDC001
 
 interface
 
@@ -27,14 +28,96 @@ uses
   Vcl.ExtCtrls ;
 
 type
+
+  TTLI_DeviceInfo = packed record
+     typeID : DWord ;
+     description : Array[0..64] of ANSIChar ;
+     serialNo : Array[0..8] of ANSIChar ;
+     PID :DWORD ;
+     isKnownType : Boolean ;
+     motorType : DWord ;
+     isPiezoDevice : Boolean ;
+     isLaser : Boolean ;
+     isCustomType : Boolean ;
+     isRack : Boolean ;
+     maxChannels : SmallInt
+     end ;
+
+  TTLI_BuildDeviceList = function : SmallInt ; cdecl ;
+  TTLI_GetDeviceListSize = function : SmallInt ; cdecl ;
+  TLI_GetDeviceListByTypeExt = function(
+                               receiveBuffer : PANSIChar ;
+                               sizeOfBuffer : DWORD ;
+                               typeID : Integer ) : SmallInt ; cdecl ;
+  TTLI_GetDeviceInfo = function(
+                       serialNo :PANSIChar ;
+                       info : TTLI_DeviceInfo ) : SmallInt ; cdecl ;
+  TCC_Open = function( serialNo :PANSIChar ) : SmallInt ; cdecl ;
+  TCC_Close = procedure( serialNo :PANSIChar ) ; cdecl ;
+  TCC_StartPolling = function(  serialNo :PANSIChar ;
+                                Milliseconds : Integer ) : WordBool ; cdecl ;
+  TCC_StopPolling = function(  serialNo :PANSIChar ) : WordBool ; cdecl ;
+  TCC_ClearMessageQueue = procedure(  serialNo :PANSIChar ) ; cdecl ;
+  TCC_Home = function(  serialNo :PANSIChar ) : SmallInt ; cdecl ;
+  TCC_WaitForMessage = function(
+                       serialNo :PANSIChar ;
+                       var messageType : DWORD ;
+                       var messageID : DWORD ;
+                       var messageData : DWORD ) : Boolean ; cdecl ;
+  TCC_GetVelParams = function(
+                       serialNo :PANSIChar ;
+                       var acceleration : Integer ;
+                       var maxVelocity : Integer ) : SmallInt ; cdecl ;
+  TCC_SetVelParams = function(
+                       serialNo :PANSIChar ;
+                       acceleration : Integer ;
+                       maxVelocity : Integer ) : SmallInt ; cdecl ;
+  TCC_MoveToPosition = function(
+                       serialNo :PANSIChar ;
+                       Index : Integer ) : SmallInt ; cdecl ;
+  TCC_GetPosition = function(
+                    serialNo :PANSIChar ) : Integer ; cdecl ;
+
+  TCC_GetMotorParamsExt = function(
+                          serialNo : PANSIChar ;
+                          var stepsPerRev : double ;
+                          var gearBoxRatio : double ;
+                          var pitch : double ) : SMallInt ; cdecl ;
+
+  TCC_GetRealValueFromDeviceUnit = function(
+                                   serialNo : PANSIChar ;
+                                   device_unit : Integer ;
+                                   //var real_unit : Double ;
+                                   p : Pointer ;
+                                   unitType : Integer ) : SMallInt ; cdecl ;
+
+  TCC_GetDeviceUnitFromRealValue = function(
+                                   serialNo : PANSIChar ;
+                                   real_unit : Double ;
+                                   var device_unit : Integer ;
+                                   unitType : Integer ) : SMallInt ; cdecl ;
+
+  TCC_SetMotorTravelLimits = function(
+                             serialNo : PANSIChar ;
+                             minPosition : Double ;
+                             maxPosition : Double ) : SMallInt ; cdecl ;
+
+  TCC_GetMotorTravelLimits = function(
+                             serialNo : PANSIChar ;
+                             var minPosition : Double ;
+                             var maxPosition : Double ) : SMallInt ; cdecl ;
+
   TZStage = class(TDataModule)
-    Timer: TTimer;
+    Timer1: TTimer;
     procedure DataModuleCreate(Sender: TObject);
     procedure DataModuleDestroy(Sender: TObject);
-    procedure TimerTimer(Sender: TObject);
+    procedure Timer1Timer(Sender: TObject);
   private
     { Private declarations }
     FStageType : Integer ;    // Type of stage
+    FStageIsOpen : Boolean ;       // TRUE = stage is open for use
+    FSerialNumber : ANSIString  ;  // Device serial number
+
 //    FControlPort : DWord ;    // Control port number
     FBaudRate : DWord ;       // Com port baud rate
     ControlState : Integer ;  // Z stage control state
@@ -48,6 +131,33 @@ type
     WaitingForPositionUpdate : Boolean ;
 
     ComThread : TZStageComThread ;
+
+    // Thorlabs TDC001 procedures and variables
+    LibraryHnd : THandle ;
+    CommonLibraryHnd : THandle ;
+    mmToDeviceUnits : Double ;
+    DeviceUnitsTomm : Double ;
+
+    TLI_BuildDeviceList : TTLI_BuildDeviceList ;
+    TLI_GetDeviceListSize : TTLI_GetDeviceListSize ;
+    TLI_GetDeviceListByTypeExt : TLI_GetDeviceListByTypeExt ;
+    TLI_GetDeviceInfo : TTLI_GetDeviceInfo ;
+    CC_Open : TCC_Open ;
+    CC_Close : TCC_Close ;
+    CC_StartPolling : TCC_StartPolling ;
+    CC_StopPolling : TCC_StopPolling ;
+    CC_ClearMessageQueue : TCC_ClearMessageQueue ;
+    CC_Home : TCC_Home ;
+    CC_WaitForMessage : TCC_WaitForMessage ;
+    CC_GetVelParams : TCC_GetVelParams ;
+    CC_SetVelParams : TCC_SetVelParams ;
+    CC_MoveToPosition : TCC_MoveToPosition ;
+    CC_GetPosition : TCC_GetPosition ;
+    CC_GetMotorParamsExt : TCC_GetMotorParamsExt ;
+    CC_GetRealValueFromDeviceUnit : TCC_GetRealValueFromDeviceUnit ;
+    CC_GetDeviceUnitFromRealValue : TCC_GetDeviceUnitFromRealValue ;
+    CC_SetMotorTravelLimits : TCC_SetMotorTravelLimits ;
+    CC_GetMotorTravelLimits : TCC_GetMotorTravelLimits ;
 
     procedure ResetCOMPort ;
     procedure SetControlPort( Value : DWord ) ;
@@ -88,13 +198,33 @@ type
                       ) ;
     procedure GetZStageTypes( List : TStrings ) ;
     procedure GetControlPorts( List : TStrings ) ;
+
+    function IsControlPortRequired : Boolean ;
+    function IsSerialNumberRequired : Boolean ;
+    procedure SetSerialNumber( Value : String ) ;
+    function GetSerialNumber : string ;
+
     procedure PriorHandleMessages ;
+
+    procedure TDC001_Open ;
+    procedure TDC001_GetPosition ;
+    procedure TDC001_MoveTo( Z : Double ) ;
+    procedure TDC001_Close ;
+    procedure TDC001_LoadLibrary ;
+
+    function GetDLLAddress(
+             Handle : THandle ;
+             const ProcName : string ) : Pointer ;
 
   published
     Property ControlPort : DWORD read FControlPort write SetControlPort ;
     Property BaudRate : DWORD read FBaudRate write SetBaudRate ;
     Property StageType : Integer read FStageType write SetStageType ;
     Property ScaleFactorUnits : string read GetScaleFactorUnits ;
+    Property ControlPortRequired : Boolean read IsControlPortRequired ;
+    Property SerialNumberRequired : Boolean read IsSerialNumberRequired ;
+    Property SerialNumber : String read GetSerialNumber write SetSerialNumber ;
+    Property IsOpen : Boolean read FStageIsOpen ;
   end;
 
 var
@@ -117,6 +247,7 @@ const
     stOptiscanII = 1 ;
     stProscanIII = 2 ;
     stPiezo = 3 ;
+    stTDC001 = 4 ;
 
     XMaxStep = 10000.0 ;
     YMaxStep = 10000.0 ;
@@ -153,6 +284,13 @@ begin
 
     MoveToRequest := False ;
     StageInitRequired := False ;
+
+    // Thorlab device variable inits.
+    FSerialNumber := '0' ;
+    LibraryHnd := 0 ;
+    CommonLibraryHnd := 0 ;
+    FStageIsOpen := False ;
+
     end;
 
 procedure TZStage.DataModuleDestroy(Sender: TObject);
@@ -163,6 +301,15 @@ begin
     if ComThread <> Nil then FreeAndNil(ComThread);
     CommandList.Free ;
     ReplyList.Free ;
+
+    // Free DLLs
+    //if LibraryHnd <> 0 then FreeLibrary(LibraryHnd) ;
+    LibraryHnd := 0 ;
+
+    if CommonLibraryHnd <> 0 then FreeLibrary(CommonLibraryHnd) ;
+    CommonLibraryHnd := 0 ;
+
+
     end;
 
 
@@ -176,6 +323,7 @@ begin
       List.Add('Prior Optiscan II') ;
       List.Add('Prior Proscan III') ;
       List.Add('Piezo (Voltage Controlled)');
+      List.Add('Thorlabs TDC001');
       end;
 
 procedure TZStage.GetControlPorts( List : TStrings ) ;
@@ -221,6 +369,7 @@ begin
           begin
           ComThread := TZStageComThread.Create ;
           CommandList.Add('COMP 0') ;
+          FStageIsOpen := True ;
           end;
         stProScanIII :
           begin
@@ -236,11 +385,24 @@ begin
           CommandList.Add( 'TTLTRG,1') ;         // Enable triggers
           ReplyZeroCount := 6 ;
           StageInitRequired := True ;
+          FStageIsOpen := True ;
           end ;
+
         stPiezo :
           begin
-
+          FStageIsOpen := True ;
           end;
+
+        stTDC001 :
+          begin
+          TDC001_Open ;
+          end;
+
+        else
+          begin
+          FStageIsOpen := True ;
+          end;
+
         end;
     end;
 
@@ -250,7 +412,7 @@ function TZStage.GetScaleFactorUnits : string ;
 // -------------------------------
 begin
     case FStageType of
-        stOptiscanII,stProScanIII : Result := 'steps/um' ;
+        stOptiscanII,stProScanIII,stTDC001 : Result := 'steps/um' ;
         stPiezo : Result := 'V/um' ;
         else Result := '' ;
         end;
@@ -262,7 +424,20 @@ procedure TZStage.Close ;
 // Close down Z stage operation
 // ---------------------------
 begin
+
+    if not FStageIsOpen then Exit ;
+
     if ComThread <> Nil then FreeAndNil(ComThread);
+
+    case FStageType of
+        stTDC001 :
+          begin
+          TDC001_Close ;
+          end;
+    end;
+
+    FStageIsOpen := False ;
+
     end;
 
 
@@ -274,14 +449,68 @@ procedure TZStage.MoveTo( X : Double ; // New X pos.
 // Go to Z position
 // ----------------
 begin
+
+    if not FStageIsOpen then Exit ;
+
     // Keep within limits
     Z := Min(Max(Z,ZPositionMin),ZPositionMax);
 
     case FStageType of
         stOptiscanII,stProScanIII : MoveToPrior(  X,Y,Z ) ;
+        stTDC001 : TDC001_MoveTo(Z) ;
         stPiezo : MoveToPZ( Z ) ;
         end;
     end;
+
+
+function TZStage.IsControlPortRequired : Boolean ;
+// --------------------------------------------------------------------
+// Returns TRUE if a control port is required to communicate with stage
+// --------------------------------------------------------------------
+begin
+    case FStageType of
+        stOptiscanII,stProScanIII,stPiezo : Result := True ;
+        else Result := False ;
+        end;
+end ;
+
+function TZStage.IsSerialNumberRequired : Boolean ;
+// --------------------------------------------------------------------
+// Returns TRUE if a serial number is required to identify the stage
+// --------------------------------------------------------------------
+begin
+    case FStageType of
+        stTDC001 : Result := True
+        else Result := False ;
+        end;
+end ;
+
+
+procedure TZStage.SetSerialNumber( Value : string ) ;
+// ------------------------
+// Set device serial number
+// ------------------------
+begin
+    if FSerialNumber <> Value then
+       begin
+       FSerialNumber := ansisTRING(Value) ;
+       if IsSerialNumberRequired and FStageIsOpen then
+          begin
+          // Close and re-open stage
+          Close ;
+          Open ;
+          end;
+       end;
+end;
+
+
+function TZStage.GetSerialNumber : string ;
+// ------------------------
+// Get device serial number
+// ------------------------
+begin
+     Result := FSerialNumber ;
+end;
 
 
 procedure TZStage.MoveToPrior( X : Double ; // New X pos.
@@ -353,20 +582,29 @@ procedure TZStage.SetStageType( Value : Integer ) ;
 // Set type of Z stage controller
 // ------------------------------
 begin
-      // Close existing stage
-      Close ;
-      FStageType := Value ;
-      // Reopen new stage
-      Open ;
+
+      if not FStageIsOpen then FStageType := Value
+      else
+        begin
+        // If stage is open, close, set type andf re-open
+        Close ;
+        FStageType := Value ;
+        Open ;
+        end;
       end;
 
-procedure TZStage.TimerTimer(Sender: TObject);
+
+procedure TZStage.Timer1Timer(Sender: TObject);
 // --------------------------------------------
 // Timed interval Z stage monitoring tasks
 // --------------------------------------------
 begin
+
+   if not FStageIsOpen then Exit ;
+
    case FStageType of
         stOptiscanII,stProScanIII : PriorHandleMessages ;
+        stTDC001 : TDC001_GetPosition ;
    end;
 
 end;
@@ -469,6 +707,152 @@ begin
             inc(iPort) ;
             end;
     end ;
+
+
+procedure TZStage.TDC001_Open ;
+// --------------------
+// Open Thorlabs device
+// --------------------
+begin
+
+    FStageIsOpen := False ;
+
+    // Load DLL library
+    TDC001_LoadLibrary ;
+
+    // Open selected device
+    if CC_Open(PANSIChar(FSerialNumber)) <> 0 then Exit ;
+
+    CC_StartPolling(PANSIChar(FSerialNumber), 200);
+    CC_ClearMessageQueue(PANSIChar(FSerialNumber));
+
+    // Move to home position
+    CC_Home(PANSIChar(FSerialNumber)) ;
+
+    FStageIsOpen := True ;
+
+    end;
+
+
+procedure TZStage.TDC001_LoadLibrary ;
+// -----------------------------
+// Load Thorlabs DLL libraries
+// -----------------------------
+var
+    Path : Array[0..255] of Char ;
+    LibFileName,SYSDrive : String ;
+begin
+
+     // Exit if library already loaded
+     if LibraryHnd <> 0 then Exit ;
+
+     
+     // Get system drive
+     GetSystemDirectory( Path, High(Path) ) ;
+     SYSDrive := ExtractFileDrive(String(Path)) ;
+
+    LibFileName := SYSDrive + '\Program Files\Thorlabs\Kinesis\Thorlabs.MotionControl.DeviceManager.DLL' ;
+    CommonLibraryHnd := LoadLibrary( PChar(LibFileName ) );
+    if CommonLibraryHnd = 0 then begin
+       ShowMessage( 'Unable to open' + LibFileName ) ;
+       Exit ;
+       end ;
+
+    LibFileName :=      SYSDrive + '\Program Files\Thorlabs\Kinesis\Thorlabs.MotionControl.TCube.DCServo.DLL' ;
+    LibraryHnd := LoadLibrary( PChar(LibFileName));
+    if LibraryHnd = 0 then begin
+       ShowMessage( 'Unable to open' + LibFileName ) ;
+       Exit ;
+       end ;
+
+    @TLI_BuildDeviceList := GetDLLAddress( LibraryHnd, 'TLI_BuildDeviceList' ) ;
+    @TLI_GetDeviceListSize := GetDLLAddress( LibraryHnd, 'TLI_GetDeviceListSize' ) ;
+    @TLI_GetDeviceListByTypeExt := GetDLLAddress( LibraryHnd, 'TLI_GetDeviceListByTypeExt' ) ;
+    @TLI_GetDeviceInfo := GetDLLAddress( LibraryHnd, 'TLI_GetDeviceInfo' ) ;
+    @CC_Open := GetDLLAddress( LibraryHnd, 'CC_Open' ) ;
+    @CC_Close := GetDLLAddress( LibraryHnd, 'CC_Close' ) ;
+    @CC_StartPolling := GetDLLAddress( LibraryHnd, 'CC_StartPolling' ) ;
+    @CC_StopPolling := GetDLLAddress( LibraryHnd, 'CC_StopPolling' ) ;
+    @CC_ClearMessageQueue := GetDLLAddress( LibraryHnd, 'CC_ClearMessageQueue' ) ;
+    @CC_Home := GetDLLAddress( LibraryHnd, 'CC_Home' ) ;
+    @CC_WaitForMessage := GetDLLAddress( LibraryHnd, 'CC_WaitForMessage' ) ;
+    @CC_GetVelParams := GetDLLAddress( LibraryHnd, 'CC_GetVelParams' ) ;
+    @CC_SetVelParams := GetDLLAddress( LibraryHnd, 'CC_SetVelParams' ) ;
+    @CC_MoveToPosition := GetDLLAddress( LibraryHnd, 'CC_MoveToPosition' ) ;
+    @CC_GetPosition := GetDLLAddress( LibraryHnd, 'CC_GetPosition' ) ;
+    @CC_GetMotorParamsExt := GetDLLAddress( LibraryHnd, 'CC_GetMotorParamsExt' ) ;
+    @CC_GetRealValueFromDeviceUnit := GetDLLAddress( LibraryHnd, 'CC_GetRealValueFromDeviceUnit' ) ;
+    @CC_GetDeviceUnitFromRealValue := GetDLLAddress( LibraryHnd, 'CC_GetDeviceUnitFromRealValue' ) ;
+    @CC_SetMotorTravelLimits := GetDLLAddress( LibraryHnd, 'CC_SetMotorTravelLimits' ) ;
+    @CC_GetMotorTravelLimits := GetDLLAddress( LibraryHnd, 'CC_GetMotorTravelLimits' ) ;
+
+end;
+
+
+procedure TZStage.TDC001_GetPosition ;
+// --------------------------------
+// Handle data returned from TDC001
+// --------------------------------
+var
+    DeviceUnits : Integer ;
+    ii : Int64 ;
+begin
+  if not FStageIsOpen then Exit ;
+  DeviceUnits := CC_GetPosition( PANSIChar(FSerialNumber) ) ;
+  if ZScaleFactor <> 0.0 then ZPosition := DeviceUnits / ZScaleFactor ;
+end;
+
+
+procedure TZStage.TDC001_MoveTo( Z : Double ) ;
+// -------------------------------------
+// Move to selected Z position (microns)
+// -------------------------------------
+var
+    Steps : Integer ;
+begin
+
+    // Keep within limits
+    z := Max(Min(Z,ZPositionMax),ZPositionMin);
+
+    Steps := Round(Z*ZScaleFactor) ;
+    CC_MoveToPosition( PANSIChar(FSerialNumber), Steps ) ;
+
+end;
+
+
+procedure TZStage.TDC001_Close ;
+// ----------------------------------------
+// Close Thorlabs TDC001 DC servo controller
+// ----------------------------------------
+begin
+
+    if not FStageIsOpen then Exit ;
+
+    // Stop polling device
+    CC_StopPolling(PANSIChar(FSerialNumber)) ;
+
+    CC_ClearMessageQueue(PANSIChar(FSerialNumber)) ;
+
+    // Close device
+    CC_Close(PANSIChar(FSerialNumber)) ;
+
+    FStageIsOpen := False ;
+
+end;
+
+
+function TZStage.GetDLLAddress(
+         Handle : THandle ;
+         const ProcName : string ) : Pointer ;
+// -----------------------------------------
+// Get address of procedure within DLL
+// -----------------------------------------
+begin
+
+    Result := GetProcAddress(Handle,PChar(ProcName)) ;
+    if Result = Nil then ShowMessage('DLL: ' + ProcName + ' not found') ;
+    end ;
+
 
 
 end.

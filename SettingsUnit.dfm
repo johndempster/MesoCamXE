@@ -53,7 +53,7 @@ object SettingsFrm: TSettingsFrm
     Top = 8
     Width = 544
     Height = 457
-    ActivePage = LightSourceTab
+    ActivePage = CameraTab
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
@@ -505,6 +505,10 @@ object SettingsFrm: TSettingsFrm
     object LightSourceTab: TTabSheet
       Caption = 'Light Source'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object lbSourceType: TLabel
         Left = 8
         Top = 8
@@ -1026,20 +1030,12 @@ object SettingsFrm: TSettingsFrm
       Caption = 'Z Stage'
       ImageIndex = 2
       object GroupBox2: TGroupBox
-        Left = 3
-        Top = 3
+        Left = 0
+        Top = 0
         Width = 219
         Height = 262
         Caption = ' Z Position Control'
         TabOrder = 0
-        object Label8: TLabel
-          Left = 47
-          Top = 40
-          Width = 58
-          Height = 13
-          Alignment = taRightJustify
-          Caption = 'Control Port'
-        end
         object Label10: TLabel
           Left = 37
           Top = 116
@@ -1088,14 +1084,6 @@ object SettingsFrm: TSettingsFrm
           Alignment = taRightJustify
           Caption = 'Z Position Upper Limit'
         end
-        object cbZStagePort: TComboBox
-          Left = 111
-          Top = 39
-          Width = 90
-          Height = 21
-          Style = csDropDownList
-          TabOrder = 0
-        end
         object edZScaleFactor: TValidatedEdit
           Left = 113
           Top = 116
@@ -1114,7 +1102,7 @@ object SettingsFrm: TSettingsFrm
           Top = 16
           Width = 194
           Height = 21
-          TabOrder = 2
+          TabOrder = 1
           Text = 'cbZStageType'
           OnChange = cbZStageTypeChange
         end
@@ -1183,6 +1171,53 @@ object SettingsFrm: TSettingsFrm
           LoLimit = -1.000000015047466E30
           HiLimit = 1000000.000000000000000000
         end
+        object ControlPortPanel: TPanel
+          Left = 40
+          Top = 40
+          Width = 162
+          Height = 24
+          BevelOuter = bvNone
+          TabOrder = 7
+          object Label8: TLabel
+            Left = 7
+            Top = 0
+            Width = 58
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'Control Port'
+          end
+          object cbZStagePort: TComboBox
+            Left = 71
+            Top = 0
+            Width = 90
+            Height = 21
+            Style = csDropDownList
+            TabOrder = 0
+          end
+        end
+        object SerialNumberPanel: TPanel
+          Left = 40
+          Top = 40
+          Width = 162
+          Height = 24
+          TabOrder = 8
+          object Label23: TLabel
+            Left = 19
+            Top = 0
+            Width = 46
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'Serial No.'
+          end
+        end
+        object edSerialNumber: TEdit
+          Left = 112
+          Top = 40
+          Width = 89
+          Height = 21
+          TabOrder = 9
+          Text = 'edSerialNumber'
+        end
       end
     end
     object LensTab: TTabSheet
@@ -1190,6 +1225,10 @@ object SettingsFrm: TSettingsFrm
       HelpKeyword = 'Lenses'
       Caption = 'Lenses'
       ImageIndex = 3
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object CalibrationGrp: TGroupBox
         Left = 8
         Top = 3

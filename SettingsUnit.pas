@@ -46,10 +46,8 @@ type
     Label5: TLabel;
     ZStageTab: TTabSheet;
     GroupBox2: TGroupBox;
-    Label8: TLabel;
     Label10: TLabel;
     Label13: TLabel;
-    cbZStagePort: TComboBox;
     edZScaleFactor: TValidatedEdit;
     cbZStageType: TComboBox;
     edZStepTime: TValidatedEdit;
@@ -138,6 +136,12 @@ type
     edCalibrationBarSize: TValidatedEdit;
     edCameraPixelSize: TValidatedEdit;
     edTemperatureSetPoint: TValidatedEdit;
+    ControlPortPanel: TPanel;
+    Label8: TLabel;
+    cbZStagePort: TComboBox;
+    SerialNumberPanel: TPanel;
+    Label23: TLabel;
+    edSerialNumber: TEdit;
     procedure FormShow(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCancelClick(Sender: TObject);
@@ -236,6 +240,7 @@ begin
     edZStepTime.Value := ZStage.ZStepTime ;
     edZPositionMin.Value := ZStage.ZPositionMin ;
     edZPositionMax.Value := ZStage.ZPositionMax ;
+    edSerialNumber.Text := ZStage.SerialNumber ;
 
     edNumLenses.Value := MainFrm.NumLenses ;
     sgLensTable.RowCount := MainFrm.NumLenses+1 ;
@@ -264,6 +269,11 @@ begin
     edImageJPath.Text := MainFrm.ImageJPath ;
     ckSaveAsMultipageTIFF.Checked := MainFrm.SaveAsMultipageTIFF ;
     edRawFileFolder.Text := ExtractFilePath(MainFrm.RawImagesFileName) ;
+
+    // Show optional controls
+    ControlPortPanel.Visible :=  ZStage.IsControlPortRequired ;
+    SerialNumberPanel.Visible :=  ZStage.IsSerialNumberRequired ;
+
 
 end;
 
@@ -315,6 +325,7 @@ begin
     ZStage.ZStepTime := edZStepTime.Value ;
     ZStage.ZPositionMin := edZPositionMin.Value ;
     ZStage.ZPositionMax := edZPositionMax.Value ;
+    ZStage.SerialNumber := edSerialNumber.Text ;
 
     LightSource.ControlPort := cbLightSourceControlPort.ItemIndex + 1 ;
     LightSource.Close ;
@@ -414,6 +425,11 @@ begin
 
     edZScaleFactor.Units := ZStage.ScaleFactorUnits ;
     edZScaleFactor.Value := ZStage.ZScaleFactor ;
+
+    // Show optional controls
+    ControlPortPanel.Visible :=  ZStage.IsControlPortRequired ;
+    SerialNumberPanel.Visible :=  ZStage.IsSerialNumberRequired ;
+
 
 end;
 
