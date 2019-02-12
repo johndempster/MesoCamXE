@@ -97,8 +97,8 @@ object MainFrm: TMainFrm
       ParentFont = False
     end
     object bCaptureImage: TButton
-      Left = 9
-      Top = 86
+      Left = 8
+      Top = 80
       Width = 198
       Height = 29
       Hint = 'Capture new image(s)'
@@ -115,7 +115,7 @@ object MainFrm: TMainFrm
       OnClick = bCaptureImageClick
     end
     object bStopImage: TButton
-      Left = 3
+      Left = 8
       Top = 148
       Width = 198
       Height = 31
@@ -133,8 +133,8 @@ object MainFrm: TMainFrm
       OnClick = bStopImageClick
     end
     object bLiveImage: TButton
-      Left = 9
-      Top = 18
+      Left = 8
+      Top = 12
       Width = 198
       Height = 32
       Hint = 'Display live images from camera'
@@ -151,7 +151,7 @@ object MainFrm: TMainFrm
       OnClick = bLiveImageClick
     end
     object cbCaptureMode: TComboBox
-      Left = 9
+      Left = 8
       Top = 115
       Width = 198
       Height = 21
@@ -259,7 +259,7 @@ object MainFrm: TMainFrm
       OnChange = cbCameraGainChange
     end
     object cbLiveBin: TComboBox
-      Left = 9
+      Left = 8
       Top = 50
       Width = 198
       Height = 21
@@ -376,8 +376,8 @@ object MainFrm: TMainFrm
         Scale = 1.000000000000000000
         Units = 'um'
         NumberFormat = '%.2f'
-        LoLimit = -100.000000000000000000
-        HiLimit = 100.000000000000000000
+        LoLimit = -200.000000000000000000
+        HiLimit = 200.000000000000000000
       end
     end
     object ckSeparateLightSources: TCheckBox
@@ -636,8 +636,8 @@ object MainFrm: TMainFrm
     end
   end
   object LightSourceGrp: TGroupBox
-    Left = 9
-    Top = 674
+    Left = 8
+    Top = 673
     Width = 389
     Height = 281
     Caption = ' Light Source '
@@ -1259,10 +1259,6 @@ object MainFrm: TMainFrm
       object SlidersTab: TTabSheet
         Caption = 'Sliders'
         ImageIndex = 1
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object Label9: TLabel
           Left = 3
           Top = 7
@@ -1427,10 +1423,10 @@ object MainFrm: TMainFrm
       Left = 13
       Top = 163
       Width = 359
-      Height = 24
+      Height = 31
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
-      Font.Height = -13
+      Font.Height = -19
       Font.Name = 'Arial Narrow'
       Font.Style = [fsBold]
       ParentFont = False
@@ -1448,10 +1444,6 @@ object MainFrm: TMainFrm
     OnChange = PageChange
     object tbChan0: TTabSheet
       Caption = 'Channel 0'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image0: TImage
         Left = 3
         Top = 3
@@ -1471,10 +1463,6 @@ object MainFrm: TMainFrm
     object tbChan1: TTabSheet
       Caption = 'Channel 1'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image1: TImage
         Left = 3
         Top = 3
@@ -1494,10 +1482,6 @@ object MainFrm: TMainFrm
     object tbChan2: TTabSheet
       Caption = 'Channel 2'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image2: TImage
         Left = 3
         Top = 3
