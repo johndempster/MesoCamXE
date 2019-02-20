@@ -83,6 +83,7 @@ begin
          if (ZStage.CommandList.Count > 0) then
             begin
             SendCommand(ZStage.CommandList[0]);
+            outputdebugstring(pchar('tx:'+ZStage.CommandList[0]));
             ZStage.CommandList.Delete(0) ;
             end;
 
@@ -91,7 +92,7 @@ begin
          if EndOfLine then
            begin
            ZStage.ReplyList.Add(Reply);
-//           outputdebugstring(pchar('rx:'+reply));
+           outputdebugstring(pchar('rx:'+reply));
            Reply := '' ;
            end ;
          end );

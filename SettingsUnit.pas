@@ -366,6 +366,8 @@ begin
     // Ensure no duplications of \
     for i := 1 to 3 do MainFrm.RawImagesFileName := ANSIReplaceStr(  MainFrm.RawImagesFileName, '\\', '\');
 
+
+
     Close ;
     end;
 
