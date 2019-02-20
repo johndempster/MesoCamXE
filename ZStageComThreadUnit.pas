@@ -16,7 +16,6 @@ type
     FComPort : Integer ;              // Com port #
     FComHandle : THandle ;            // Com port handle
     FComPortOpen : Boolean ;          // Com port open flag
-    ComFailed : Boolean ;             // COM port communications failed flag
 
     OverLapStructure : POVERLAPPED ;
 
@@ -83,7 +82,7 @@ begin
          if (ZStage.CommandList.Count > 0) then
             begin
             SendCommand(ZStage.CommandList[0]);
-            outputdebugstring(pchar('tx:'+ZStage.CommandList[0]));
+    //        outputdebugstring(pchar('tx:'+ZStage.CommandList[0]));
             ZStage.CommandList.Delete(0) ;
             end;
 
@@ -92,7 +91,7 @@ begin
          if EndOfLine then
            begin
            ZStage.ReplyList.Add(Reply);
-           outputdebugstring(pchar('rx:'+reply));
+  //         outputdebugstring(pchar('rx:'+reply));
            Reply := '' ;
            end ;
          end );
@@ -118,7 +117,6 @@ begin
 
      Synchronize( procedure begin FComPort := ZStage.FControlPort end ) ;
 
-     ComFailed := True ;
      if FComPort < 1 then Exit ;
 
      { Open com port  }
@@ -133,9 +131,12 @@ begin
      if NativeInt(FComHandle) < 0 then
         begin
         FComPortOpen := False ;
+        outputdebugstring(pchar(format('COM%d failed to open',[FComPort])));
 //        ShowMessage(format('OBIS: Unable to open serial port: COM%d',[FControlPort+1]));
         Exit ;
         end;
+
+     outputdebugstring(pchar(format('COM%d open on handle %d',[FComPort,FComHandle])));
 
      { Get current state of COM port and fill device control block }
      GetCommState( FComHandle, DCB ) ;
@@ -165,7 +166,6 @@ begin
      ClearCommBreak( FComHandle ) ;
 
      FComPortOpen := True ;
-     ComFailed := False ;
 
      end ;
 
@@ -176,6 +176,7 @@ procedure  TZStageComThread.CloseCOMPort ;
 // ----------------------
 begin
      if FComPortOpen then CloseHandle( FComHandle ) ;
+     outputdebugstring(pchar(format('COM%d closed',[FComPort])));
      FComPortOpen := False ;
 end ;
 
@@ -196,9 +197,8 @@ begin
 
      Result := False ;
      if not FComPortOpen then Exit ;
-     if ComFailed then Exit ;
 
-//     outputdebugstring(pchar('tx: ' + Line));
+     outputdebugstring(pchar('tx: ' + Line));
 
      { Copy command line to be sent to xMit buffer and and a CR character }
      nC := Length(Line) ;
@@ -224,7 +224,7 @@ function TZStageComThread.ReceiveBytes(
           var EndOfLine : Boolean
           ) : string ;          { bytes received }
 { -------------------------------------------------------
-  Read bytes from COMort until a line has been received
+  Read bytes from COM port until a line has been received
   -------------------------------------------------------}
 var
    Line : string ;
@@ -234,6 +234,7 @@ var
    NumBytesRead,ComError,NumRead : DWORD ;
 begin
 
+     Result := '' ;
      if not FComPortOpen then Exit ;
 
      PComState := @ComState ;

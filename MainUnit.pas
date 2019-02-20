@@ -3632,7 +3632,6 @@ begin
     AddElementInt( iNode, 'STAGETYPE', ZStage.StageType ) ;
     AddElementInt( iNode, 'CONTROLPORT', ZStage.ControlPort ) ;
     AddElementText( iNode, 'SERIALNUMBER', ZStage.SerialNumber ) ;
-    AddElementInt( iNode, 'BAUDRATE', ZStage.BaudRate ) ;
     AddElementDouble( iNode, 'XSCALEFACTOR', ZStage.XScaleFactor ) ;
     AddElementDouble( iNode, 'YSCALEFACTOR', ZStage.YScaleFactor ) ;
     AddElementDouble( iNode, 'ZSCALEFACTOR', ZStage.ZScaleFactor ) ;
@@ -3803,7 +3802,6 @@ begin
       ZStage.StageType := GetElementInt( iNode, 'STAGETYPE', Round(ZStage.StageType) ) ;
       ZStage.ControlPort := GetElementInt( iNode, 'CONTROLPORT', Round(ZStage.ControlPort) ) ;
       ZStage.SerialNumber := GetElementText( iNode, 'SERIALNUMBER', ZStage.SerialNumber ) ;
-      ZStage.BaudRate := GetElementInt( iNode, 'BAUDRATE', Round(ZStage.BaudRate)  ) ;
       ZStage.XScaleFactor := GetElementDouble( iNode, 'XSCALEFACTOR', ZStage.XScaleFactor ) ;
       ZStage.YScaleFactor := GetElementDouble( iNode, 'YSCALEFACTOR', ZStage.YScaleFactor ) ;
       ZStage.ZScaleFactor := GetElementDouble( iNode, 'ZSCALEFACTOR', ZStage.ZScaleFactor ) ;

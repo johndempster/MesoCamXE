@@ -72,16 +72,15 @@ type
     OldControlLines : Array[0..MaxLightSources-1] of Integer ;
 
     ComThread : TLightSourceComThread ;
+    FLightSourceIsOpen : Boolean ;
 
-    procedure ResetCOMPort ;
-
-    procedure SetBaudRate( Value : DWord ) ;
     procedure SetControlPort( Value : DWord ) ;
     procedure SetSourceType( Value : Integer ) ;
     procedure CoolLEDInit ;
     procedure CoolLEDHandleMessages ;
     procedure CoolLEDUpdate ;
     procedure LEDUpdate ;
+    procedure StopComThread ;
 
   public
     { Public declarations }
@@ -158,6 +157,7 @@ begin
     ComFailed := False ;
     TickCounter := 0 ;
     NamesChanged := False ;
+    FLightSourceIsOpen := False ;
 
     for I := 0 to High(Names) do begin
         Names[i] := format('LS%d',[i]) ;
@@ -194,20 +194,25 @@ var
     i : Integer ;
 begin
 
+    FLightSourceIsOpen := False ;
+
     // Clear old name list
     for i := 0 to High(OldNames) do OldNames[i] := '' ;
 
-    // Close COM port (if open)
-    if ComThread <> Nil then FreeAndNil(ComThread);
+    // Close COM thread (if in use)
+    StopComThread ;
 
     case FSourceType of
         lsCoolLED : begin
           ComThread := TLightSourceComThread.Create ;
           CoolLEDInit ;
+          FLightSourceIsOpen := True ;
           end ;
         lsLED : begin
           Initialised := True ;
+          FLightSourceIsOpen := True ;
           end;
+        else FLightSourceIsOpen := True ;
         end;
 
     for i := 0 to High(OldNames) do OldNames[i] := '' ;
@@ -216,12 +221,14 @@ begin
 
 
 procedure TLightSource.Close ;
-// ---------------------------
-// Close down Z stage operation
-// ---------------------------
+// --------------------------------
+// Close down light source operation
+// --------------------------------
 begin
     // Close COM thread (if active)
-    if ComThread <> Nil then FreeAndNil(ComThread); ;
+    StopComThread ;
+
+    FLightSourceIsOpen := False ;
 
     end;
 
@@ -373,12 +380,18 @@ procedure TLightSource.SetSourceType( Value : Integer ) ;
 // Set type of light source
 // ------------------------
 begin
-      // Close existing stage
-      Close ;
-      FSourceType := Value ;
-      // Reopen new stage
-      Open ;
-      end;
+     // Close existing stage
+
+     if FLightSourceIsOpen then
+        begin
+        // Close re-open if light source is already open for use
+        Close ;
+        FSourceType := Value ;
+        Open ;
+        end
+     else FSourceType := Value ;
+
+     end;
 
 
 procedure TLightSource.TimerTimer(Sender: TObject);
@@ -469,45 +482,34 @@ begin
     end;
 
 
-
-
 procedure TLightSource.SetControlPort( Value : DWord ) ;
 // -----------------------
 // Set Control Serial Port
 //------------------------
 begin
+
     FControlPort := Max(Value,0) ;
-//    ResetCOMPort ;
+
+    // If light source is open for use, close and re-open
+    if FLightSourceIsOpen then
+       begin
+       Close ;
+       Open ;
+       end;
+
     end;
 
 
-procedure TLightSource.SetBaudRate( Value : DWord ) ;
-// ----------------------
-// Set com Port baud rate
-//-----------------------
+procedure TLightSource.StopComThread ;
+// ------------------------
+// Stop and free COM thread
+// ------------------------
 begin
-    if Value <= 0 then Exit ;
-//    FBaudRate := Value ;
-//    ResetCOMPort ;
-    end;
-
-
-procedure TLightSource.ResetCOMPort ;
-// --------------------------
-// Reset COM port (if in use)
-// --------------------------
-begin
-    case FSourceType of
-        lsCoolLED :
-          begin
-          if ComThread <> Nil then
-             begin
-             FreeAndNil(ComThread);
-             ComThread := TLightSourceCOMThread.Create ;
-             end;
-          end;
-        end;
-    end;
+     if ComThread = Nil Then Exit ;
+     ComThread.Terminate ;
+     ComThread.WaitFor ;
+     FreeAndNil(ComThread);
+end;
 
 
 procedure TLightSource.GetControlPorts( List : TStrings ) ;

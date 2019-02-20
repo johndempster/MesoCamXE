@@ -20,6 +20,7 @@ unit ZStageUnit;
 // 14.11.18 Conversion to Threaded COM I/O in progress
 // 03.12.18 Now tested and working with threaded COM I/O
 // 15.01.19 Adding support for Thorlabs TDC001
+// 20.02.19 COM port thread now terminated before freeing.
 
 interface
 
@@ -159,9 +160,7 @@ type
     CC_SetMotorTravelLimits : TCC_SetMotorTravelLimits ;
     CC_GetMotorTravelLimits : TCC_GetMotorTravelLimits ;
 
-    procedure ResetCOMPort ;
     procedure SetControlPort( Value : DWord ) ;
-    procedure SetBaudRate( Value : DWord ) ;
     procedure SetStageType( Value : Integer ) ;
 
     procedure MoveToPrior( X : Double ; // New X pos.
@@ -171,6 +170,7 @@ type
 
     procedure MoveToPZ( Position : Double ) ;
     function GetScaleFactorUnits : string ;
+    procedure StopComThread ;
   public
     { Public declarations }
     XPosition : Double ;     // X position (um)
@@ -218,7 +218,6 @@ type
 
   published
     Property ControlPort : DWORD read FControlPort write SetControlPort ;
-    Property BaudRate : DWORD read FBaudRate write SetBaudRate ;
     Property StageType : Integer read FStageType write SetStageType ;
     Property ScaleFactorUnits : string read GetScaleFactorUnits ;
     Property ControlPortRequired : Boolean read IsControlPortRequired ;
@@ -298,7 +297,7 @@ procedure TZStage.DataModuleDestroy(Sender: TObject);
 // Tidy up when module is destroyed
 // --------------------------------
 begin
-    if ComThread <> Nil then FreeAndNil(ComThread);
+    StopComThread ;
     CommandList.Free ;
     ReplyList.Free ;
 
@@ -311,6 +310,17 @@ begin
 
 
     end;
+
+procedure TZStage.StopComThread ;
+// ------------------------
+// Stop and free COM thread
+// ------------------------
+begin
+     if ComThread = Nil Then Exit ;
+     ComThread.Terminate ;
+     ComThread.WaitFor ;
+     FreeAndNil(ComThread);
+end;
 
 
 procedure TZStage.GetZStageTypes( List : TStrings ) ;
@@ -362,7 +372,7 @@ procedure TZStage.Open ;
 begin
 
     // Close COM thread (if open)
-    if ComThread <> Nil then FreeAndNil(ComThread);
+    StopComThread ;
 
     case FStageType of
         stOptiscanII :
@@ -375,7 +385,7 @@ begin
           begin
           ComThread := TZStageComThread.Create ;
           // Download stage protection handler
-          // (Returns stage to Z=0 when stage microswitch triggered)
+          // (Returns stage to Z=0 when stage microswitch triggered
           CommandList.Add('COMP 0') ;
           CommandList.Add('SMZ 20') ;           // Set Z stage speed to 20% of maximum
           CommandList.Add( 'TTLDEL,1') ;
@@ -427,7 +437,8 @@ begin
 
     if not FStageIsOpen then Exit ;
 
-    if ComThread <> Nil then FreeAndNil(ComThread);
+    // Stop COM port thread if it is running
+    StopComThread ;
 
     case FStageType of
         stTDC001 :
@@ -544,36 +555,13 @@ procedure TZStage.SetControlPort( Value : DWord ) ;
 //-----------------
 begin
     FControlPort := Max(Value,0) ;
-    ResetCOMPort ;
-    end;
 
-
-procedure TZStage.SetBaudRate( Value : DWord ) ;
-// ----------------------
-// Set com Port baud rate
-//-----------------------
-begin
-    if Value <= 0 then Exit ;
-    FBaudRate := Value ;
-    ResetCOMPort ;
-    end;
-
-
-procedure TZStage.ResetCOMPort ;
-// --------------------------
-// Reset COM port (if in use)
-// --------------------------
-begin
-    case FStageType of
-        stOptiscanII,stProScanIII :
-          begin
-          if ComThread <> Nil then
-             begin
-             FreeAndNil(ComThread);
-             ComThread := TZStageCOMThread.Create ;
-             end;
-          end;
-        end;
+    // If stage is open for use, close and re-open
+    if FStageIsOpen then
+       begin
+       Close ;
+       Open ;
+       end;
     end;
 
 
@@ -586,7 +574,7 @@ begin
       if not FStageIsOpen then FStageType := Value
       else
         begin
-        // If stage is open, close, set type andf re-open
+        // If stage is open, close, set type and re-open
         Close ;
         FStageType := Value ;
         Open ;
@@ -655,6 +643,7 @@ begin
                    begin
                    if c <> ',' then s := s + Reply[i] ;
                    // Remove error flag (if represent)
+                   s := '';
                    s := ReplaceText(s,'R','');
                    if (not ContainsText(s,'R')) and (s<>'') then
                      begin
