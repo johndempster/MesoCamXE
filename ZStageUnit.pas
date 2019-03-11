@@ -395,6 +395,7 @@ begin
           CommandList.Add( 'TTLTRG,1') ;         // Enable triggers
           ReplyZeroCount := 6 ;
           StageInitRequired := True ;
+          WaitingForPositionUpdate := False ;
           FStageIsOpen := True ;
           end ;
 
@@ -643,7 +644,6 @@ begin
                    begin
                    if c <> ',' then s := s + Reply[i] ;
                    // Remove error flag (if represent)
-                   s := '';
                    s := ReplaceText(s,'R','');
                    if (not ContainsText(s,'R')) and (s<>'') then
                      begin

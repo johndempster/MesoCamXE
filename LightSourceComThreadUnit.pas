@@ -84,6 +84,7 @@ begin
          if (LightSource.CommandList.Count > 0) then
             begin
             SendCommand(LightSource.CommandList[0]);
+//            outputdebugstring(pchar(format('Light Source tx: %s',[LightSource.CommandList[0]])));
             LightSource.CommandList.Delete(0) ;
             end;
 
@@ -92,7 +93,7 @@ begin
          if EndOfLine then
            begin
            if Reply <> '' then LightSource.ReplyList.Add(Reply);
-//           outputdebugstring(pchar(format('rx: %s',[Reply])));
+ //          outputdebugstring(pchar(format('Light Source rx: %s',[Reply])));
            Reply := '' ;
            end ;
          end );
@@ -136,6 +137,8 @@ begin
 //        ShowMessage(format('OBIS: Unable to open serial port: COM%d',[FControlPort+1]));
         Exit ;
         end;
+
+     outputdebugstring(pchar(format('Light Source COM%d open on handle %d',[FComPort,FComHandle])));
 
      { Get current state of COM port and fill device control block }
      GetCommState( FComHandle, DCB ) ;

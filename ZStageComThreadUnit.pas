@@ -91,7 +91,7 @@ begin
          if EndOfLine then
            begin
            ZStage.ReplyList.Add(Reply);
-  //         outputdebugstring(pchar('rx:'+reply));
+//           outputdebugstring(pchar('rx:'+reply));
            Reply := '' ;
            end ;
          end );
@@ -176,7 +176,7 @@ procedure  TZStageComThread.CloseCOMPort ;
 // ----------------------
 begin
      if FComPortOpen then CloseHandle( FComHandle ) ;
-     outputdebugstring(pchar(format('COM%d closed',[FComPort])));
+     outputdebugstring(pchar(format('Z Stage COM%d closed',[FComPort])));
      FComPortOpen := False ;
 end ;
 
@@ -198,7 +198,7 @@ begin
      Result := False ;
      if not FComPortOpen then Exit ;
 
-     outputdebugstring(pchar('tx: ' + Line));
+//     outputdebugstring(pchar('tx: ' + Line));
 
      { Copy command line to be sent to xMit buffer and and a CR character }
      nC := Length(Line) ;
@@ -253,7 +253,6 @@ begin
          ReadFile( FComHandle,rBuf,1,NumBytesRead,OverlapStructure ) ;
          if (rBuf[0] <> #10) and (rBuf[0] <> #13) then Line := Line + String(rBuf[0])
                                                   else EndOfLine := True ;
-         //outputdebugstring(pwidechar(RBuf[0]));
          Inc( NumRead ) ;
          end ;
 

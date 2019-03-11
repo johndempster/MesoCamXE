@@ -450,8 +450,9 @@ type
     PanelName : Array[0..MaxPanels-1] of string ; // Names of display panels in use
     NumPanels : Integer ;                         // No. of display panels in use
 
-    SnapStartAt : Cardinal ;                       // Time to acquire next image
-    LightSourceOnAt : Cardinal ;                   // Time to turn light source(s) on
+    SnapStartAt : Cardinal ;                       // Time (ms) to acquire next image
+    LastSnapStartedAt : Cardinal ;                 // Time (ms) last snap started
+    LightSourceOnAt : Cardinal ;                   // Time (ms) to turn light source(s) on
 
     UpdateLightSource : Boolean ;                  // Update light source flag
 
@@ -793,6 +794,9 @@ begin
      // Open Z stage
      ZStage.Open ;
 
+     // Open light source
+     Lightsource.Open ;
+
      // Load first image from existing raw images file
      scZSection.Position := 0 ;
      scTSection.Position := 0 ;
@@ -804,6 +808,7 @@ begin
 
      UpdateDisplay := False ;
      SnapStartAt := 0 ;
+     LastSnapStartedAt := 0 ;
      ScanningInProgress := False ;
 
      SetImagePanels ;
@@ -2414,6 +2419,9 @@ begin
        begin
        StartCamera ;
        UpdateImage ;
+       outputdebugstring(pchar(format('time lapse %d',[SnapStartAt-LastSnapStartedAt])));
+       LastSnapStartedAt := SnapStartAt ;
+
        SnapStartAt := 0 ;
        end ;
 
@@ -2690,7 +2698,7 @@ begin
           lbTSection.Caption := Format('%d/%d',[TPointCounter+1,scTSection.Max+1]);
           if TPointCounter < Round(edNumTimeLapsePoints.Value) then
              begin
-             SnapStartAt := SnapStartAt + Round(1000*edTimeLapseInterval.Value) ;
+             SnapStartAt := LastSnapStartedAt + Round(1000*edTimeLapseInterval.Value) ;
              LightSourceOnAt := SnapStartAt - 200 ;
              LightSource.On := False ;
              end;
