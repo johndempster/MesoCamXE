@@ -349,7 +349,7 @@ object MainFrm: TMainFrm
         Left = 78
         Top = 8
         Width = 55
-        Height = 24
+        Height = 27
         Hint = 'No. of sections in Z stack'
         ShowHint = True
         Text = ' 1 '
@@ -363,7 +363,7 @@ object MainFrm: TMainFrm
         Left = 180
         Top = 8
         Width = 118
-        Height = 24
+        Height = 27
         Hint = 'Z increment between sections (pixels)'
         OnKeyPress = edNumPixelsPerZStepKeyPress
         ShowHint = True
@@ -379,7 +379,7 @@ object MainFrm: TMainFrm
         Left = 302
         Top = 8
         Width = 92
-        Height = 24
+        Height = 27
         Hint = 'Z position increment between sections (microns)'
         OnKeyPress = edMicronsPerZStepKeyPress
         ShowHint = True
@@ -493,7 +493,7 @@ object MainFrm: TMainFrm
         Left = 85
         Top = 8
         Width = 52
-        Height = 24
+        Height = 28
         Hint = 'No. of images to be captured in time series'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -512,7 +512,7 @@ object MainFrm: TMainFrm
         Left = 249
         Top = 8
         Width = 102
-        Height = 24
+        Height = 28
         Hint = 'Time interval between images'
         OnKeyPress = edNumPixelsPerZStepKeyPress
         Font.Charset = DEFAULT_CHARSET
@@ -548,7 +548,7 @@ object MainFrm: TMainFrm
       Left = 108
       Top = 56
       Width = 95
-      Height = 24
+      Height = 28
       Hint = 'Z axis position to move to'
       OnKeyPress = edGotoXPositionKeyPress
       Font.Charset = ANSI_CHARSET
@@ -587,7 +587,7 @@ object MainFrm: TMainFrm
       Left = 322
       Top = 56
       Width = 95
-      Height = 24
+      Height = 28
       Hint = 'Z axis position to move to'
       OnKeyPress = edGotoYPositionKeyPress
       Font.Charset = ANSI_CHARSET
@@ -608,7 +608,7 @@ object MainFrm: TMainFrm
       Left = 108
       Top = 86
       Width = 95
-      Height = 24
+      Height = 28
       Hint = 'Z axis position to move to'
       OnKeyPress = edGotoZPositionKeyPress
       Font.Charset = ANSI_CHARSET
@@ -1221,7 +1221,6 @@ object MainFrm: TMainFrm
       TabOrder = 1
       object RangeTab: TTabSheet
         Caption = 'Display Contrast'
-        ExplicitHeight = 94
         object bFullScale: TButton
           Left = 1
           Top = 4
@@ -1313,7 +1312,6 @@ object MainFrm: TMainFrm
       object SlidersTab: TTabSheet
         Caption = 'Sliders'
         ImageIndex = 1
-        ExplicitHeight = 94
         object Label9: TLabel
           Left = 3
           Top = 7

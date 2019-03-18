@@ -77,7 +77,8 @@ unit MainUnit;
 // V1.8.3 05.12.17 CoolLED wavelength list update now works.
 // V1.8.4 17.05.18 IMAQUNit.pas Camera start now tried repeatedly to overcome random failure to start camera acquisition
 // V1.8.5 21.11.18 CoolLED coms now handled by thread
-// V1.8.6 08.02.19 Thorlabs Z stage controller added
+// V1.8.6 18.03.19 Thorlabs Z stage controller added. CoolLED and Z stage coms now handled by thread.
+//                 LEDs now turned off between time lapse exposures
 
 interface
 
@@ -664,7 +665,7 @@ begin
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 08/02/19';
+     ProgramName := ProgramName + ' 18/03/19';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -2366,7 +2367,7 @@ begin
                s := s + format(' F(%s):',[LightSource.Names[LightSource.List[LightSource.ListIndex]]])
             else s := s + 'F:' ;
             s := s + format('%d/%d',[Min(CCDShiftCounter,NumPixelShiftFrames),NumPixelShiftFrames]);
-            edStatus.Text := s ;
+            edstatus.Text := s ;
             UpdateDisplay := True ;
             end ;
        End;
