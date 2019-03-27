@@ -79,6 +79,7 @@ unit MainUnit;
 // V1.8.5 21.11.18 CoolLED coms now handled by thread
 // V1.8.6 18.03.19 Thorlabs Z stage controller added. CoolLED and Z stage coms now handled by thread.
 //                 LEDs now turned off between time lapse exposures
+// V1.8.7 27.03.19 Now supports FlASH 4.0 and other DCAM cameras.
 
 interface
 
@@ -659,13 +660,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.8.6';
+     ProgramName := 'MesoCam V1.8.7';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 18/03/19';
+     ProgramName := ProgramName + ' 27/03/19';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
