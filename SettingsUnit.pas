@@ -9,6 +9,7 @@ unit SettingsUnit;
 // 10.05.17 ZPositionMin, ZPositionMax limits added
 // 09.10.17 MainFrm.Cam1.CameraTemperatureSetPoint now updated by settings
 // 06.11.17 Cam1.CCDTapOffsetLT etc. CCD tap black offset adjustment properties added and can be changed by user
+// 08.04.19 Calbration bar and temperature set point labells now in correct places
 
 interface
 
