@@ -81,9 +81,11 @@ unit MainUnit;
 //                 LEDs now turned off between time lapse exposures
 // V1.8.7 27.03.19 Now supports FlASH 4.0 and other DCAM cameras.
 // V1.8.8 08.04.19 Calbration bar and temperature set point labells now in correct places
+// V1.8.9 24.04.19 StartCamera() Extra frame at beginning of CCD shift exposure sequences now only collected
+//                 for Vieworks cameras on IMAQ interface
+//                 'CAMERAREADOUTSPEED', Cam1.ReadoutSpeed now stored in settings file
 
-interface
-
+Interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
@@ -661,13 +663,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.8.8';
+     ProgramName := 'MesoCam V1.8.9';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 08/04/19';
+     ProgramName := ProgramName + ' 24/04/19';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -1904,11 +1906,16 @@ begin
     // Initialise frame timeout variables
     LastFrameCount := 0 ;
 
-    CCDShiftCounter := -1 ;
+    // CCDShiftCounter set to -1 for Vieworks pixel shift camera
+    // to ensure that an extra frame is collected at start of
+    // CCD shift sequence (and discarded) because first frame
+    // in series has incorrect expsoure time
+    if Cam1.CameraType = IMAQ then CCDShiftCounter := -1
+                              else CCDShiftCounter := 0 ;
 
     CameraTriggerRequired := False ;
 
-    NextCameraTrigger := timegettime + 1000  ;
+//    NextCameraTrigger := timegettime + 1000  ;
 
     UpdateDisplay := True ;
     ResizeImage := True ;
@@ -3590,6 +3597,8 @@ begin
     AddElementInt( ProtNode, 'CAMERATYPE', CameraType ) ;
     AddElementInt( ProtNode, 'SELECTEDCAMERA', Cam1.SelectedCamera ) ;
     AddElementInt( ProtNode, 'CAMERAADC', Cam1.CameraADC ) ;
+    AddElementInt( ProtNode, 'CAMERAREADOUTSPEED', Cam1.ReadoutSpeed ) ;
+
 
     AddElementDouble( ProtNode, 'EXPOSURETIME', edExposureTime.Value ) ;
 
@@ -3750,6 +3759,7 @@ begin
     CameraType := GetElementInt( ProtNode, 'CAMERATYPE', CameraType ) ;
     Cam1.SelectedCamera := GetElementInt( ProtNode, 'SELECTEDCAMERA', Cam1.SelectedCamera ) ;
     Cam1.CameraADC := GetElementInt( ProtNode, 'CAMERAADC', Cam1.CameraADC ) ;
+    Cam1.ReadoutSpeed := GetElementInt( ProtNode, 'CAMERAREADOUTSPEED', Cam1.ReadoutSpeed ) ;
 
     edExposureTime.Value := GetElementDouble( ProtNode, 'EXPOSURETIME', edExposureTime.Value ) ;
     CameraGainIndex := GetElementInt( ProtNode, 'CAMERAGAIN', CameraGainIndex ) ;
