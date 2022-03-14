@@ -30,13 +30,21 @@ unit LabIOUnit;
 //                fixed. Card list now also cleared
 // 15.06.09 NS .... NIDAQ_InitialiseNIBoards no longer re-initializes NI devices.
 // 04.08.11 JD .... PCI-6733 board name now returned
-// 23.10.17 JD .... If error detecting board name no. of devices set to zero
+// 15.01.15    .... Now uses FIFO A/D and D/A buffers
+// 26.02.15 JD .... ADCToMemoryExtScan() now supports multiple channels and channel voltage ranges
+// 08.03.16 JD .... FADCPointerMax now correctly set to FADCNumSamples*FADCNumChannels - 1
+// 21.10.19 JD .... ADCToMemoryExtScan() A/D samplings now set to maximum supported by device
+//                  for selected number of channels
+// 22.01.10 JD .... Pseudo_diff analog input config now selected if device only supports that
+//                  Input voltage ranges greater than +/-10V excluded from list of available input voltage ranges
+// 27.07.20 JD .... Traditional NIDAQ code removed
+
 
 interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls,
-  Forms, Dialogs, nidaqcns, math, mmsystem, strutils ;
+  Forms, Dialogs, nidaqcns, math, mmsystem, strutils, system.uitypes ;
 const
 
     NIDAQ = 0 ;
@@ -46,13 +54,13 @@ const
     MaxVRanges = 16 ;
     MaxDACChannels = 16 ;
     MaxResources = 200 ;
-    LineDisabled = MaxResources+1 ;
+    ControlDisabled = MaxResources ;
     ClockSync_RTSI0 = 0 ;
     ClockSync_PFI5 = 1 ;
     DefaultTimeOut = 1.0 ;
-    MaxADCSamples = 100000000 ;
-    InBufMaxSamples = 2000000 ;
-    OutBufMaxSamples = 5000000 ;
+    MaxADCSamples =    10000000 ;
+    InBufMaxSamples =  10000000 ;
+    OutBufMaxSamples = 10000000 ;
 
     imSingleEnded = 0  ; // Single ended A/D input mode
     imDifferential = 1 ; // Differential input mode
@@ -68,12 +76,14 @@ type
   TDoubleArray = Array[0..MaxADCSamples-1] of Double ;
   PDoubleArray = ^TDoubleArray ;
 
+
   TResourceType = (ADCIn,DACOut,DigOut,None) ;
   TResource = record
         Device : Integer ;
         ResourceType : TResourceType ;
         StartChannel : Integer ;
         EndChannel : Integer ;
+        Name : string ;
         end ;
 
   TBig16bitArray = Array[0..$1FFFFFFF] of SmallInt ;
@@ -84,36 +94,33 @@ type
   PBig32bitArray = ^TBig32bitArray ;
   TBigSingleArray = Array[0..$1FFFFFF] of Single ;
   PBigSingleArray = ^TBigSingleArray ;
+  TBigDoubleArray = Array[0..$1FFFFFF] of double ;
+  PBigDoubleArray = ^TBigDoubleArray ;
 
   TLabIO = class(TDataModule)
     procedure DataModuleCreate(Sender: TObject);
   private
     { Private declarations }
 
-    FNIDAQAPI : Integer ;       // NI-DAQ library (NIDAQ,NIDAQMX)
     LibraryHnd : HModule ;
     LibraryLoaded : Boolean ;
 
-    //BoardInitialised : Boolean ;
-
-    InBuf : PBig16bitArray ; // A/D input buffer pointer
-
     // NIDAQ-MX task objects
-    DACTask : Array[1..MaxDevices] of Integer ;
-    ADCTask : Array[1..MaxDevices] of Integer ;
-    DIGTask : Array[1..MaxDevices] of Integer ;
+    DACTask : Array[1..MaxDevices] of NativeInt ;
+    ADCTask : Array[1..MaxDevices] of NativeInt ;
+    DIGTask : Array[1..MaxDevices] of NativeInt ;
 
-    ADCVScale : Array[1..MaxDevices] of Single ;
-    ADCVOffset : Array[1..MaxDevices] of Single ;
     ADCVoltageRangeAtX1Gain : Array[1..MaxDevices] of Single ;
     FADCCircularBuffer : Boolean ;
 
-    FADCPointer : Integer ;
-    FADCNumChannels : Integer ;
-    FADCNumSamples : Integer ;
-    FADCNumSamplesAcquired : Integer ;
+    FADCPointer : NativeInt ;
+    FADCPointerMax : NativeInt ;
+    FADCNumChannels : NativeInt ;
+    FADCNumSamples : NativeInt ;
+    FADCNumSamplesAcquired : NativeInt ;
+    FADCScale : Array[0..127] of Double ;
 
-    DACFreeBufferSpace : Integer ;
+    //DACFreeBufferSpace : Integer ;
     GetADCSamplesInUse : Boolean ;
 
     FPUExceptionMask : Set of TFPUException ;
@@ -123,18 +130,58 @@ type
     procedure EnableFPUExceptions ;
     function  PCharArrayToString( CBuf : Array of ANSIChar ) : ANSIString ;
 
+    // NI-DAQ MX methods
+    function NIDAQMX_StopADC( Device : SmallInt ) : Boolean ;
+    function NIDAQMX_ADCInputModeCode(
+             Device : Integer ;
+             InputMode : Integer ) : Integer ;
 
+    function NIDAQMX_StopDAC( Device : SmallInt ) : Boolean ;
+
+    procedure NIDAQMX_WriteDACs(
+              Device : Integer ;
+              DACVolts : array of Single ;
+              nChannels : Integer ) ;
+
+    procedure NIDAQMX_WriteDAC(
+              Device : Integer ;
+              DACVolts : Single ;
+              iChannel : Integer ) ;
+
+   function MemoryToDIG(
+            Device : SmallInt ;
+            var DIGBuf : Array of Integer  ;     { D/A output data buffer (IN) }
+            nPoints : Integer ;               { No. of D/A output values (IN) }
+            UpdateInterval : Double ;          { D/A output interval (s) (IN) }
+            CircularBufferMode : Boolean ;     { TRUE = continuous update from circular buffer }
+            ExternalTrigger : Boolean ;
+            TimingDevice : SmallInt           // Device providing ADC/DAC timing pulse
+            ): Boolean ;                      { Returns TRUE=D/A active }
+
+    procedure NIDAQMX_UpdateDIGBuffer(
+              Device : SmallInt ;
+              var DIGBuf : Array of Integer  ; { D/A output data buffer (IN) }
+              nPoints : Integer                 { No. of D/A output values (IN) }
+              ) ;
+
+    function NIDAQMX_StopDIG( Device : SmallInt ) : Boolean ;
+
+     function NIDAQMX_ReadADC(
+              Device : Integer ;
+              Channel : Integer ;
+              ADCVoltageRange : Single
+              ) : Integer ;
+    procedure NIDAQMX_WriteToDigitalOutPutPort(
+              Device : Integer ;
+              Pattern : Integer
+              ) ;
 
   function IsLabInterfaceAvailable : boolean ;
 
   function  IntLimit( Value : Integer ; LoLimit : Integer ; HiLimit : Integer
           ) : Integer ;
 
-  procedure SetNIDAQAPI( Value : Integer ) ;
-
   procedure Wait( Delay : Single ) ;
-
-
 
   public
     { Public declarations }
@@ -155,7 +202,9 @@ type
     DACNumSamplesToWrite : DWord ;
     DACNumSamplesWRitten : DWord ;
     DACNumChannels : Integer ;
-    pDACBuf : PBig16bitArray ;
+    DACBuf : PBig16bitArray ;
+    DACPointer : Cardinal ;
+    DACCircularBuffer : Boolean ;
 
     // DAC output voltage states
     DACOutState : Array[1..MaxDevices,0..MaxDACs-1] of Single ;
@@ -167,6 +216,8 @@ type
     ADCScale : Array[1..MaxDevices] of Single ;
     ADCVoltageRanges : Array[1..MaxDevices,0..MaxVRanges] of Single ;
     NumADCVoltageRanges : Array[1..MaxDevices] of Integer ;
+    ADCMinSamplingInterval : Array[1..MaxDevices] of Double ;
+    ADCSimultaneousSampling : Array[1..MaxDevices] of Boolean ;
 
     DigitalWaveformCapable : Array[1..MaxDevices] of Boolean ;
     DigOutState : Array[1..MaxDevices] of Integer ;
@@ -183,7 +234,7 @@ type
 
     ADCVoltageRangeMax : single ;  { Max. positive A/D input voltage range}
     ADCChannelOffsets : Array[0..15] of Integer ;
-    ADCMinSamplingInterval : single ;
+//    ADCMinSamplingInterval : single ;
     ADCMaxSamplingInterval : single ;
 
     DACMinUpdateInterval : Double ;
@@ -196,28 +247,31 @@ type
     procedure GetDeviceADCChannelProperties( DeviceNum : Integer ) ;
     procedure GetDeviceDACChannelProperties( DeviceNum : Integer ) ;
 
+    procedure GetAIPorts( List : TStrings ) ;
+    procedure GetAOPorts( List : TStrings ) ;
+    procedure GetPOPorts( List : TStrings ) ;
+
     procedure Close ;
 
     procedure CheckError( Err : Integer ) ;
 
+    function ADCToMemory(
+          Device : SmallInt ;
+          AIChans : Array of Integer ;           // AI Channels to be used (IN)
+          AIVRange : Array of Integer ;          // Index number of channel voltage range
+          nChannels : Integer ;                  // Number of A/D channels
+          nSamples : Integer ;               { Number of A/D samples ( per channel) (IN) }
+          CircularBuffer : Boolean ;          { Repeated sampling into buffer (IN) }
+          TimingDevice : SmallInt ;           // Device supply ADC/DAC timing pulses
+          SamplingInterval : double
+          ) : Boolean ;                      { Returns TRUE indicating A/D started }
 
-    function ADCToMemoryExtScan(
-             Device : SmallInt ;
-             var ADCBuf : Array of SmallInt  ;
-             FirstChannel : Integer ;
-             nChannels : Integer ;
-             nSamples : Integer ;
-             ADCVoltageRange : Single ;
-             CircularBuffer : Boolean ;
-             TimingDevice : SmallInt
-             ) : Boolean ;
 
     procedure CheckSamplingInterval(
               DeviceNum : Integer ;
               var SamplingInterval : double ;
                NumADCChannels : Integer
               ) ;
-
 
     function StopADC( Device : SmallInt ) : Boolean ;
 
@@ -226,35 +280,23 @@ type
              InputMode : Integer ) : Integer ;
     procedure GetADCInputModes( InputModes :TStrings ) ;
 
-    procedure GetADCSamples(
+    function GetADCSamples(
           Device : Integer ;
           var ADCBuf : Array of SmallInt ;
-          var NumSamplesRead : Integer ;
-          DACBuf : PBig16bitArray ;
-          YStartVolts : Single ;
-          YScale : Single ;
-          YLineSpacingVolts : Single ;
-          NumPointsPerLine : Cardinal
-          ) ;
+          var NumSamplesRead : NativeInt
+          ): Boolean ;
 
     function MemoryToDAC(
              Device : SmallInt ;
-             var DACBuf : Array of SmallInt  ;
+             DACBufIn : PBig16bitArray  ;
+             AOList : Array of Integer ;   // Analog output channel list
              nChannels : SmallInt ;
              nPoints : Cardinal ;
-             nPointsInDACBuffer : Cardinal ;
              UpdateInterval : Double ;
              CircularBufferMode : Boolean ;
              ExternalTrigger : Boolean ;
              TimingDevice : SmallInt
              ) : Boolean ;
-
-    procedure UpdateDACBuffer(
-              Device : SmallInt ;
-              var DACBuf : Array of SmallInt  ; { D/A output data buffer (IN) }
-              nChannels : SmallInt ;            { No. of D/A channels (IN) }
-              nPoints : Integer                 { No. of D/A output values (IN) }
-              ) ;
 
     function StopDAC( Device : SmallInt ) : Boolean ;
 
@@ -267,16 +309,6 @@ type
               Device : Integer ;
               DACVolts : Single ;
               iChannel : Integer ) ;
-
-    function MemoryToDIG(
-             Device : SmallInt ;
-             var DIGBuf : Array of Integer  ;
-             nPoints : Integer ;
-             UpdateInterval : Double ;
-             CircularBufferMode : Boolean ;
-             ExternalTrigger : Boolean ;
-             TimingDevice : SmallInt
-             ) : Boolean ;
 
     procedure UpdateDIGBuffer(
               Device : SmallInt ;
@@ -292,35 +324,33 @@ type
               ADCVoltageRange : Single
               ) : Integer ;
 
+  procedure WriteBit(
+          Device : Integer ;  // Device
+          On : Boolean ;      // On/off
+          Bit : Integer       // Bit position (0..7)
+          ) ;
+
    procedure WriteToDigitalOutPutPort(
              Device : Integer ;
              Pattern : Integer
              ) ;
-
-   procedure FillDACBufWithDefaultValues(
-         Dev : Integer ;            // Device #
-         DACBuf : PBig16bitArray ;  // Buffer to be updated
-         NumPoints : Integer // No. of points in buffer
-         ) ;
 
    procedure FillDIGBufWithDefaultValues(
          Dev : Integer ;            // Device #
          DIGBuf : PBig32bitArray ;  // Buffer to be updated
          NumPoints : Integer // No. of points in buffer
          ) ;
-
-    procedure SetBit( var iValue : Integer ;
-                      BitNum : Integer ;
-                      State : Integer ) ;
-
-
+         
     function GetChannelOffset(
              Chan : Integer ;
              NumChannels : Integer ) : Integer ;
 
     function BitMask( BitNumber : Integer ) : Integer ;
 
-    property NIDAQAPI : Integer read FNIDAQAPI write SetNIDAQAPI ;
+    function SetBit( var iValue : Integer ;
+                      BitNum : Integer ;
+                      State : Integer ) : Integer ;
+
 
   end;
 
@@ -329,7 +359,7 @@ var
 
 implementation
 
-uses MainUnit, logunit, nidaqmxlib ;
+uses MainUnit, logunit, nidaqmxlib, nidaqlib ;
 
 //uses Main;
 
@@ -344,9 +374,6 @@ const
    Timebase_1ms = 4 ;
    Timebase_10ms = 5 ;
    TimeBasePeriod : Array[-3..5] of Single = (5E-8,0.0,2E-7,0.0,1E-6,1E-5,1E-4,1E-3,1E-2) ;
-
-
-
 
 type
 
@@ -368,8 +395,6 @@ begin
     LibraryLoaded := False ;
     FPUExceptionMaskSet := False ;
 
-    FNIDAQAPI := NIDAQ ;
-
     for i := 1 to MaxDevices do DeviceBoardName[i] := '' ;
     for i := 1 to MaxDevices do DigitalWaveformCapable[i] := False ;
     for i := 1 to MaxDevices do DeviceName[i] := '' ;
@@ -382,28 +407,8 @@ begin
     for i := 1 to MaxDevices do ADCVoltageRangeAtX1Gain[i] := 1.0 ;
     for i := 1 to MaxDevices do for j := 0 to MaxDACs-1 do DACOutState[i,j] := 0.0 ;
     NumResources := 0 ;
-    InBuf := Nil ;
 
     end;
-
-
-procedure TLabIO.SetNIDAQAPI( Value : Integer ) ;
-// ------------------------------------------
-// Set National Instrument interface API type
-// ------------------------------------------
-begin
-
-    // Shut down system to allow change of API
-    if BoardsInitialised then Close ;
-
-    // Reset API
-    if Value = NIDAQ then FNIDAQAPI := NIDAQ
-                     else FNIDAQAPI := NIDAQMX ;
-
-    // Re-open interface
-    Open ;
-
-    end ;
 
 
 function TLabIO.Open : Boolean ;
@@ -426,42 +431,146 @@ begin
 
      BoardsInitialised := InitialiseNIBoards ;
 
-     // Create input buffer
-     if InBuf <> Nil then FreeMem(InBuf) ;
-     GetMem(InBuf,InBufMaxSamples*Sizeof(Integer)) ;
-
      Result := BoardsInitialised ;
 
      end ;
 
 
-procedure TLabIO.FillDACBufWithDefaultValues(
-         Dev : Integer ;            // Device #
-         DACBuf : PBig16bitArray ;  // Buffer to be updated
-         NumPoints : Integer // No. of points in buffer
-         ) ;
-// ---------------------------------------
-// Update DAC buffer with default voltages
-// ---------------------------------------
+function TLabIO.StopADC(
+         Device : SmallInt
+         ) : Boolean ;
+// ------------------------------------
+// Stop A/D sampling on selected device
+// ------------------------------------
+begin
+    Result := NIDAQMX_StopADC( Device ) ;
+    end ;
+
+
+function TLabIO.ADCInputModeCode(
+         Device : Integer ;
+         InputMode : Integer ) : Integer ;
+// ------------------------------------
+// Return code for selected A/D input mode
+// ------------------------------------
+begin
+    Result := NIDAQMX_ADCInputModeCode(Device,InputMode) ;
+    end ;
+
+
+function TLabIO.StopDAC( Device : SmallInt ) : Boolean ;
+// ------------------------------------
+// Stop D/A sampling on selected device
+// ------------------------------------
+begin
+    Result := NIDAQMX_StopDAC( Device ) ;
+    end ;
+
+
+procedure TLabIO.WriteDACs(
+          Device : Integer ;
+          DACVolts : array of Single ;
+          nChannels : Integer ) ;
+// --------------------
+// Write to D/A outputs
+// --------------------
 var
-  ch,i,j,DACValue : Integer ;
+    ch : Integer ;
 begin
 
-     if DACBuf = nil then Exit ;
+    // Update DAC default output state
+    for ch := 0 to nChannels do DACOutState[Device,ch] := DACVolts[ch] ;
 
-     // Initialise DAC outputs to current default DAC states
-     for ch := 0 to NumDACS[Dev]-1 do
-         begin
-         j := ch ;
-         DACValue := Round( DACOutState[Dev,ch]*DACScale[Dev] ) ;
-         for i := 0 to NumPoints-1 do
-             begin
-             DACBuf^[j] := DACValue ;
-             j := j + NumDACS[Dev] ;
-             end ;
-         end ;
+    NIDAQMX_WriteDACs( Device,DACVolts,nChannels ) ;
 
-     end ;
+    end ;
+
+
+procedure TLabIO.WriteDAC(
+          Device : Integer ;
+          DACVolts : Single ;
+          iChannel : Integer ) ;
+// ----------------------------
+// Write to a single D/A output
+// ----------------------------
+begin
+
+    // Update DAC default output state
+    DACOutState[Device,iChannel] := DACVolts ;
+    NIDAQMX_WriteDAC( Device,DACVolts,iChannel ) ;
+    end ;
+
+
+procedure TLabIO.UpdateDIGBuffer(
+          Device : SmallInt ;
+          var DIGBuf : Array of Integer  ; { Digital output data buffer (IN) }
+          nPoints : Integer             { No. of D/A output values (IN) }
+          ) ;
+// --------------------------------------------------
+// Update internal digital waveform buffer (while in use)
+// --------------------------------------------------
+begin
+    NIDAQMX_UpdateDIGBuffer( Device,
+                                           DIGBuf,
+                                           nPoints ) ;
+    end ;
+
+
+function TLabIO.StopDIG( Device : SmallInt ) : Boolean ;
+// ------------------------------------
+// Stop digital output on selected device
+// ------------------------------------
+begin
+    Result := NIDAQMX_StopDIG( Device ) ;
+    end ;
+
+
+function TLabIO.ReadADC(
+         Device : Integer ;
+         Channel : Integer ;
+         ADCVoltageRange : Single
+         ) : Integer ;
+// ---------------
+// Read A/D inputs
+// ---------------
+begin
+    Result := NIDAQMX_ReadADC( Device,
+                                             Channel,
+                                             ADCVoltageRange ) ;
+    end ;
+
+
+procedure TLabIO.WriteToDigitalOutPutPort(
+          Device : Integer ;
+          Pattern : Integer
+          ) ;
+// -------------------------
+// Write to digital outputs
+// -------------------------
+begin
+
+    // Save default digital output state
+    DigOutState[Device] := Pattern ;
+    NIDAQMX_WriteToDigitalOutPutPort( Device,Pattern ) ;
+    end ;
+
+
+procedure TLabIO.WriteBit(
+          Device : Integer ;  // Device
+          On : Boolean ;      // On/off
+          Bit : Integer       // Bit position (0..7)
+          ) ;
+// ---------------------------
+// Write to digital output bit
+// ---------------------------
+var
+    Mask : Cardinal ;
+begin
+    Mask := 1 shl Bit ;
+    if On then DigOutState[Device] := DigOutState[Device] or Mask
+          else DigOutState[Device] := DigOutState[Device] and (not Mask) ;
+    NIDAQMX_WriteToDigitalOutPutPort( Device,DigOutState[Device] ) ;
+    end ;
 
 
 procedure TLabIO.FillDIGBufWithDefaultValues(
@@ -496,8 +605,8 @@ function TLabIO.InitialiseNIBoards : Boolean ;
 var
     Done : Boolean ;
     i : Integer ;
-    CBuf : Array[0..500] of ANSIChar ;
-    DeviceNum,Err : Integer ;
+    CBuf : Array[0..1000] of ANSIChar ;
+    DeviceNum : Integer ;
 begin
 
    // Clear number of devices
@@ -546,16 +655,12 @@ begin
    // Get device board name
    for i := 1 to NumDevices do
        begin
-       Err := DAQmxGetDevProductType(PANSIChar(DeviceName[i]),CBuf,High(CBuf)+1) ;
-       CheckError(Err) ;
+       CheckError(DAQmxGetDevProductType(PANSIChar(DeviceName[i]),CBuf,High(CBuf)+1)) ;
        DeviceBoardName[i] := PCharArrayToString(CBuf) ;
        if AnsiContainsText(DeviceBoardName[i],'622') or
           AnsiContainsText(DeviceBoardName[i],'625') then DigitalWaveformCapable[i] := True
                                                      else DigitalWaveformCapable[i] := False ;
        end ;
-
-   // If error getting board name then set no. of devices to 0
-   if Err <> 0 then NumDevices := 0 ;
 
    for i := 1 to NumDevices do DeviceNumDMAChannels[i] := 2 ;
 
@@ -574,6 +679,7 @@ begin
           Resource[NumResources].ResourceType := ADCIn ;
           Resource[NumResources].StartChannel := 0 ;
           Resource[NumResources].EndChannel := NumADCs[DeviceNum]-1 ;
+          Resource[NumResources].Name := format('Dev%d:AI0',[DeviceNum]) ;
           Inc(NumResources) ;
           end ;
 
@@ -589,6 +695,7 @@ begin
               Resource[NumResources].ResourceType := DACOut ;
               Resource[NumResources].StartChannel := i ;
               Resource[NumResources].EndChannel := i ;
+              Resource[NumResources].Name := format('Dev%d:AO%d',[DeviceNum,i]) ;
               Inc(NumResources) ;
               end ;
           end ;
@@ -608,14 +715,67 @@ begin
             Resource[NumResources].ResourceType := DIGOut ;
             Resource[NumResources].StartChannel := i ;
             Resource[NumResources].EndChannel := i ;
+            Resource[NumResources].Name := format('Dev%d:PO.%d',[DeviceNum,i]) ;
             Inc(NumResources) ;
             end ;
-        end ;
+       end ;
 
 
    Result := True ;
 
    end ;
+
+
+procedure TLabIO.GetAIPorts( List : TStrings ) ;
+// ----------------------------------------------
+// Return list of analogue input ports available
+// ----------------------------------------------
+var
+    i : Cardinal ;
+begin
+    List.Clear ;
+    List.AddObject( 'None',TObject(MaxResources));
+    for i := 0 to High(Resource) do
+        if (Resource[i].ResourceType = ADCIn) then
+        begin
+        List.AddObject( Resource[i].Name,TObject(i));
+        end;
+end;
+
+
+procedure TLabIO.GetAOPorts( List : TStrings ) ;
+// ----------------------------------------------
+// Return list of analogue output ports available
+// ----------------------------------------------
+var
+    i : Cardinal ;
+begin
+    List.Clear ;
+    List.AddObject( 'None',TObject(MaxResources));
+    for i := 0 to High(Resource) do
+        if (Resource[i].ResourceType = DACOut) then
+        begin
+        List.AddObject( Resource[i].Name,TObject(i));
+        end;
+end;
+
+
+procedure TLabIO.GetPOPorts( List : TStrings ) ;
+// ----------------------------------------------
+// Return list of digital output ports available
+// ----------------------------------------------
+var
+    i : Cardinal ;
+begin
+    List.Clear ;
+    List.AddObject( 'None',TObject(MaxResources));
+    for i := 0 to High(Resource) do
+        if (Resource[i].ResourceType = DigOut) then
+        begin
+        List.AddObject( Resource[i].Name,TObject(i));
+        end;
+end;
+
 
 
 function TLabIO.ResetNIBoards : Boolean ;
@@ -642,8 +802,7 @@ begin
 
    // Load API function library
    if not LibraryLoaded then LibraryLoaded := NIDAQMX_LoadLibrary( LibraryHnd ) ;
-   if not LibraryLoaded then
-      begin
+   if not LibraryLoaded then begin
       LogFrm.AddLine('NIDAQ-MX library (nicaiu.dll) not found!') ;
       Exit ;
       end ;
@@ -668,7 +827,7 @@ begin
            end ;
         Inc(i) ;
         if i >= High(CBuf) then Done := True ;
-   until Done ;
+        until Done ;
 
 
    if NumDevices <= 0 then Exit ;
@@ -752,111 +911,86 @@ procedure TLabIO.GetDeviceADCChannelProperties(
 // ------------------------------------------------
 const
     NumVRanges = 9 ;
-    VRanges : Array[0..8] of Double = (10.0,5.0,2.5,1.25,1.0,0.5,0.25,0.2,0.1) ;
 var
     DValue : Double ;
-    ADCScaleFactors : Array[0..20] of Double ;
     i : Integer ;
     Err : Integer ;
     ChannelName : ANSIString ;
     NumChannels : Integer ;
+    ChannelList : Array[0..10000] of ANSICHar ;
+    VRanges : Array[0..31] of Double ;
+    SimultaneousSampling : LongBool ;
+    MaxSamplingRate : Double ;
+
 begin
 
     DisableFPUExceptions ;
 
+    // Determine number of available AI channels
+    CheckError( DAQmxGetDevAIPhysicalChans( PANSIChar(DeviceName[DeviceNum]), ChannelList, High(ChannelList)) ) ;
     NumChannels := 0 ;
-    Err := 0 ;
-    While Err = 0 do
+    while ContainsText(String(ChannelList),format('ai%d',[NumChannels])) do Inc(NumChannels) ;
+    CheckError( DAQmxGetDevAISimultaneousSamplingSupported( PANSIChar(DeviceName[DeviceNum]),SimultaneousSampling));
+    if not SimultaneousSampling then NumChannels := NumChannels div 2 ;
+    NumADCs[DeviceNum] := NumChannels ;
+
+    // Determine channel input voltage ranges
+    for i := 0 to High(VRanges) do VRanges[i] := 0.0 ;
+    CheckError( DAQmxGetDevAIVoltageRngs( PANSIChar(DeviceName[DeviceNum]), VRanges, High(VRanges) ) );
+    NumChannels := 0 ;
+    for i := High(VRanges) downto 0 do
+        if (VRanges[i] > 0.0) and (VRanges[i] <= 10.0) then
         begin
+        ADCVoltageRanges[DeviceNum,NumChannels] := VRanges[i] ;
+        Inc(NumChannels) ;
+        end;
+    NumADCVoltageRanges[DeviceNum]  := NumChannels ;
 
-        // Create A/D task for selected channel
-        CheckError( DAQmxCreateTask( '', ADCTask[DeviceNum] ) ) ;
-        ChannelName := format('%s/ai%d',[DeviceName[DeviceNum],NumChannels]) ;
-        Err := DAQmxCreateAIVoltageChan( ADCTask[DeviceNum],
-                                      PANSIChar(ChannelName),
-                                      nil ,
-                                      DAQmx_Val_Diff,
-                                      -10,
-                                      10,
-                                      DAQmx_Val_Volts,
-                                      nil);
+    // Create A/D task for selected channel
+    CheckError( DAQmxCreateTask( '', ADCTask[DeviceNum] ) ) ;
 
-        if Err <> 0 then
-           begin
-           // Check for 61XX series devices which only
-           // support pseudo-differential inputs 01/07/10
-           CheckError( DAQmxClearTask( ADCTask[DeviceNum] ) ) ;
-           CheckError( DAQmxCreateTask( '', ADCTask[DeviceNum] ) ) ;
-           Err := DAQmxCreateAIVoltageChan( ADCTask[DeviceNum],
+    ChannelName := format('%s/ai0',[DeviceName[DeviceNum]]) ;
+    Err := DAQmxCreateAIVoltageChan( ADCTask[DeviceNum],
+                                     PANSIChar(ChannelName),
+                                     nil ,
+                                     Integer(DAQmx_Val_PseudoDiff),
+                                     -10.0,
+                                     10.0,
+                                     Integer(DAQmx_Val_Volts),
+                                     nil);
+    if Err <> 0 then
+       begin
+       // Check for 61XX series devices which only
+       // support pseudo-differential inputs 01/07/10
+       CheckError(DAQmxCreateAIVoltageChan( ADCTask[DeviceNum],
                                             PANSIChar(ChannelName),
                                             nil ,
-                                            DAQmx_Val_PseudoDiff,
-                                            -10,
-                                            10,
-                                            DAQmx_Val_Volts,
-                                            nil);
-           end ;
+                                            Integer(DAQmx_Val_Diff),
+                                            -10.0,
+                                            10.0,
+                                            Integer(DAQmx_Val_Volts),
+                                            nil));
+       end;
 
 
-        // If channel is valid, get its properties
+    // Get A/D converter resolution
+    CheckError( DAQmxGetAIResolution( ADCTask[DeviceNum],
+                                      PANSIChar(ChannelName),
+                                      DValue)) ;
 
-        if (Err = 0) and (NumChannels=0) then
-           begin
+    ADCResolution[DeviceNum] := Round(DValue) ;
+    ADCMaxValue[DeviceNum] := Round(Power(2.0,DValue-1.0)) - 1 ;
+    ADCMinValue[DeviceNum] := -ADCMaxValue[DeviceNum] - 1 ;
 
-           // Get A/D converter resolution
-           CheckError( DAQmxGetAIResolution( ADCTask[DeviceNum],
-                                             PANSIChar(ChannelName),
-                                             DValue)) ;
+    // Discover maximum sampling rate and whether ADC is simultaneous sampling
+    CheckError( DAQmxGetSampClkMaxRate( ADCTask[DeviceNum],MaxSamplingRate )) ;
+    ADCMinSamplingInterval[DeviceNum] := 1.0 / MaxSamplingRate ;
 
-           // Channel scaling factors
-           CheckError( DAQmxGetAIDevScalingCoeff( ADCTask[DeviceNum],
-                                                  PANSIChar(ChannelName),
-                                                  @ADCScaleFactors,
-                                                  4 )) ;
-           ADCVScale[DeviceNum] := ADCScaleFactors[1] ;
-           ADCVOffset[DeviceNum] := ADCScaleFactors[0] ;
-           ADCResolution[DeviceNum] := Round(DValue) ;
-           ADCMaxValue[DeviceNum] := Round(Power(2.0,DValue-1.0)) - 1 ;
-           ADCMinValue[DeviceNum] := -ADCMaxValue[DeviceNum] - 1 ;
-           end ;
+    CheckError( DAQmxGetDevAISimultaneousSamplingSupported( PANSIChar(DeviceName[DeviceNum]),SimultaneousSampling));
+    ADCSimultaneousSampling[DeviceNum] := SimultaneousSampling ;
 
-        Inc(NumChannels) ;
-        CheckError( DAQmxClearTask( ADCTask[DeviceNum] ) ) ;
-        end ;
+    CheckError( DAQmxClearTask( ADCTask[DeviceNum] ) ) ;
 
-    NumADCs[DeviceNum] := NumChannels - 1 ;
-    if NumChannels <= 0 then Exit ;
-
-    // Get available A/D voltage ranges
-
-    NumADCVoltageRanges[DeviceNum] := 0 ;
-    for i := 0 to NumVRanges-1 do
-        begin
-
-        CheckError( DAQmxCreateTask( '', ADCTask[DeviceNum] ) ) ;
-        ChannelName := DeviceName[DeviceNum] + '/AI0' ;
-        Err := DAQmxCreateAIVoltageChan( ADCTask[DeviceNum],
-                                              PANSIChar(ChannelName),
-                                              nil ,
-                                              ADCInputModeCode(DeviceNum,imDifferential),
-                                              -0.9*VRanges[i],
-                                              0.9*VRanges[i],
-                                              DAQmx_Val_Volts,
-                                              nil);
-
-        if Err = 0 then
-           begin
-           CheckError( DAQmxGetAIMax( ADCTask[DeviceNum], PANSIChar(ChannelName), DValue ));
-           if Abs((DValue - VRanges[i])/VRanges[i]) < 0.1 then
-              begin
-              ADCVoltageRanges[DeviceNum,NumADCVoltageRanges[DeviceNum]] := DValue ;
-              if NumADCVoltageRanges[DeviceNum] <= High(NumADCVoltageRanges) then
-                 NumADCVoltageRanges[DeviceNum] := NumADCVoltageRanges[DeviceNum] + 1 ;
-              end ;
-           end ;
-
-        CheckError( DAQmxClearTask( ADCTask[DeviceNum] ) ) ;
-        end ;
 
     EnableFPUExceptions ;
 
@@ -870,82 +1004,58 @@ procedure TLabIO.GetDeviceDACChannelProperties(
 // Get number of device D/A channels and properties
 // ------------------------------------------------
 var
-    DValue,VMin,VMax : Double ;
-    Err : Integer ;
+    DValue : Double ;
+    i : Integer ;
     ChannelName : ANSIString ;
     NumChannels : Integer ;
+    ChannelList : Array[0..10000] of ANSICHar ;
+    VRanges : Array[0..15] of Double ;
 begin
 
     DisableFPUExceptions ;
 
-    // Create D/A task
+    // Determine number of available AO channels
+    CheckError( DAQmxGetDevAOPhysicalChans( PANSIChar(DeviceName[DeviceNum]), ChannelList, High(ChannelList)) ) ;
     NumChannels := 0 ;
-    Err := 0 ;
-    While Err = 0 do
-        begin
-
-        CheckError( DAQmxCreateTask( '', DACTask[DeviceNum] ) ) ;
-        ChannelName := format('%s/ao%d',[DeviceName[DeviceNum],NumChannels]) ;
-
-        if AnsiContainsText(DeviceBoardName[DeviceNum],'600') then
-           begin
-           VMin := 0.0 ;
-           VMax := 5.0 ;
-           end
-        else
-           begin
-           VMin := -10.0 ;
-           VMax := 10.0 ;
-           end;
-
-        Err := DAQmxCreateAOVoltageChan( DACTask[DeviceNum],
-                                      PANSIChar(ChannelName),
-                                      nil,
-                                      VMin,
-                                      VMax,
-                                      DAQmx_Val_Volts,
-                                      nil);
-
-        if (Err = 0) then
-           begin
-
-           // D/A output range
-           CheckError(DAQmxGetAODACRngHigh( DACTask[DeviceNum],
-                                            PANSIChar(ChannelName),
-                                            DValue ));
-           DACMaxVolts[DeviceNum] := DValue ;
-
-           // D/A output range
-           CheckError(DAQmxGetAODACRngLow( DACTask[DeviceNum],
-                                           PANSIChar(ChannelName),
-                                           DValue ));
-           DACMinVolts[DeviceNum] := DValue ;
-
-           // Get D/A converter resolution
-           CheckError( DAQmxGetAOResolution( DACTask[DeviceNum],
-                                             PANSIChar(ChannelName),
-                                             DValue)) ;
-           DACResolution[DeviceNum] := Round(DValue) ;
-
-           if DACMinVolts[DeviceNum] = 0.0 then
-              begin
-              // Unipolar DACs
-              DACMaxValue[DeviceNum] := Round(Power(2.0,DValue)) - 1 ;
-              DACMinValue[DeviceNum] := 0 ;
-              end
-           else
-              begin
-              // Bipolar DACs
-              DACMaxValue[DeviceNum] := Round(Power(2.0,DValue-1.0)) - 1 ;
-              DACMinValue[DeviceNum] := -DACMaxValue[DeviceNum] - 1 ;
-              end ;
-
-           Inc(NumChannels) ;
-           CheckError( DAQmxClearTask( DACTask[DeviceNum] ) ) ;
-           end ;
-      end;
-
+    while ContainsText(String(ChannelList),format('ao%d',[NumChannels])) do Inc(NumChannels) ;
     NumDACs[DeviceNum] := NumChannels ;
+
+    // Determine output voltage ranges
+    for i := 0 to High(VRanges) do VRanges[i] := 0.0 ;
+    CheckError( DAQmxGetDevAOVoltageRngs( PANSIChar(DeviceName[DeviceNum]), VRanges, High(VRanges) ) );
+    DACMaxVolts[DeviceNum] := VRanges[1] ;
+    DACMinVolts[DeviceNum] := VRanges[0] ;
+
+    // Create D/A task
+    CheckError( DAQmxCreateTask( '', DACTask[DeviceNum] ) ) ;
+    ChannelName := format('%s/ao0',[DeviceName[DeviceNum]]) ;
+
+    CheckError( DAQmxCreateAOVoltageChan( DACTask[DeviceNum],
+                                          PANSIChar(ChannelName),
+                                          nil,
+                                          DACMinVolts[DeviceNum],
+                                          DACMaxVolts[DeviceNum],
+                                          DAQmx_Val_Volts,
+                                          nil) );
+
+     // Get D/A converter resolution
+     CheckError( DAQmxGetAOResolution( DACTask[DeviceNum],
+                                       PANSIChar(ChannelName),
+                                       DValue)) ;
+     DACResolution[DeviceNum] := Round(DValue) ;
+
+     if DACMinVolts[DeviceNum] = 0.0 then
+        begin
+        // Unipolar DACs
+        DACMaxValue[DeviceNum] := Round(Power(2.0,DValue)) - 1 ;
+        DACMinValue[DeviceNum] := 0 ;
+        end
+     else
+        begin
+        // Bipolar DACs
+        DACMaxValue[DeviceNum] := Round(Power(2.0,DValue-1.0)) - 1 ;
+        DACMinValue[DeviceNum] := -DACMaxValue[DeviceNum] - 1 ;
+        end ;
 
     EnableFPUExceptions ;
 
@@ -1002,7 +1112,7 @@ begin
      end ;
 
 
-function TLabIO.ADCInputModeCode(
+function TLabIO.NIDAQMX_ADCInputModeCode(
          Device : Integer ;
          InputMode : Integer                // Device in use
          ) : Integer ;
@@ -1037,25 +1147,27 @@ begin
     end ;
 
 
-function TLabIO.ADCToMemoryExtScan(
+function TLabIO.ADCToMemory(
           Device : SmallInt ;
-          var ADCBuf : Array of SmallInt  ;  { A/D sample buffer (OUT) }
-          FirstChannel : Integer ;           // First A/D channel to acquire
-          nChannels : Integer ;              { Number of A/D channels (IN) }
-          nSamples : Integer ;               { Number of A/D samples ( per channel) (IN) }
-          ADCVoltageRange : Single ;         { A/D input voltage range (V) (IN) }
-          CircularBuffer : Boolean ;          { Repeated sampling into buffer (IN) }
-          TimingDevice : SmallInt            // Device supply ADC/DAC timing pulses
-          ) : Boolean ;                      { Returns TRUE indicating A/D started }
+          AIChans : Array of Integer ;           // AI Channels to be used (IN)
+          AIVRange : Array of Integer ;          // Index number of channel voltage range
+          nChannels : Integer ;                  // Number of A/D channels
+          nSamples : Integer ;                   // Number of A/D samples ( per channel) (IN)
+          CircularBuffer : Boolean ;             // Repeated sampling into buffer (IN) }
+          TimingDevice : SmallInt ;               // Device supply ADC/DAC timing pulses
+          SamplingInterval : double
+          ) : Boolean ;                          // Returns TRUE indicating A/D started }
+
 { ----------------------------
   Start A/D converter sampling
   ----------------------------}
 var
-   ChannelList : ANSIString ;
+   ChannelList,ChannelName : ANSIString ;
    ClockSource : ANSIString ;
    ch : Integer ;
    SampleMode : Integer ;
-   SamplingRate : Double ;
+   SamplingRate,MaxSamplingRate : Double ;
+   IsSimultaneousSamplingADC : LongBool ;
 begin
 
      Result := False ;
@@ -1070,17 +1182,32 @@ begin
      // Create A/D task
      CheckError( DAQmxCreateTask( '', ADCTask[Device] ) ) ;
 
-     // Select A/D input channels
-     ChannelList := format( DeviceName[Device] + '/AI%d:%d', [FirstChannel,FirstChannel+nChannels-1] ) ;
+     // Create channel list
+     ChannelList := '' ;
+     for ch := 0 to nChannels-1 do
+         ChannelList := ChannelList + DeviceName[Device] + format('/AI%d,',[AIChans[ch]]);
+     ChannelList := LeftStr(ChannelList,Length(ChannelList)-1);
 
      CheckError( DAQmxCreateAIVoltageChan( ADCTask[Device],
                                            PANSIChar(ChannelList),
                                            nil ,
                                            ADCInputModeCode(Device,ADCInputMode),
-                                           -ADCVoltageRange,
-                                           ADCVoltageRange,
+                                           -ADCVoltageRanges[Device][0],
+                                           ADCVoltageRanges[Device][0],
                                            DAQmx_Val_Volts,
                                            nil));
+
+     // Set individual channel voltage range
+     for ch := 0 to nChannels-1 do
+         begin
+         ChannelName := DeviceName[Device] + format('/AI%d',[AIChans[ch]]) ;
+         CheckError( DAQmxSetAIRngHigh( ADCTask[Device],
+                                        PANSIChar(ChannelName),
+                                        ADCVoltageRanges[Device][AIVRange[ch]])) ;
+         CheckError( DAQmxSetAIRngLow( ADCTask[Device],
+                                        PANSIChar(ChannelName),
+                                        -ADCVoltageRanges[Device][AIVRange[ch]])) ;
+         end ;
 
      // Select continuous sampling if circular buffer selected
      FADCCircularBuffer := CircularBuffer ;
@@ -1088,22 +1215,30 @@ begin
                        else SampleMode := DAQmx_Val_FiniteSamps ;
 
      // Set timing
-     ClockSource := '/' + DeviceName[TimingDevice] + '/ao/sampleclock' ;
-     SamplingRate := 200000.0 / (nChannels+1) ;
+     ClockSource := '/' + DeviceName[TimingDevice] + '/ai/sampleclock' ;
+     ClockSource := 'OnboardClock' ;
 
+     // Discover maximum sampling rate and whether ADC is simultaneous sampling
+     CheckError( DAQmxGetSampClkMaxRate( ADCTask[Device],MaxSamplingRate )) ;
+
+     //CheckError( DAQmxGetDevAIMaxMultiChanRate( PANSIChar(DeviceName[Device]), MaxSamplingRate ));
+     CheckError( DAQmxGetDevAISimultaneousSamplingSupported( PANSIChar(DeviceName[Device]),
+                 IsSimultaneousSamplingADC )) ;
+
+     SamplingRate := 1.0 / SamplingInterval ;
      CheckError( DAQmxCfgSampClkTiming( ADCTask[Device],
-                                             PANSIChar(ClockSource),
-                                             SamplingRate,
-                                             DAQmx_Val_Falling ,
-                                             SampleMode,
-                                             Int64(nSamples)));
+                                        PANSIChar(ClockSource),
+                                        SamplingRate,
+                                        DAQmx_Val_Falling ,
+                                        DAQmx_Val_ContSamps,
+                                        InBufMaxSamples));
 
      // Get clock rate set
      CheckError( DAQmxGetSampClkRate( ADCTask[Device], SamplingRate )) ;
 //     SamplingInterval := 1.0 / SamplingRate ;
 
      // Configure buffer
-     CheckError( DAQmxCfgInputBuffer ( ADCTask[Device], nSamples )) ;
+     CheckError( DAQmxCfgInputBuffer ( ADCTask[Device], InBufMaxSamples )) ;
      // Enable immediate return with any available data within buffer
      CheckError( DAQmxSetReadReadAllAvailSamp( ADCTask[Device], True )) ;
 
@@ -1111,7 +1246,13 @@ begin
      // --------------
 
      // Request immediate start
-     CheckError(DAQmxDisableStartTrig(ADCTask[Device]));
+ //    CheckError(DAQmxDisableStartTrig(ADCTask[Device]));
+
+     // Trigger A/D samplinh sequence with first AO clock pulse
+     ClockSource := '/' + DeviceName[TimingDevice] + '/ao/SampleClock' ;
+     CheckError( DAQmxCfgDigEdgeStartTrig( ADCTask[Device],
+                                           PANSIChar(ClockSource),
+                                           DAQmx_Val_Rising )) ;
 
      // Start A/D task
      CheckError( DAQmxStartTask(ADCTask[Device])) ;
@@ -1122,6 +1263,10 @@ begin
      FADCPointer := 0 ;
      FADCNumChannels := nChannels ;
      FADCNumSamples := nSamples ;
+     FADCPointerMax := FADCNumSamples*FADCNumChannels - 1 ;
+     for ch := 0 to FADCNumChannels-1 do
+         FADCScale[ch] := ADCVoltageRanges[Device][AIVRange[ch]] / ADCMaxValue[Device] ;
+
      FADCNumSamplesAcquired := 0 ;
 
      // Define A/D channel offset sequence within A/D sample buffer
@@ -1133,7 +1278,7 @@ begin
      end ;
 
 
-function TLabIO.StopADC(
+function TLabIO.NIDAQMX_StopADC(
          Device : SmallInt
          ) : Boolean ;      { Returns FALSE = A/D stopped }
 { -------------------------------
@@ -1158,123 +1303,108 @@ begin
      end ;
 
 
-procedure TLabIO.GetADCSamples(
+function TLabIO.GetADCSamples(
           Device : Integer ;
           var ADCBuf : Array of SmallInt ;
-          var NumSamplesRead : Integer ;
-          DACBuf : PBig16bitArray ;
-          YStartVolts : Single ;
-          YScale : Single ;
-          YLineSpacingVolts : Single ;
-          NumPointsPerLine : Cardinal
-          ) ;
+          var NumSamplesRead : NativeInt
+          ) : Boolean ;
 // -------------------------------------------------------------
 // Get latest A/D samples acquired and transfer to memory buffer
 // -------------------------------------------------------------
+const
+    MaxBufSamples = 10000000 ;
 var
-    i : Integer ;
-    ADCBufNumSamples : Integer ;
-    ADCBufEnd : Integer ;
-    VScale,VOffset,VUnscale,YLinePosition : Single ;
-    ADCMaxVal : Single ;
-    ADCMinVal : Single ;
-    ScaledValue : Single ;
-    t0 : Integer ;
-    NumSamplesWritten,NumPointsToWrite,NumLinesToWrite,NumLinesWritten : Integer ;
-    iX,j,SpaceAvailable,LineOffset : Cardinal ;
-    iYValue : Smallint ;
+    i,iFrom,iTo,ch : Integer ;
+    NumSamplesWritten,NumPointsToWrite,np,npMax,NumRead : Integer ;
+    SpaceAvailable : Cardinal ;
+    Done : Boolean ;
+    IOBuf : PBigDoubleArray ;
+
 begin
 
+    Result := False ;
     if not ADCActive[Device] then Exit ;
 
     if GetADCSamplesInUse then Exit ;
-
     GetADCSamplesInUse := True ;
 
-    ADCBufNumSamples := FADCNumSamples*FADCNumChannels ;
-    ADCBufEnd := FADCNumSamples*FADCNuMChannels - 1 ;
-
-    if (not FADCCircularBuffer) and (FADCNumSamplesAcquired >= ADCBufNumSamples) then begin
-       GetADCSamplesInUse := False ;
-       Exit ;
-    end;
-
-    t0 := TimeGetTime ;
+    // Allocate I/O buffer
+    IOBuf := AllocMem( MaxBufSamples*SizeOf(Double) ) ;
 
     // Read data from A/D converter
-    DAQmxReadBinaryI16( ADCTask[Device],
-                                  -1,
-                                  DefaultTimeOut,
-                                  DAQmx_Val_GroupByScanNumber,
-                                  InBuf,
-                                  ADCBufNumSamples,
-                                  NumSamplesRead,
-                                  Nil) ;
+    DAQmxReadAnalogF64( ADCTask[Device],
+                        -1,
+                        0.0,
+                        DAQmx_Val_GroupByScanNumber,
+                        IOBuf,
+                        MaxBufSamples,
+                        NumRead,
+                        Nil) ;
 
-    // Apply calibration factors and copy to output buffer
-    VUnScale := ADCMaxValue[Device]/10.0 ;
-    VScale := ADCVScale[Device] ;
-    VOffset := ADCVOffset[Device] ;
-    ADCMaxVal := ADCMaxValue[Device] - 1 ;
-    ADCMinVal := ADCMinValue[Device] + 1 ;
-    for i := 0 to NumSamplesRead*FADCNumChannels-1 do begin
-        ScaledValue := (InBuf^[i]*VScale + VOffset)*VUnScale ;
-        ADCBuf[i] := Round( Max( Min( ScaledValue, ADCMaxVal ), ADCMinVal )) ;
-        Inc(FADCPointer) ;
-        FADCNumSamplesAcquired := FADCPointer ;
-        if (FADCPointer > ADCBufEnd) and FADCCircularBuffer then FADCPointer := 0 ;
-        end ;
+    if (FADCNumSamplesAcquired + NumRead) > FADCNumSamples then NumRead := FADCNumSamples - FADCNumSamplesAcquired ;
+    FADCNumSamplesAcquired := FADCNumSamplesAcquired + NumRead ;
 
-    DACFreeBufferSpace := DACFreeBufferSpace + NumSamplesRead ;
+    if NumRead <= 0 then
+       begin
+       GetADCSamplesInUse := False ;
+       Exit ;
+       end;
+
+    // Scale to integer and copy to return buffer
+    NumSamplesRead := 0 ;
+    for i := 0 to NumRead-1 do
+        for ch := 0 to FADCNumChannels-1 do
+            begin
+            ADCBuf[NumSamplesRead] := Round(IOBuf[NumSamplesRead]/FADCScale[ch]) ;
+            Inc(NumSamplesRead) ;
+            end ;
+
+    FADCPointer := FADCPointer + NumSamplesRead ;
+    if (not FADCCircularBuffer) and (FADCPointer > FADCPointerMax) then Done := True
+                                                                   else Done := False ;
 
     // Update D/A output buffer with XY scan waveform
     DAQmxGetWriteSpaceAvail( DACTask[Device], SpaceAvailable ) ;
-
-    if (DACNumSamplesToWrite > DACNumSamplesWritten)
-        and (SpaceAvailable >= (NumPointsPerLine*2))
-        and DACActive[Device] then
+    if (SpaceAvailable > 0) and DACActive[Device] then
         begin
 
-        // Copy X waveform from 1st two lines of DACBuf and update Y positon
-        NumPointsToWrite := Min(DACNumSamplesToWrite - DACNumSamplesWritten,SpaceAvailable ) ;
-        NumPointsToWrite := Min( NumPointsToWrite, InBufMaxSamples ) ;
-        NumLinesToWrite := (NumPointsToWrite div NumPointsPerLine) ;
-        NumPointsToWrite := NumLinesToWrite*NumPointsPerLine ;
-        NumLinesWritten := DACNumSamplesWritten div NumPointsPerLine ;
-        j := 0 ;
-        iX := 0 ;
-        LineOffset := (NumLinesWritten mod 2)*NumPointsPerLine*2 ;
-        for i := 0 to NumPointsToWrite-1 do
+        NumPointsToWrite := Min(DACNumSamplesToWrite - DACPointer,SpaceAvailable ) ;
+        NumPointsToWrite := Min( NumPointsToWrite, MaxBufSamples ) ;
+
+        np := NumPointsToWrite*DACNumChannels ;
+        npMax := DACNumSamplesToWrite*DACNumChannels ;
+        iFrom := DACNumSamplesWritten*DACNumChannels ;
+        for iTo := 0 to np-1 do
             begin
-            if ix = 0 then
+            IOBuf^[iTo] := DACBuf^[iFrom]*DACScale[Device] ;
+            Inc(iFrom) ;
+            if iFrom >= npMax then
                begin
-               YLinePosition := NumLinesWritten*YLineSpacingVolts + YStartVolts ;
-               iYValue := Round(YLinePosition*YScale) ;
-//               Inc(NumLinesWritten);
-               end;
-            InBuf^[j] := DACBuf^[j+LineOffset] ;
-            InBuf^[j+1] := iYValue ;
-            j := j + 2 ;
-            inc(ix) ;
-            if ix >= NumPointsPerLine then ix := 0 ;
-            end;
+               if DACCircularBuffer then iFrom := 0
+                                    else iFrom := npMax - DACNumChannels ;
+               end
+            end ;
+        DACNumSamplesWritten := iFrom div DACNumChannels ;
+        DACPointer := DACPointer + NumPointsToWrite ;
+        if DACPointer >= DACNumSamplesToWrite then DACPointer := 0 ;
 
-        DAQmxWriteBinaryI16( DACTask[Device],
-                           NumPointsToWrite,
-                           False,
-                           0.0,
-                           DAQmx_Val_GroupByScanNumber,
-                           InBuf,
-                           NumSamplesWritten,
-                           Nil
-                           ) ;
+        DAQmxWriteAnalogF64( DACTask[Device],
+                             NumPointsToWrite,
+                             False,
+                             0.0,
+                             DAQmx_Val_GroupByScanNumber,
+                             IOBuf,
+                             NumSamplesWritten,
+                             Nil
+                             ) ;
 
-        DACNumSamplesWritten := DACNumSamplesWritten + NumSamplesWritten ;
-        DACFreeBufferSpace := Max(DACFreeBufferSpace - NumSamplesWritten,0) ;
-     //outputdebugString(PChar(format('%d %d %d %d',
-     //[SpaceAvailable,NumSamplesWritten,NumPointsToWrite,NumPointsToWrite-NumSamplesWritten]))) ;
-     end;
+        end;
+
+    FreeMem( IOBuf ) ;
+
     GetADCSamplesInUse := False ;
+    Result := True ;
+
     end ;
 
 
@@ -1306,13 +1436,13 @@ begin
      ChannelList := format( DeviceName[DeviceNum] + '/AI0:%d', [NumADCChannels-1] ) ;
 
      CheckError( DAQmxCreateAIVoltageChan( ADCTask[DeviceNum],
-                                                PANSIChar(ChannelList),
-                                                nil ,
-                                                ADCInputModeCode(DeviceNum,ADCInputMode),
-                                                -10.0,
-                                                10.0,
-                                                DAQmx_Val_Volts,
-                                                nil));
+                                           PANSIChar(ChannelList),
+                                           nil ,
+                                           ADCInputModeCode(DeviceNum,ADCInputMode),
+                                           -10.0,
+                                           10.0,
+                                           DAQmx_Val_Volts,
+                                           nil));
 
      // Set sampling rate (ensuring that it can be supported by board)
 
@@ -1327,8 +1457,8 @@ begin
 
         // Read rate back from board
         Err := DAQmxGetSampClkRate( ADCTask[DeviceNum], ActualSamplingRate ) ;
-        if Err <> 0 then SamplingRate := SamplingRate*0.75 ;
-        Until Err = 0 ;
+        if Err <> 0 then SamplingRate := SamplingRate*0.95 ;
+     Until Err = 0 ;
 
      // Return actual sampling interval
      SamplingInterval := 1.0 / ActualSamplingRate ;
@@ -1343,10 +1473,10 @@ begin
 
 function TLabIO.MemoryToDAC(
           Device : SmallInt ;
-          var DACBuf : Array of SmallInt  ; { D/A output data buffer (IN) }
-          nChannels : SmallInt ;            { No. of D/A channels (IN) }
+          DACBufIn : PBig16bitArray ;   //  D/A output data buffer (IN)
+          AOList : Array of Integer ;   // Analog output channel list
+          nChannels : SmallInt ;        // No. of AO channels
           nPoints : Cardinal ;               { No. of D/A output values (IN) }
-          nPointsInDACBuffer : Cardinal ;    // No. of points in internal DAC buffer
           UpdateInterval : Double ;          { D/A output interval (s) (IN) }
           CircularBufferMode : Boolean ;     { TRUE = continuous update from circular buffer }
           ExternalTrigger : Boolean ;
@@ -1355,22 +1485,28 @@ function TLabIO.MemoryToDAC(
 { --------------------------
   Start D/A converter output
   --------------------------}
+const
+    MaxBufPoints = 10000000 ;
 var
-    SampleMode : Integer ;
     ClockSource : ANSIString ;
     ChannelList : ANSIString ;
-    NumSamplesWritten : Integer ;
+    NumSamplesWritten,i,NumWrite : Integer ;
     VScale : Double ;
     UpdateRate : Double ;
+    IOBuf : PBigDoubleArray ;
 begin
+
      Result := False ;
      if (Device < 1) or (Device > NumDevices) then Exit ;
      if NumDACs[Device] <= 0 then Exit ;
 
-     if Device > TimingDevice then begin
+     if Device > TimingDevice then
+        begin
         ShowMessage('ERROR! Timing device must be last device number started.)') ;
         Exit ;
         end ;
+
+    IOBuf := AllocMem( MaxBufPoints*nChannels*SizeOf(Double) ) ;
 
     // Stop any running D/A task
      StopDAC(Device) ;
@@ -1382,7 +1518,13 @@ begin
 
      // Select D/A output channels
      DACNumChannels := nChannels ;
-     ChannelList := format( DeviceName[Device] + '/AO0:%d', [nChannels-1] ) ;
+     ChannelList := '' ;
+     for i := 0 to nChannels-1 do
+         begin
+         ChannelList := ChannelList + DeviceName[Device]  + '/AO' + format('%d',[i]) ;
+         if i < (nChannels-1) then ChannelList := ChannelList + ',';
+         end;
+
      CheckError( DAQmxCreateAOVoltageChan( DACTask[Device],
                                            PANSIChar(ChannelList),
                                            nil ,
@@ -1392,22 +1534,24 @@ begin
                                            nil));
 
      // Select continuous sampling if repeated waveform selected
-     if CircularBufferMode then SampleMode := DAQmx_Val_ContSamps
-                           else SampleMode := DAQmx_Val_FiniteSamps ;
+     DACCircularBuffer := CircularBufferMode ;
 
      // Set D/A clock source
-     if TimingDevice <> Device then begin
+     if TimingDevice <> Device then
+        begin
         ClockSource := '/' + DeviceName[TimingDevice] + '/ao/sampleclock' ;
         end
-     else begin
+     else
+        begin
         ClockSource := 'onboardclock' ;
         end ;
 
      // Configure buffer size
-     CheckError( DAQmxCfgOutputBuffer ( DACTask[Device], nPointsInDACBuffer )) ;
+     CheckError( DAQmxCfgOutputBuffer ( DACTask[Device], MaxBufPoints )) ;
 
      // Convert to volts and ensure that data is within valid limits
      VScale := DACMaxVolts[Device] / (DACMaxValue[Device]+1.0) ;
+     DACScale[Device] := VScale ;
 
      // Set timing
      UpdateRate := 1.0 / UpdateInterval ;
@@ -1415,25 +1559,34 @@ begin
                                         PANSIChar(ClockSource),
                                         UpdateRate,
                                         DAQmx_Val_Falling ,
-                                        SampleMode,
-                                        Int64(nPoints) )) ;
+                                        DAQmx_Val_ContSamps,
+                                        Int64(Min(nPoints,MaxBufPoints)) )) ;
+
+     // Disable buffer regeneration, so waveform update is possible
+     CheckError( DAQmxSetWriteRegenMode( DACTask[Device], DAQmx_Val_DoNotAllowRegen ));
 
      // Write data to buffer
-     CheckError( DAQmxWriteBinaryI16( DACTask[Device],
-                           Min( nPointsInDACBuffer, nPoints ),
-                           False,
-                           DefaultTimeOut,
-                           DAQmx_Val_GroupByScanNumber,
-                           @DACBuf[0],
-                           NumSamplesWritten,
-                           Nil
-                           )) ;
+     DACBuf := DACBufIn ;
+
+     NumWrite := Min( nPoints, MaxBufPoints ) ;
+     for i := 0 to NumWrite*DACNumChannels-1 do IOBuf[i] := DACBuf[i] * VSCale ;
+
+     CheckError( DAQmxWriteAnalogF64(
+                 DACTask[Device],
+                 NumWrite,
+                 False,
+                 DefaultTimeOut,
+                 DAQmx_Val_GroupByScanNumber,
+                 IOBuf,
+                 NumSamplesWritten,
+                 Nil
+                 )) ;
 
      DACNumSamplesToWrite := nPoints ;
-     DACNumSamplesWritten :=  NumSamplesWritten ;
-     DACFreeBufferSpace := 0 ;
-     pDACBuf := @DACBuf ;
-     //outputdebugString(PChar(format('%d %d',[DACNumSamplesWritten,NumSamplesWritten]))) ;
+     DACNumSamplesWritten := NumSamplesWritten ;
+     DACPointer := DACNumSamplesWritten ;
+
+//     outputdebugString(PChar(format('MemoryToDAC %d %d',[DACNumSamplesWritten,NumSamplesWritten]))) ;
 
      // Request immediate start
      CheckError(DAQmxDisableStartTrig(DACTask[Device]));
@@ -1447,68 +1600,13 @@ begin
      GetADCSamplesInUse := False ;
      Result := DACActive[Device] ;
 
-     //FreeMem( DBuf ) ;
-
-     end ;
-
-
-procedure TLabIO.UpdateDACBuffer(
-          Device : SmallInt ;
-          var DACBuf : Array of SmallInt  ; { D/A output data buffer (IN) }
-          nChannels : SmallInt ;            { No. of D/A channels (IN) }
-          nPoints : Integer                 { No. of D/A output values (IN) }
-          ) ;
-{ --------------------------
-  Update DAC buffer
-  --------------------------}
-var
-    i : Integer ;
-    NumSamplesWritten : Integer ;
-    VScale : Double ;
-    DBuf : PDoubleArray ;
-begin
-
-     if (Device < 1) or (Device > NumDevices) then Exit ;
-     if NumDACs[Device] <= 0 then Exit ;
-     Exit ;
-
-     // Allocate buffer
-     GetMem( DBuf, nChannels*nPoints*8 ) ;
-
-     if not DACActive[Device] then Exit ;
-
-     DisableFPUExceptions ;
-
-     VScale := DACMaxVolts[Device] / (DACMaxValue[Device]+1.0) ;
-     for i := 0 to nChannels*nPoints-1 do DBuf^[i] := DACBuf[i]*VScale ;
-
-     CheckError( DAQmxSetWriteRelativeTo( DACTask[Device], DAQmx_Val_FirstSample )) ;
-     CheckError( DAQmxSetWriteOffset( DACTask[Device], 0 )) ;
-
-     // Write data to buffer
-     DAQmxWriteAnalogF64 ( DACTask[Device],
-                           nPoints,
-                           False,
-                           DefaultTimeOut,
-                           DAQmx_Val_GroupByScanNumber,
-                           DBuf,
-                           NumSamplesWritten,
-                           Nil
-                           ) ;
-
-//     outputdebugString(PANSIChar(format('%d %d',[nPoints,NumSamplesWritten]))) ;
-
-
-     // Restore FPU exceptions
-     EnableFPUExceptions ;
-
-     FreeMem( DBuf ) ;
+     FreeMem( IOBuf ) ;
 
      end ;
 
 
 
-function TLabIO.StopDAC(
+function TLabIO.NIDAQMX_StopDAC(
          Device : SmallInt
          ) : Boolean ;    { Returns FALSE = D/A stopped }
 { ---------------
@@ -1534,7 +1632,7 @@ begin
      end ;
 
 
-procedure TLabIO.WriteDACs(
+procedure TLabIO.NIDAQMX_WriteDACs(
           Device : Integer ;
           DACVolts : array of Single ;
           nChannels : Integer ) ;
@@ -1572,9 +1670,9 @@ begin
                                            nil)) ;
 
      // Copy into double array
-     for i := 0 to nChannels-1 do
-          begin
+     for i := 0 to nChannels-1 do begin
           DBuf[i] := Max(Min(DACVolts[i],DACMaxVolts[Device]),DACMinVolts[Device]) ;
+//          outputdebugstring(pchar(format('DAC%d V=%.4g',[i,DBuf[i]])));
           end ;
 
      // Write data to buffer
@@ -1596,7 +1694,7 @@ begin
      end ;
 
 
-procedure TLabIO.WriteDAC(
+procedure TLabIO.NIDAQMX_WriteDAC(
           Device : Integer ;
           DACVolts : Single ;
           iChannel : Integer ) ;
@@ -1675,8 +1773,7 @@ begin
      Result := False ;
      if (Device < 1) or (Device > NumDevices) then Exit ;
 
-     if Device > TimingDevice then
-        begin
+     if Device > TimingDevice then begin
         ShowMessage('ERROR! Timing device must be last device number started.)') ;
         Exit ;
         end ;
@@ -1701,12 +1798,10 @@ begin
                            else SampleMode := DAQmx_Val_FiniteSamps ;
 
      // Set D/A clock source
-     if TimingDevice <> Device then
-        begin
+     if TimingDevice <> Device then begin
         ClockSource := '/' + DeviceName[TimingDevice] + '/ao/sampleclock' ;
         end
-     else
-        begin
+     else begin
         ClockSource := 'onboardclock' ;
         end ;
      ClockSource := '/' + DeviceName[TimingDevice] + '/ao/sampleclock' ;
@@ -1751,7 +1846,7 @@ begin
      end ;
 
 
-procedure TLabIO.UpdateDIGBuffer(
+procedure TLabIO.NIDAQMX_UpdateDIGBuffer(
           Device : SmallInt ;
           var DIGBuf : Array of Integer  ; { Digital output data buffer (IN) }
           nPoints : Integer                 { No. of D/A output values (IN) }
@@ -1790,7 +1885,7 @@ begin
 
 
 
-function TLabIO.StopDIG(
+function TLabIO.NIDAQMX_StopDIG(
          Device : SmallInt
          ) : Boolean ;    { Returns FALSE = D/A stopped }
 { -------------------
@@ -1815,7 +1910,7 @@ begin
      end ;
 
 
-procedure TLabIO.WriteToDigitalOutPutPort(
+procedure TLabIO.NIDAQMX_WriteToDigitalOutPutPort(
           Device : Integer ;
           Pattern : Integer
           ) ;
@@ -1856,7 +1951,7 @@ begin
      end ;
 
 
-function TLabIO.ReadADC(
+function TLabIO.NIDAQMX_ReadADC(
          Device : Integer ;
          Channel : Integer ;       { A/D channel to be read (IN) }
          ADCVoltageRange : Single  { A/D converter input voltage range (V) (IN) }
@@ -1933,9 +2028,6 @@ begin
 
      BoardsInitialised := False ;
 
-     if InBuf <> Nil then FreeMem(InBuf) ;
-     InBuf := Nil ;
-
      if LibraryLoaded then FreeLibrary( LibraryHnd ) ;
      LibraryLoaded := False ;
 
@@ -1969,21 +2061,9 @@ begin
     repeat
         if Cbuf[i] <> #0 then s := s + CBuf[i] ;
         Inc(i) ;
-    until (CBuf[i] = #0) or (i >= High(CBuf)) ;
+        until (CBuf[i] = #0) or (i >= High(CBuf)) ;
     Result := s ;
     end ;
-
-procedure TLabIO.SetBit( var iValue : Integer ;
-                         BitNum : Integer ;
-                         State : Integer ) ;
-
-var
-  Bit, BitMask : Integer;
-begin
-    BitMask := not (1 shl BitNum) ;
-    Bit := State shl BitNum ;
-    iValue := (iValue and BitMask) or Bit ;
-    end;
 
 
 procedure TLabIO.Wait( Delay : Single ) ;
@@ -2012,6 +2092,20 @@ begin
     for i := 1 to BitNumber do Bit := Bit*2 ;
     Result := Bit ;
     end ;
+
+
+function TLabIO.SetBit( var iValue : Integer ;
+                         BitNum : Integer ;
+                         State : Integer ) : Integer ;
+
+var
+  Bit, BitMask : Integer;
+begin
+    BitMask := not (1 shl BitNum) ;
+    Bit := State shl BitNum ;
+    iValue := (iValue and BitMask) or Bit ;
+    end;
+
 
 
 

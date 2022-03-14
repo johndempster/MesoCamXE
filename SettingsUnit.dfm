@@ -1025,6 +1025,10 @@ object SettingsFrm: TSettingsFrm
     object ZStageTab: TTabSheet
       Caption = 'Z Stage'
       ImageIndex = 2
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object GroupBox2: TGroupBox
         Left = 0
         Top = 0
@@ -1222,6 +1226,10 @@ object SettingsFrm: TSettingsFrm
       HelpKeyword = 'Lenses'
       Caption = 'Lenses'
       ImageIndex = 3
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object CalibrationGrp: TGroupBox
         Left = 8
         Top = 3
@@ -1291,6 +1299,15 @@ object SettingsFrm: TSettingsFrm
           Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing]
           ParentFont = False
           TabOrder = 1
+          ColWidths = (
+            64
+            64)
+          RowHeights = (
+            24
+            24
+            24
+            24
+            24)
         end
         object edRelayLensMagnification: TValidatedEdit
           Left = 165

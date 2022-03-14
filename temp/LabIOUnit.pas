@@ -30,6 +30,7 @@ unit LabIOUnit;
 //                fixed. Card list now also cleared
 // 15.06.09 NS .... NIDAQ_InitialiseNIBoards no longer re-initializes NI devices.
 // 04.08.11 JD .... PCI-6733 board name now returned
+// 23.10.17 JD .... If error detecting board name no. of devices set to zero
 
 interface
 
@@ -496,7 +497,7 @@ var
     Done : Boolean ;
     i : Integer ;
     CBuf : Array[0..500] of ANSIChar ;
-    DeviceNum : Integer ;
+    DeviceNum,Err : Integer ;
 begin
 
    // Clear number of devices
@@ -545,12 +546,16 @@ begin
    // Get device board name
    for i := 1 to NumDevices do
        begin
-       CheckError(DAQmxGetDevProductType(PANSIChar(DeviceName[i]),CBuf,High(CBuf)+1)) ;
+       Err := DAQmxGetDevProductType(PANSIChar(DeviceName[i]),CBuf,High(CBuf)+1) ;
+       CheckError(Err) ;
        DeviceBoardName[i] := PCharArrayToString(CBuf) ;
        if AnsiContainsText(DeviceBoardName[i],'622') or
           AnsiContainsText(DeviceBoardName[i],'625') then DigitalWaveformCapable[i] := True
                                                      else DigitalWaveformCapable[i] := False ;
        end ;
+
+   // If error getting board name then set no. of devices to 0
+   if Err <> 0 then NumDevices := 0 ;
 
    for i := 1 to NumDevices do DeviceNumDMAChannels[i] := 2 ;
 

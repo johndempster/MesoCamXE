@@ -84,6 +84,8 @@ unit MainUnit;
 // V1.8.9 24.04.19 StartCamera() Extra frame at beginning of CCD shift exposure sequences now only collected
 //                 for Vieworks cameras on IMAQ interface
 //                 'CAMERAREADOUTSPEED', Cam1.ReadoutSpeed now stored in settings file
+// V1.9.0 11.03.22 Time lapse, Z stack and multi-wavelength illumination now supported
+//                 Timing of light source, image capture snd Z stage now handled by Event list.
 
 Interface
 
@@ -104,6 +106,13 @@ const
     MaxPanels = 4 ;
     MaxHistogramBins = 128 ;
     MaxLenses = 10 ;
+    evLightSource = 1 ;
+    evZStage = 2 ;
+    evSetCCDPixelShift = 3 ;
+    evExposure = 4 ;
+    evImageWait = 5 ;
+    evSequenceStart = 6 ;
+    evSequenceEnd = 7 ;
 type
 
  TPaletteType = (palGrey,palGreen,palRed,palBlue,palFalseColor) ;
@@ -116,6 +125,21 @@ type
     Width : Double ;
     Height : Double ;
     end ;
+
+ TEventListItem = record
+    EventType : Cardinal ;
+//    Time : Cardinal ;
+    Delay : Cardinal ;
+    LightSourceOn : Boolean ;
+    LightSources : TActiveLightSource ;
+    CCDShiftCounter : Cardinal ;
+    ZPosition : Double ;
+    TSection : Integer ;
+    ZSection : Integer ;
+    end ;
+
+ TEventList = Array[0..1000000] of TEventListItem ;
+ PEventList = ^TEventList ;
 
 
   TMainFrm = class(TForm)
@@ -215,9 +239,6 @@ type
     tbChan1: TTabSheet;
     tbChan2: TTabSheet;
     Image0: TImage;
-    ZSectionPanel: TPanel;
-    lbZSection: TLabel;
-    scZSection: TScrollBar;
     lbReadout: TLabel;
     Image1: TImage;
     Image2: TImage;
@@ -244,15 +265,19 @@ type
     Label4: TLabel;
     edNumTimeLapsePoints: TValidatedEdit;
     edTimeLapseInterval: TValidatedEdit;
-    TSectionPanel: TPanel;
-    lbTSection: TLabel;
-    scTSection: TScrollBar;
-    Label1: TLabel;
-    Label15: TLabel;
     bGoToXPosition: TButton;
     bGoToYPosition: TButton;
     Cam1: TSESCam;
     lbSaveFilename: TLabel;
+    SlidersGrp: TGroupBox;
+    TSectionPanel: TPanel;
+    lbTSection: TLabel;
+    Label15: TLabel;
+    scTSection: TScrollBar;
+    ZSectionPanel: TPanel;
+    lbZSection: TLabel;
+    Label1: TLabel;
+    scZSection: TScrollBar;
     edSaveFileStatus: TEdit;
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -352,16 +377,20 @@ type
     MagnifiedCameraPixelSize : double ;    // Image pixel size (microns)
     CameraTriggerOutput : Integer ;        // Camera trigger digital output line
     CameraTriggerActiveHigh : Boolean ;    // TTL high level triggers camera
-    CameraTriggerRequired : Boolean ;      // Camera trigger pulse required
     CameraGainIndex : Integer ;
     CCDShiftCounter : Integer ;            // CCD stage shift counter
     Initialising : Boolean ;
+
     ShowCapturedImage : Boolean ;
-    LiveImagingInProgress : Boolean ;
+    LiveImagingInProgress : Boolean ;      // Live imaging in progress (not saving to disk)
+    ImageCaptureInProgress : Boolean ;     // Image capture in progress (saving to disk)
     ShowCameraImage : Boolean ;
     RawImageAvailable : Boolean ;
+    ImageCaptured : Boolean ;              // Image has been captured flag
+
     DeviceNum : Integer ;
     pFrameBuf : Pointer ;
+
     TempBuf : PBig16bitArray ;
     FirstImageSum : Double ;
     ResizeImage : Boolean ;
@@ -375,7 +404,7 @@ type
     NumFramesAcquired : Integer ;     // No. of frames acquired by camera
     NumFramesRequired : Integer ;     //  No. of frames required to be captured
 //    OldNumFramesAcquired : Integer ;
-    NextCameraTrigger : Integer ;
+//    NextCameraTrigger : Integer ;
 
     LastFrameCount : Cardinal ;        // Last camera frame count
 
@@ -413,16 +442,28 @@ type
     HRNumComponentsPerFrame : Integer ;     // No. of colour components
     NumPixelShiftFrames : Integer ;         // No. of pixel shifted frames
 
+    EventList : PEventList ;            // Timer event list
+    NumEvents : Integer ;               // No. events in list
+    EventCounter : Integer ;            // Event list pointer
+    TNextEvent : Cardinal ;             // System time for next event (ms)
+    TZStackStart : Cardinal ;          // System time (ms) that Z stack started
+
+    LightSourcesInUse : Array[0..MaxLightSources] of Integer  ;  // List of index nos. of light sources in use
+    NumLightSourcesInUse : Integer ;                            // No. of light sources in use
+//    NumImagePanels : Integer ;                                   // No. of image panels in use
+
     SlidersDisabled : Boolean ;
 
     // Z axis control
     NumZSectionsRequested : Integer ;   // No. of sections in Z stack requested
 
-    ZStackStartingPosition : Double ;   // Starting position of Z stack series
+//    ZStackStartingPosition : Double ;   // Starting position of Z stack series
+
+    TImageCaptureStartedAt : Cardinal ; // System time (ms) that image capture started
 
     NumTSectionsAvailable : Integer ;   // No. of time lapse sections available
     NumTSectionsRequested : Integer ;   // No. of time lapse sections required
-    NumPanelsAvailable : Integer ;   // No. of image panels available
+//    NumPanelsAvailable : Integer ;   // No. of image panels available
 
     ZStartingPosition : Double ;      // Z position at start of scanning
     EmptyFlag : Integer ;
@@ -448,16 +489,16 @@ type
     GreenLUT : Array[0..LUTSize-1] of Word ;    // Display look-up tables
     BlueLUT : Array[0..LUTSize-1] of Word ;    // Display look-up tables
     PaletteType : TPaletteType ;  // Display colour palette
-    pImageBuf : PIntArray ; // Pointer to image buffers
-    pLiveImageBuf : PIntArray ; // Pointer to live image buffer
+    pImageBuf : PIntArray ;              // Pointer to image buffers
+    pLiveImageBuf : PIntArray ;          // Pointer to live image buffer
     pDisplayBuf : PIntArray ;
 
     PanelName : Array[0..MaxPanels-1] of string ; // Names of display panels in use
     NumPanels : Integer ;                         // No. of display panels in use
 
-    SnapStartAt : Cardinal ;                       // Time (ms) to acquire next image
-    LastSnapStartedAt : Cardinal ;                 // Time (ms) last snap started
-    LightSourceOnAt : Cardinal ;                   // Time (ms) to turn light source(s) on
+//    SnapStartAt : Cardinal ;                       // Time (ms) to acquire next image
+//    LastSnapStartedAt : Cardinal ;                 // Time (ms) last snap started
+//    LightSourceOnAt : Cardinal ;                   // Time (ms) to turn light source(s) on
 
     UpdateLightSource : Boolean ;                  // Update light source flag
 
@@ -486,8 +527,6 @@ type
     procedure StartImageCapture ;
     procedure StartCamera ;
     procedure StopCamera ;
-    procedure NextZTStep ;
-    function SelectNextLightSource( Initialise : Boolean ) : Boolean ;
 
     procedure SetDisplayIntensityRange(
           LoValue : Integer ;
@@ -635,8 +674,11 @@ begin
      pDisplayBuf := Nil ;
      pImageBuf := Nil ;
      pLiveImageBuf := Nil ;
+     EventList := Nil ;
+     NumEvents := 0 ;
+     EventCounter := 0 ;
+
      IgnorePanelControls := True ;
-     CameraTriggerRequired := False ;
      TimerBusy := False ;
      ResizeImage := False ;
 
@@ -644,7 +686,6 @@ begin
      ZSectionCounter := 0 ;
      TPointCounter := 0 ;
      NumTSectionsAvailable := 0 ;
-     NumPanelsAvailable := 0 ;
      CursorReadoutText := '' ;
      edSaveFileStatus.Visible := False ;
      end;
@@ -655,26 +696,26 @@ procedure TMainFrm.FormShow(Sender: TObject);
 // Initialisations when form is displayed
 // --------------------------------------
 var
-    i,iDev : Integer ;
+    i : Integer ;
 begin
 
      Initialising := False ;
      LiveImagingInProgress := False ;
+     ImageCaptureInProgress := False ;
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.8.9';
+     ProgramName := 'MesoCam V1.9.0';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 24/04/19';
+     ProgramName := ProgramName + ' 14/03/22';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
      DeviceNum := 1 ;
-     LabIO.NIDAQAPI := NIDAQMX ;
      LabIO.Open ;
 
      Cam1.BinFactor := 1 ;
@@ -690,7 +731,6 @@ begin
 
      DeviceNum := 1 ;
 
-     //StatusBar.SimpleText := LabIO.DeviceName[1] ;
      Magnification[0] := 1 ;
      for i := 0 to High(Magnification) do begin
          Magnification[i+1] := Magnification[i] + Max(Round(Magnification[i]*0.25),1) ;
@@ -771,7 +811,8 @@ begin
 
      // Create settings directory path
      SettingsDirectory := GetSpecialFolder(CSIDL_COMMON_DOCUMENTS) + '\MesoCam\';
-     if not SysUtils.DirectoryExists(SettingsDirectory) then begin
+     if not SysUtils.DirectoryExists(SettingsDirectory) then
+        begin
         if not SysUtils.ForceDirectories(SettingsDirectory) then
            ShowMessage( 'Unable to create settings folder' + SettingsDirectory) ;
         end ;
@@ -812,8 +853,8 @@ begin
      ShowCapturedImage := RawImageAvailable ;
 
      UpdateDisplay := False ;
-     SnapStartAt := 0 ;
-     LastSnapStartedAt := 0 ;
+//     SnapStartAt := 0 ;
+//     LastSnapStartedAt := 0 ;
      ScanningInProgress := False ;
 
      SetImagePanels ;
@@ -829,9 +870,9 @@ begin
     SetScanZoomToFullField ;
 
     // Initialise digital outputs
-    for iDev := 1 to LabIO.NumDevices do begin
-        LabIO.WriteToDigitalOutPutPort( iDev, LabIO.DigOutState[iDev] ) ;
-        end;
+//    for iDev := 1 to LabIO.NumDevices do begin
+//        LabIO.WriteToDigitalOutPutPort( iDev, LabIO.DigOutState[iDev] ) ;
+//        end;
 
      Timer.Enabled := True ;
      UpdateDisplay := True ;
@@ -846,8 +887,6 @@ begin
      tbChan3.ControlStyle := tbChan3.ControlStyle + [csOpaque] ;
 
      lbreadout.ControlStyle := lbreadout.ControlStyle + [csOpaque] ;
-     ZSectionPanel.Visible := False ;
-     TSectionPanel.Visible := False ;
 
      Left := 10 ;
      Top := 10 ;
@@ -1158,7 +1197,7 @@ const
     MarginPixels = 16 ;
 var
     HeightWidthRatio : Double ;
-    i,TabIndex : Integer ;
+    i,TabIndex,iPanel : Integer ;
 
 begin
 
@@ -1208,7 +1247,7 @@ begin
 
      // Assign image panel captions
      TabIndex := Page.TabIndex ;
-     NumPanels := 0 ;
+     iPanel := 0 ;
      tbChan0.Caption := '' ;
      tbChan1.TabVisible := False ;
      tbChan2.TabVisible := False ;
@@ -1216,31 +1255,31 @@ begin
 
      for i := 0 to High(LightSource.Active) do if LightSource.Active[i] then
          begin
-         case NumPanels of
+         case iPanel of
               0 : begin
                   tbChan0.Caption := tbChan0.Caption + LightSource.Names[i] + ' ';
-                  PanelName[NumPanels] := tbChan0.Caption ;
+                  PanelName[iPanel] := tbChan0.Caption ;
                   end;
               1 : begin
                   tbChan1.Caption := LightSource.Names[i] ;
-                  PanelName[NumPanels] := tbChan1.Caption ;
+                  PanelName[iPanel] := tbChan1.Caption ;
                   tbChan1.TabVisible := True ;
                   end;
               2 : begin
                   tbChan2.Caption := LightSource.Names[i] ;
-                  PanelName[NumPanels] := tbChan2.Caption ;
+                  PanelName[iPanel] := tbChan2.Caption ;
                   tbChan2.TabVisible := True ;
                   end ;
               3 : begin
                   tbChan3.Caption := LightSource.Names[i] ;
-                  PanelName[NumPanels] := tbChan3.Caption ;
+                  PanelName[iPanel] := tbChan3.Caption ;
                   tbChan3.TabVisible := True ;
                   end ;
               end;
-         if ckSeparateLightSources.Checked and ShowCapturedImage then Inc(NumPanels) ;
+         if ShowCapturedImage and ckSeparateLightSources.checked then Inc(iPanel) ;
          end;
      Page.TabIndex := TabIndex ;
-     NumPanels := Max(NumPanels,1);
+//     NumPanels := Max(NumPanels,1);
 end ;
 
 
@@ -1523,26 +1562,11 @@ begin
      Images[Page.TabIndex].Height := BitMap.Height ;
 
      // Show Z section slider bar
-     if ckAcquireZStack.Checked and (not bStopImage.Enabled)  then
-        begin
-        scZSection.Max := Max( Min( NumZSectionsRequested, NumImagesInRawFile div NumPanelsAvailable ) -1,0);
-        ZSectionPanel.Visible := True ;
-        lbZSection.Caption := format(' %d/%d',[scZSection.Position+1,scZSection.Max+1]) ;
-        end
-     else ZSectionPanel.Visible := False ;
+     scZSection.Max := Max( Min( NumZSectionsRequested, NumImagesInRawFile div NumPanels ) -1,0);
+     lbZSection.Caption := format(' %d/%d',[scZSection.Position+1,scZSection.Max+1]) ;
 
      // Show T section slider bar
-     if ckAcquireTimeLapseSeries.Checked and (not bStopImage.Enabled)  then
-        begin
-        TSectionPanel.Visible := True ;
-        lbTSection.Caption := format(' %d/%d',[scTSection.Position+1,scTSection.Max+1]) ;
-        end
-     else TSectionPanel.Visible := False ;
-
-     TSectionPanel.Left := Page.Left ;
-     if TSectionPanel.Visible then ZSectionPanel.Left := TSectionPanel.Left + TSectionPanel.Width
-                              else ZSectionPanel.Left := TSectionPanel.Left ;
-
+     lbTSection.Caption := format(' %d/%d',[scTSection.Position+1,scTSection.Max+1]) ;
      edSaveFileStatus.Top := ZSectionPanel.Top ;
      if TSectionPanel.Visible or ZSectionPanel.Visible then edSaveFileStatus.Left := ZSectionPanel.Left + ZSectionPanel.Width
                                                        else edSaveFileStatus.Left := ZSectionPanel.Left ;
@@ -1653,9 +1677,13 @@ begin
     bCaptureImage.Enabled := True ;
     bStopImage.Enabled := True ;
     LiveImagingInProgress := True ;
+    ImageCaptureInProgress := False ;
     ShowCapturedImage := False ;
     ShowCameraImage := True ;
-    StartImageCapture ;
+//    StartImageCapture ;
+
+    StopCamera ;
+       StartCamera ;
 end ;
 
 
@@ -1667,8 +1695,9 @@ begin
     bCaptureImage.Enabled := False ;
     if LiveImagingInProgress then
        begin
-       StopCamera ;
-       LiveImagingInProgress := False ;
+//       StopCamera ;
+//       LiveImagingInProgress := False ;
+       bStopImage.Click ;
        end;
 
     StartImageCapture ;
@@ -1677,6 +1706,7 @@ begin
     bStopImage.Enabled := True ;
     NumFramesRequired := 1 ;
     ShowCameraImage := True ;
+    EdStatus.Text := 'Capture Image(s)' ;
 
 end ;
 
@@ -1695,7 +1725,12 @@ begin
      SetCCDReadoutFrm.Top := 20 ;
      bEnterCCDArea.Enabled := False ;
 
-    if LiveImagingInProgress then SnapStartAt := TimeGetTime ;
+    if LiveImagingInProgress then
+       begin
+       StopCamera ;
+       StartCamera ;
+       end;
+
 end;
 
 
@@ -1704,59 +1739,185 @@ procedure TMainFrm.StartImageCapture ;
 // Start new image capture sequence
 // ----------------------------------
 var
-    ZPosRequired : Double ;
+    ImageSaveTime : Double ;
+    iT,i,iZ,iLS,iP,iPS,iPS_Start : Integer ;
 begin
 
     if UnsavedRawImage and
-       (MessageDlg( 'Current image(s) not saved! Do you want to overwrite?',mtWarning,[mbYes,mbNo], 0 ) = mrYes) then UnsavedRawImage := False ;
+       (MessageDlg( 'Current image(s) not saved! Do you want to overwrite?',mtWarning,[mbYes,mbNo], 0 ) = mrNo) then Exit ;
 
-    // Clear image counters
-    if not UnsavedRawImage then
+    // No. of pixel shifted frames per image
+    NumPixelShiftFrames := Round(Integer(cbCaptureMode.Items.Objects[cbCaptureMode.ItemIndex])) ;
+
+    // Light sources in use
+    GetAllLightSourcePanels ;
+
+    // Create list of light sources (wavelengths) in use
+    NumLightSourcesInUse := 0 ;
+    for iLS := 0 to High(LightSource.Active) do if LightSource.Active[iLS] then
+        begin
+        LightSourcesInUse[NumLightSourcesInUse] :=  iLS ;
+        Inc(NumLightSourcesInUse) ;
+        end;
+
+    // Set no. of image panels depending on whether light source wavelengths are to be acquired simultaneously or separately
+    if ckSeparateLightSources.Checked then NumPanels := NumLightSourcesInUse
+                                      else NumPanels := 1 ;
+
+     // Z sections
+     ZSectionCounter := 0 ;
+     if ckAcquireZStack.Checked then
+        begin
+        NumZSectionsRequested := Max(Round(edNumZsections.Value),1) ;
+        scZSection.Max := 0 ;
+        end
+     else
+        begin
+        NumZSectionsRequested := 1 ;
+        scZSection.Max := 0 ;
+        end;
+
+     TPointCounter := 0 ;
+     NumTSectionsAvailable := 0 ;
+     if ckAcquireTimeLapseSeries.Checked then
+        begin
+        NumTSectionsRequested := Max(Round(edNumTimeLapsePoints.Value),1)
+        end
+     else
        begin
-       // Z sections
-       ZSectionCounter := 0 ;
-       if ckAcquireZStack.Checked then
-          begin
-          NumZSectionsRequested := Max(Round(edNumZsections.Value),1) ;
-          scZSection.Max := 0 ;
-          end
-       else
-          begin
-          NumZSectionsRequested := 1 ;
-          scZSection.Max := 0 ;
-          end;
-
-       TPointCounter := 0 ;
-       NumTSectionsAvailable := 0 ;
-       if ckAcquireTimeLapseSeries.Checked then
-          begin
-          NumTSectionsRequested := Max(Round(edNumTimeLapsePoints.Value),1)
-          end
-       else
-          begin
-          NumTSectionsRequested := 1 ;
-          scTSection.Max := 0 ;
-
-          end;
-       ZStackStartingPosition := ZStage.ZPosition ;
-       NumImagesInRawFile := 0 ;
+       NumTSectionsRequested := 1 ;
+       scTSection.Max := 0 ;
        end;
+     NumImagesInRawFile := 0 ;
+     scTSection.Max := NumTSectionsRequested - 1 ;
+     scZSection.Max := NumZSectionsRequested - 1 ;
 
-       // Z stage control
-    if ckAcquireZStack.Checked then
-       begin
-       NumZSectionsRequested := Max(Round(edNumZsections.Value),1) ;
-       ZSectionCounter := (NumImagesInRawFile div NumPanelsAvailable) mod NumZSectionsRequested ;
-       // Move Z position to start
-       ZPosRequired := ZStackStartingPosition + edMicronsPerZStep.Value*(ZSectionCounter) ;
-       SnapStartAt := timegettime + Round(1000*ZStage.ZStepTime*Max(Abs(ZPosRequired-ZStage.ZPosition),1.0)) ;
-       ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZPosRequired );
-       outputdebugstring(pchar(format('Start image Z %.3f',[ZPosRequired])));
-       end
-    else
-       begin
-       SnapStartAt := timegettime ;      // Start time.
-       end ;
+    // Create event list
+
+    NumEvents := NumZSectionsRequested*NumTSectionsRequested*NumPixelShiftFrames*NumPanels*20 ;
+    if EventList <> Nil then FreeMem(EventList) ;
+    EventList := AllocMem( NumEvents*SizeOf(TEventListItem) ) ;
+
+    NumEvents := 0 ;
+    ImageSaveTime := 0.05 ;
+    EventList[0].TSection := 0 ;
+    EventList[0].ZSection := 0 ;
+    EventCounter := 0 ;
+
+    for iT := 0 to NumTSectionsRequested-1 do
+        begin
+
+        // Start Z stack capture sequence
+        EventList[NumEvents].TSection := iT ;
+        EventList[NumEvents].ZSection := 0 ;
+        EventList[NumEvents].Delay := 0 ;
+        EventList[NumEvents].EventType := evSequenceStart ;
+        Inc(NumEvents) ;
+
+        // Acquire Z sections
+
+        for iZ := 0 to NumZSectionsRequested-1 do
+            begin
+
+            // Set Z stage position (except for first exposure
+            EventList[NumEvents].TSection := iT ;
+            EventList[NumEvents].ZSection := iZ ;
+            if NumZSectionsRequested > 1 then
+               begin
+               EventList[NumEvents].Delay := Round(ZStage.ZStepTime*edMicronsPerZStep.Value*1000.0) ;
+               EventList[NumEvents].EventType := evZStage ;
+               EventList[NumEvents].ZPosition := ZStage.ZPosition + iZ*edMicronsPerZStep.Value ;
+               Inc(NumEvents) ;
+               end;
+
+            for iP := 0 to NumPanels-1 do
+                begin
+
+                // Select wavelengths and turn light sources on
+                EventList[NumEvents].TSection := iT ;
+                EventList[NumEvents].ZSection := iZ ;
+                EventList[NumEvents].Delay := Round(LightSource.ChangeTime*1000.0) ;
+                EventList[NumEvents].EventType := evLightSource ;
+                for i := 0 to MaxLightSources-1 do EventList[NumEvents].LightSources[i] := False ;
+                if NumPanels = 1 then
+                   begin
+                   // All wavelengths on simultaneously
+                   for iLS := 0 to NumLightSourcesInUse-1 do
+                       EventList[NumEvents].LightSources[LightSourcesInUse[iLS]] := True ;
+                   end
+                else
+                   begin
+                   // Separate images for each wavelength
+                   EventList[NumEvents].LightSources[LightSourcesInUse[iP]] := True ;
+                   end;
+
+                EventList[NumEvents].LightSourceOn := True ;
+                Inc(NumEvents) ;
+
+                //Set camera exposure
+                if NumPixelShiftFrames = 1 then iPS_Start := 0
+                                           else iPS_Start := -1 ;
+                for iPS := iPS_Start to NumPixelShiftFrames-1 do
+                    begin
+
+                    // Set pixel shift counter for cameras using CCD pixel shift resolution enhancement
+                    if NumPixelShiftFrames > 1 then
+                       begin
+                       EventList[NumEvents].TSection := iT ;
+                       EventList[NumEvents].ZSection := iZ ;
+                       EventList[NumEvents].Delay := 50 ;
+                       EventList[NumEvents].EventType := evSetCCDPixelShift ;
+                       EventList[NumEvents].CCDShiftCounter := iPS ;
+                       Inc(NumEvents) ;
+                       end;
+
+                   // Start camera exposure
+                   EventList[NumEvents].TSection := iT ;
+                   EventList[NumEvents].ZSection := iZ ;
+                   EventList[NumEvents].Delay :=  Round((edExposureTime.Value + ImageSaveTime)*1000.0) ;
+                   EventList[NumEvents].EventType := evExposure ;
+                   Inc(NumEvents) ;
+
+                   // Wait for image
+                   EventList[NumEvents].TSection := iT ;
+                   EventList[NumEvents].ZSection := iZ ;
+                   EventList[NumEvents].Delay := 50 ;
+                   EventList[NumEvents].EventType := evImageWait ;
+                   Inc(NumEvents) ;
+
+                   end;
+
+                end;
+
+            end;
+
+        // Return to starting Z position
+        if NumZSectionsRequested > 1 then
+           begin
+           EventList[NumEvents].Delay := Round(ZStage.ZStepTime*1000.0) ;
+           EventList[NumEvents].EventType := evZStage ;
+           EventList[NumEvents].ZPosition := ZStage.ZPosition ;
+           Inc(NumEvents) ;
+           end;
+
+        // Turn light sources off
+        EventList[NumEvents].TSection := iT ;
+        EventList[NumEvents].ZSection := 0 ;
+        EventList[NumEvents].Delay := Round(LightSource.ChangeTime*1000.0) ;
+        EventList[NumEvents].EventType := evLightSource ;
+        EventList[NumEvents].LightSourceOn := False ;
+        Inc(NumEvents) ;
+
+        // End Z stack capture sequence
+        EventList[NumEvents].TSection := iT ;
+        EventList[NumEvents].ZSection := 0 ;
+        EventList[NumEvents].Delay := Round(edTimeLapseInterval.Value*1000.0) ;
+        if iT >= NumTSectionsRequested then EventList[NumEvents].Delay := 50 ;
+        EventList[NumEvents].EventType := evSequenceEnd ;
+        Inc(NumEvents) ;
+
+        end;
+
 
     FixRectangle( SelectedRectBM ) ;
 
@@ -1766,12 +1927,17 @@ begin
 
     RawImageAvailable := False ;
 
-
-    // Initialise light source used in SeparateLightSources mode
-    SelectNextLightSource(true) ;
-    LightSource.On := True ;
-
     SetImagePanels ;
+
+    StartCamera ;
+
+    ImageCaptureInProgress := True ;
+    LiveImagingInProgress := False ;
+
+    // Time (ms) that image capture started at
+    TImageCaptureStartedAt := timegettime ;
+    TNextEvent := timegettime ;
+    ImageCaptured := False ;
 
     end ;
 
@@ -1821,7 +1987,7 @@ procedure TMainFrm.StartCamera ;
 // Scan image scan
 // ---------------
 var
-    i,nShifts : Integer ;
+    i : Integer ;
 begin
 
     if Initialising then Exit ;
@@ -1882,15 +2048,20 @@ begin
 
     NumBitsPerPixel := Cam1.PixelDepth ;
     GreyLevelMax := Cam1.GreyLevelMax ;
-    nShifts := Round(sqrt(Cam1.NumPixelShiftFrames)) ;
+//    nShifts := Round(sqrt(Cam1.NumPixelShiftFrames)) ;
 
     Cam1.NumFramesInBuffer := 18 ;
 //    Cam1.TriggerMode := CamExtTrigger ;//camFreeRun ;
 
     Cam1.GetFrameBufferPointer( pFrameBuf ) ;
 
-    if LiveImagingInProgress then Cam1.StartCapture
-                             else Cam1.SnapImage ;
+    if LiveImagingInProgress then
+       begin
+       LightSource.On := True ;
+       LightSource.Update ;
+       Cam1.StartCapture ;
+       end;
+//                             else Cam1.SnapImage ;
 
     FramePointer := 0 ;
     MostRecentFrame := -1 ;
@@ -1912,10 +2083,6 @@ begin
     // in series has incorrect expsoure time
     if Cam1.CameraType = IMAQ then CCDShiftCounter := -1
                               else CCDShiftCounter := 0 ;
-
-    CameraTriggerRequired := False ;
-
-//    NextCameraTrigger := timegettime + 1000  ;
 
     UpdateDisplay := True ;
     ResizeImage := True ;
@@ -1957,7 +2124,7 @@ begin
                               Round(CCDRegion.Right*MainFrm.Cam1.FrameWidthMax)-1,
                               Round(CCDRegion.Bottom*MainFrm.Cam1.FrameHeightMax)-1);
 
-     if LiveImagingInProgress then SnapStartAt := TimeGetTime ;
+     if LiveImagingInProgress then StartCamera ;
      bFullFrame.Enabled := True ;
 
      end;
@@ -2016,8 +2183,9 @@ procedure TMainFrm.edExposureTimeKeyPress(Sender: TObject; var Key: Char);
 begin
     if (Key = #13) and LiveImagingInProgress then
        begin
-       SnapStartAt := TimeGetTime ;
+//       SnapStartAt := TimeGetTime ;
        StopCamera ;
+       StartCamera ;
        end;
 
     end;
@@ -2140,7 +2308,6 @@ var
      i,NumPixels,iStep,nPoints : Integer ;
      z,zMean,zSD,zSum : Single ;
      iz,ZMin,ZMax,ZLo,ZHi,ZThreshold : Integer ;
-     FrameType : Integer ;
      pImBuf : PIntArray ;
 begin
 
@@ -2165,7 +2332,7 @@ begin
 
 
     NumPixels := FrameWidth*FrameHeight - 4 ;
-    FrameType := 0 ;
+//    FrameType := 0 ;
     if NumPixels < 2 then Exit ;
 
     iStep := Max(NumPixels div MaxPoints,1) ;
@@ -2240,14 +2407,13 @@ const
     MaxPoints = 10000 ;
 var
      i,ix,NumPixels,iStep,BinWidth : Integer ;
-     FrameType : Integer ;
      XLo,XMid,XHi,YMax : single ;
 begin
 
     if pDisplayBuf = Nil then Exit ;
 
     NumPixels := FrameWidth*FrameHeight - 4 ;
-    FrameType := 0 ;
+
     if NumPixels < 2 then Exit ;
 
     iStep := Max(NumPixels div MaxPoints,1) ;
@@ -2306,6 +2472,7 @@ begin
     UpdateDisplay := True ;
     end;
 
+
 procedure TMainFrm.rbZoomModeClick(Sender: TObject);
 // -----------------
 // Zoom mode selected
@@ -2314,80 +2481,150 @@ begin
     UpdateDisplay := True ;
     end;
 
+
 procedure TMainFrm.TimerTimer(Sender: TObject);
 // -------------------------
 // Regular timed operations
 // --------------------------
 var
-    iDev,NumSubPixels : Integer ;
+    NumSubPixels : Integer ;
     FrameRate : Double ;
     s : string ;
-    NextZTStepRequested : Boolean ;
+    TNow : Cardinal ;
 begin
 
     if TimerBusy then Exit ;
 
-    NextZTStepRequested := False ;
+    TNow := TimeGetTime ;
+
+    if ImageCaptureInProgress and (EventCounter < NumEvents) then
+       begin
+
+       if TNow > TNextEvent then
+          begin
+          case EventList[EventCounter].EventType of
+
+              // Start of Z stack capture sequence
+              evSequenceStart :
+                begin
+                TZStackStart := TNow ;
+                TNextEvent := TNow ;
+                Inc(EventCounter) ;
+                end;
+
+              // Light source event
+              evLightSource :
+                begin
+                LightSource.Active := EventList[EventCounter].LightSources ;
+                LightSource.On := EventList[EventCounter].LightSourceOn ;
+                LightSource.Update ;
+                SetImagePanels ;
+                TNextEvent := TNow + EventList[EventCounter].Delay ;
+                Inc(EventCounter) ;
+                end;
+
+              // Z stage event
+              evZStage :
+                begin
+                ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, EventList[EventCounter].ZPosition );
+                TNextEvent := TNow + EventList[EventCounter].Delay ;
+                Inc(EventCounter) ;
+                end;
+
+              // Pixel shift event
+              evSetCCDPixelShift :
+                begin
+                NumSubPixels := Round(sqrt(NumPixelShiftFrames)) ;
+                CCDShiftCounter := EventList[EventCounter].CCDShiftCounter ;
+                // Calculate fractional CCD shifts
+                Cam1.CCDXShift := (Max(CCDShiftCounter,0) mod NumSubPixels)/NumSubPixels ;
+                Cam1.CCDYShift := (Max(CCDShiftCounter,0) div NumSubPixels)/NumSubPixels ;
+
+                TNextEvent := TNow + EventList[EventCounter].Delay ;
+                Inc(EventCounter) ;
+                end;
+
+              // Acquire image
+              evExposure :
+                begin
+                Cam1.SnapImage ;
+                ImageCaptured := False ;
+                TNextEvent := TNow + EventList[EventCounter].Delay ;
+                Inc(EventCounter) ;
+                end;
+
+              // Wait for image
+              evImageWait :
+                begin
+                if ImageCaptured then
+                   begin
+                   TNextEvent := TNow + EventList[EventCounter].Delay ;
+                   Inc(EventCounter) ;
+                   end;
+                end;
+
+              // End of Z stack sequence
+              evSequenceEnd :
+                begin
+                TNextEvent := Max( TZStackStart + EventList[EventCounter].Delay, TNow) ;
+                Inc(EventCounter) ;
+                end;
+
+              end;
+          end;
+
+       // Update status
+       s := format('T:%d/%d',[EventList[EventCounter].TSection+1,NumTSectionsRequested]);
+       if NumZSectionsRequested > 1 then
+          s := s + format(' Z:%d/%d',[EventList[EventCounter].ZSection+1,NumZSectionsRequested]);
+       if NumPixelShiftFrames > 1 then
+          s := s + format(' PS:%d/%d',[Min(CCDShiftCounter+1,NumPixelShiftFrames),NumPixelShiftFrames]);
+       s := s + format(' Imgs:%d',[NumImagesInRawFile]) ;
+       s := s + format(' (%.1f s)',[Max((TNextEvent*0.001-TNow*0.001),0.0)]);
+       edstatus.Text := s ;
+
+       if EventCounter >= NumEvents then bStopImage.Click ;
+
+       end;
 
         // Read images from camera
     if Cam1.CameraActive then Cam1.ReadCamera ;
 
-    if Cam1.CameraActive and (not LiveImagingInProgress) then
+    if Cam1.CameraActive and ImageCaptureInProgress then
        Begin
          // Update CCD XY stage position
          if Cam1.FrameCount >= 1 then
             begin
+
             // Stop camera
             Cam1.StopCapture ;
+
             // Copy image to display buffer
             CopyImageToDisplayBuf( Cam1.FrameCount-1 ) ;
+
             // Add image to interleaved buffer
             InterleaveToPixelShiftImage( Max(CCDShiftCounter,0) ) ;
+
             // Set next pixel shift steps
-            NumSubPixels := Round(sqrt(NumPixelShiftFrames)) ;
-            Inc(CCDShiftCounter) ;
+//            NumSubPixels := Round(sqrt(NumPixelShiftFrames)) ;
+//            Inc(CCDShiftCounter) ;
             // Calculate fractional CCD shifts
-            Cam1.CCDXShift := (Max(CCDShiftCounter,0) mod NumSubPixels)/NumSubPixels ;
-            Cam1.CCDYShift := (Max(CCDShiftCounter,0) div NumSubPixels)/NumSubPixels ;
+ //           Cam1.CCDXShift := (Max(CCDShiftCounter,0) mod NumSubPixels)/NumSubPixels ;
+ //           Cam1.CCDYShift := (Max(CCDShiftCounter,0) div NumSubPixels)/NumSubPixels ;
  //           outputdebugstring(Pchar(format('%d CCD X=%.3g Y=%.3g',[CCDShiftCounter,Cam1.CCDXShift,Cam1.CCDYShift])));
 
-            if CCDShiftCounter < NumPixelShiftFrames then
-               begin
-               NextCameraTrigger := TimeGetTime ;
-               CameraTriggerRequired := True ;
-               end
-            else
+            if CCDShiftCounter >= (NumPixelShiftFrames-1) then
                begin
                // Save to raw image file
-               edStatus.Text := edStatus.Text + ' Saving' ;
                Application.ProcessMessages ;
                Inc(NumImagesInRawFile) ;
                SaveRawImage( RawImagesFileName, NumImagesInRawFile-1 ) ;
-               NextZTStepRequested := True ;
                end;
 
-            // Update status
-            s := '' ;
-            if ckAcquireTimeLapseSeries.Checked then
-               s := s + format('T:%d/%d, ',[TPointCounter+1,NumTSectionsRequested]);
-            if ckAcquireZStack.Checked then
-               s := s + format('Z:%d/%d, ',[ZSectionCounter+1,NumZSectionsRequested]);
-            if ckSeparateLightSources.Checked then
-               s := s + format(' F(%s):',[LightSource.Names[LightSource.List[LightSource.ListIndex]]])
-            else s := s + 'F:' ;
-            s := s + format('%d/%d',[Min(CCDShiftCounter,NumPixelShiftFrames),NumPixelShiftFrames]);
-            edstatus.Text := s ;
             UpdateDisplay := True ;
+            ImageCaptured := True ;
             end ;
        End;
-
-    if (timegettime >= NextCameraTrigger) and CameraTriggerRequired and bStopImage.Enabled then
-       begin
-       // Acquire single image
-       Cam1.SnapImage ;
-       // Set next trigger to far in the future to disable.
-       CameraTriggerRequired := False ;
-       end ;
 
     // Live imaging
     if Cam1.CameraActive and LiveImagingInProgress then
@@ -2417,23 +2654,6 @@ begin
 
        end ;
 
-    for iDev := 1 to LabIO.NumDevices do begin
-        LabIO.WriteToDigitalOutPutPort( iDev, LabIO.DigOutState[iDev] ) ;
-        end;
-
-    // Re-start image acquisition
-
-    if (SnapStartAt <> 0) and (timegettime > LightSourceOnAt) then LightSource.On := True ;
-
-    if (SnapStartAt <> 0) and (timegettime > SnapStartAt) then
-       begin
-       StartCamera ;
-       UpdateImage ;
-       outputdebugstring(pchar(format('time lapse %d',[SnapStartAt-LastSnapStartedAt])));
-       LastSnapStartedAt := SnapStartAt ;
-
-       SnapStartAt := 0 ;
-       end ;
 
     if UpdateDisplay then
        begin ;
@@ -2460,13 +2680,6 @@ begin
        begin
        LightSource.Update ;
        UpdateLightSource := False ;
-       end;
-
-    // Next Z or T step requested
-    if NextZTStepRequested then
-       begin
-       if bStopImage.Enabled then NextZTStep ;
-       NextZTStepRequested := False ;
        end;
 
     // Acquire and display current stage position
@@ -2662,123 +2875,11 @@ begin
     end ;
 
 
-procedure TMainFrm.NextZTStep ;
-// ---------------------
-// Get and process image
-// ---------------------
-var
-    OldZSectionCounter : Integer ;
-begin
-
-       // Exit if capture not in progress
-       if bCaptureImage.Enabled then Exit ;
-
-       // Light source control
-       // (Image capture request is made if not at end of light source list)
-       if not SelectNextLightSource(false) then SnapStartAt := TimeGetTime ;
-       NumPanelsAvailable := LightSource.NumList ;
-       if SnapStartAt <> 0 then Exit ;
-
-       OldZSectionCounter  := ZSectionCounter ;
-       ZSectionCounter := (NumImagesInRawFile div LightSource.NumList) mod NumZSectionsRequested ;
-       TPointCounter := (NumImagesInRawFile) div (NumZSectionsRequested*LightSource.NumList) ;
-
-       // Z stage control
-       if ckAcquireZStack.Checked then
-          begin
-          scZSection.Max := Max(NumZSectionsRequested-1,ZSectionCounter);
-          scZSection.Position := 0 ;
-          lbZSection.Caption := Format('Section %d/%d',[ZSectionCounter,NumZSectionsRequested]);
-          // Increment Z position to next section
-          ZStage.MoveTo( ZStage.XPosition, ZStage.YPosition, ZStackStartingPosition + edMicronsPerZStep.Value*(ZSectionCounter));
-                 outputdebugstring(pchar(format('NextZT Z %.3f',[ZStackStartingPosition + edMicronsPerZStep.Value*ZSectionCounter])));
-          if ZSectionCounter >= OldZSectionCounter then
-             begin
-             SnapStartAt := timegettime + Round(1000*ZStage.ZStepTime*Max(Abs(edMicronsPerZStep.Value),1.0)) ;
-             end
-          else SnapStartAt := 0 ;
-//             outputdebugstring(pchar(format('step time %.4g %.4g',[ZStage.ZStepTime,ZStage.ZStepTime*Max(Abs(ZStep),1.0)])));
-          end ;
-
-       // Time lapse control
-       if ckAcquireTimeLapseSeries.Checked and (SnapStartAt = 0) then
-          begin
-          scTSection.Max := Max(TPointCounter-1,0) ;
-          scTSection.Position := 0 ;
-          lbTSection.Caption := Format('%d/%d',[TPointCounter+1,scTSection.Max+1]);
-          if TPointCounter < Round(edNumTimeLapsePoints.Value) then
-             begin
-             SnapStartAt := LastSnapStartedAt + Round(1000*edTimeLapseInterval.Value) ;
-             LightSourceOnAt := SnapStartAt - 200 ;
-             LightSource.On := False ;
-             end;
-          end ;
-
-       // No more images requested - stop capture
-       if SnapStartAt = 0 then
-          begin
-          ShowCameraImage := False ;
-          ShowCapturedImage := True ;
-          UpdateImage ;
-          bStopImage.Click ;
-          end ;
-
-       end ;
-
-
-function TMainFrm.SelectNextLightSource( Initialise : Boolean ) : Boolean ;
-// -----------------------------------------------------------
-// Select next light source in separate light sources sequence
-// Return TRUE if last light source in sequence done
-// -----------------------------------------------------------
-var
-    i : Integer ;
-begin
-
-    // Get light source settings from panel
-    GetAllLightSourcePanels ;
-
-    // No. of light sources in use
-    LightSource.NumList := 0 ;
-    for i := 0 to High(LightSource.Active) do if LightSource.Active[i] then
-        begin
-        LightSource.List[LightSource.NumList] := i ;
-        Inc(LightSource.NumList) ;
-        end;
-
-    if not Initialise then LightSource.ListIndex := LightSource.ListIndex + 1
-                      else LightSource.ListIndex := 0 ;
-
-    if (not ckSeparateLightSources.Checked) or LiveImagingInProgress then
-       begin
-       // Turn all selected on and exit
-       Result := True ;
-       LightSource.ListIndex := 0 ;
-       LightSource.NumList := 1 ;
-       LightSource.Update ;
-       exit ;
-       end;
-
-    // Return TRUE if at end of sequence
-    if LightSource.ListIndex = LightSource.NumList then Result := True
-                                                   else Result := False ;
-    // Keep cycle to start of list
-    if LightSource.ListIndex >= LightSource.NumList then LightSource.ListIndex := 0 ;
-
-    // Update selected light source
-    for i := 0 to High(LightSource.Active) do LightSource.Active[i] := False ;
-    LightSource.Active[LightSource.List[LightSource.ListIndex]] := True ;
-    LightSource.Update ;
-
-    end;
-
-
 procedure TMainFrm.bSelectedRegionClick(Sender: TObject);
 // ---------------------------
 // Set new frame capture area
 // ---------------------------
 begin
-
 
     if LiveImagingInProgress then StopCamera ;
 
@@ -2803,7 +2904,7 @@ begin
      XLeft := 0.0 ;
      YTop := 0.0 ;
 
-     if LiveImagingInProgress then SnapStartAt := TimeGetTime ;
+     if LiveImagingInProgress then StartCamera ;
      bSelectedRegion.Enabled := True  ;
 
 end;
@@ -2815,39 +2916,41 @@ procedure TMainFrm.bStopImageClick(Sender: TObject);
 // ----------------------
 begin
 
-    if LabIO.ADCActive[DeviceNum] then LabIO.StopADC(DeviceNum) ;
-    if LabIO.DACActive[DeviceNum] then LabIO.StopDAC(DeviceNum) ;
-
     // Stop camera (if running) and kill any trigger requests
     Cam1.StopCapture ;
-    CameraTriggerRequired := False ;
 
     // Turn illumination off
     LightSource.On := False ;
-
     GetAllLightSourcePanels ;
-    SetImagePanels ;
+    LightSource.Update ;
 
     scZSection.Position := 0 ;
     scTSection.Position := 0 ;
 
     // Reload image
-    if not LiveImagingInProgress then
+    if ImageCaptureInProgress  then
        begin
        LoadRawImage( RawImagesFileName,scZSection.Position,scTSection.Position,Page.TabIndex) ;
        UpdateDisplay := True ;
        end;
 
+    // Enable/disable buttons
     bStopImage.Enabled := False ;
     bLiveImage.Enabled := True ;
     bCaptureImage.Enabled := True ;
+
+    // Disable all image capture
     LiveImagingInProgress := False ;
-    SnapStartAt := 0 ;
-    ScanningInProgress := False ;
+    ImageCaptureInProgress := False ;
+
+    // Displayed stored images
     ShowCameraImage := False ;
     ShowCapturedImage := True ;
-    CameraTriggerRequired := False ;
+
     UpdateDisplay := True ;
+
+    // Update size and number of image panels
+    SetImagePanels ;
 
     end;
 
@@ -2858,13 +2961,11 @@ procedure TMainFrm.cbCameraGainChange(Sender: TObject);
 // Gain changed
 // ---------------------
 begin
-    if LiveImagingInProgress then
-       begin
-       SnapStartAt := TimeGetTime ;
-       StopCamera ;
-       end;
-    CameraGainIndex := cbCameraGain.ItemIndex
+    if LiveImagingInProgress then StopCamera ;
+    CameraGainIndex := cbCameraGain.ItemIndex ;
+    if LiveImagingInProgress then StartCamera ;
     end;
+
 
 procedure TMainFrm.cbCaptureModeChange(Sender: TObject);
 var
@@ -2895,7 +2996,7 @@ begin
    if LiveImagingInProgress then
       begin
       StopCamera ;
-      SnapStartAt := TimeGetTime ;
+      StartCamera ;
       end;
 end;
 
@@ -3065,7 +3166,7 @@ begin
                     + FormatDateTime('yyyy-mm-dd',Now)
                     + format(' %d.tif',[iNum]) ;
         Exists := false ;
-        for iPanel := 0 to NumPanelsAvailable-1 do
+        for iPanel := 0 to NumPanels-1 do
          for iT := 0 to NumTSectionsRequested-1 do
              for iZ := 0 to NumZSectionsRequested-1 do
              begin
@@ -3086,7 +3187,7 @@ begin
 
      // Check if any files exist already and allow user option to quit
      Exists := False ;
-     for iPanel := 0 to NumPanelsAvailable-1 do
+     for iPanel := 0 to NumPanels-1 do
          for iT := 0 to scTSection.Max do
              for iZ := 0 to scZSection.Max do
                  begin
@@ -3105,8 +3206,9 @@ begin
      FileNames := TStringList.Create ;
      NumFramesInFile := 0 ;
      NumFiles := 0 ;
+     nFrames := 1 ;
      FileOpen := False ;
-     for iPanel := 0 to Max(NumPanelsAvailable,1)-1 do
+     for iPanel := 0 to Max(NumPanels,1)-1 do
          begin
          NewFileRequired := True ;
          for iT := 0 to Max(scTSection.Max,0) do
@@ -3261,13 +3363,8 @@ var
     iTop : Integer ;
 begin
 
-  Page.Width := Max(ClientWidth - Page.Left - 5,2) ;
+ // Page.Width := Max(ClientWidth - Page.Left - 5,2) ;
   Page.Height := Max(ClientHeight - Page.Top - 5 - ZSectionPanel.Height,2) ;
-
-  ZSectionPanel.Top := Page.Top + Page.Height + 2 ;
-  ZSectionPanel.Left := Page.Left + Page.Width - ZSectionPanel.Width ;
-  TSectionPanel.Top := ZSectionPanel.Top ;
-  TSectionPanel.Left := ZSectionPanel.Left - TSectionPanel.Width - 5 ;
 
   lbReadout.Top :=  ZSectionPanel.Top ;
 
@@ -3278,23 +3375,24 @@ begin
 
   // Image series options
 
-  ImageSizeGrp.ClientHeight := ckAcquireZStack.Top + ckAcquireTimeLapseSeries.Height + 25 ;
-  ckAcquireZStack.Top := ckSeparateLightSources.Top + ckSeparateLightSources.Height ;
-  ckAcquireTimeLapseSeries.Top := ckAcquireZStack.Top + ckAcquireZStack.Height ;
-  if ckAcquireZStack.Checked then begin
-     ZStackGrp.Visible := True ;
-     ZStackGrp.Top := ckAcquireZStack.Top + ckAcquireZStack.Height + 2 ;
-     ckAcquireTimeLapseSeries.Top := ckAcquireTimeLapseSeries.Top + ZStackGrp.Height ;
-     ImageSizeGrp.ClientHeight := ImageSizeGrp.ClientHeight + ZStackGrp.Height + 10 ;
+  ImageSizeGrp.ClientHeight := ckSeparateLightSources.Top +
+                               ckSeparateLightSources.Height +
+                               ckAcquireZStack.Height +
+                               ckAcquireTimeLapseSeries.Height + 25 ;
+
+  ckAcquireZStack.Top := ckSeparateLightSources.Top + ckSeparateLightSources.Height + 2 ;
+  ZStackGrp.Top := ckAcquireZStack.Top + ckAcquireZStack.Height + 2 ;
+  ZStackGrp.Visible := ckAcquireZStack.Checked ;
+  if ZStackGrp.Visible then
+     begin
+     ckAcquireTimeLapseSeries.Top := ZStackGrp.Top + ZStackGrp.Height + 2 ;
+     ImageSizeGrp.ClientHeight := ImageSizeGrp.ClientHeight + ZStackGrp.Height + 2 ;
      end
-  else ZStackGrp.Visible := False ;
+  else ckAcquireTimeLapseSeries.Top := ckAcquireZStack.Top + ckAcquireZStack.Height + 2 ;
 
   TimeLapseGrp.Top := ckAcquireTimeLapseSeries.Top + ckAcquireTimeLapseSeries.Height + 2 ;
-  if ckAcquireTimeLapseSeries.Checked then begin
-     TimeLapseGrp.Visible := True ;
-     ImageSizeGrp.ClientHeight := ImageSizeGrp.ClientHeight + TimeLapseGrp.Height + 10 ;
-     end
-  else TimeLapseGrp.Visible := False ;
+  TimeLapseGrp.Visible := ckAcquireTimeLapseSeries.Checked ;
+  if TimeLapseGrp.Visible then ImageSizeGrp.ClientHeight := ImageSizeGrp.ClientHeight + TimeLapseGrp.Height + 2 ;
 
   // Set light source panels
   iTop := 16 ;
@@ -3333,9 +3431,10 @@ var
 begin
 
       Panel.Enabled := False ;
-      if (LightSource.ControlLines[Num] < LineDisabled) and
+      if (LightSource.ControlLines[Num] < ControlDisabled) and
          (LightSource.SourceType <> lsNone) then Panel.Visible := True
-                                           else Panel.Visible := False ;
+                                            else Panel.Visible := False ;
+      LightSource.Active[Num] := Panel.Visible ;
 
       if Panel.Visible then begin
          Panel.Top := iTop ;
@@ -3521,8 +3620,8 @@ begin
 
       if not RawImageAvailable then Exit ;
 
-     iSection := TSection*NumZSectionsRequested*Max(NumPanelsAvailable,1) +
-                 ZSection*Max(NumPanelsAvailable,1) + iPanel  ;
+     iSection := TSection*NumZSectionsRequested*Max(NumPanels,1) +
+                 ZSection*Max(NumPanels,1) + iPanel  ;
 
      // Exit with zero image if image not available
      if iSection >= NumImagesInRawFile then
@@ -3696,7 +3795,7 @@ begin
 
     // Images available in raw file
     AddElementInt( ProtNode, 'NUMTSECTIONSAVAILABLE', NumTSectionsAvailable ) ;
-    AddElementInt( ProtNode, 'NUMPANELSAVAILABLE', NumPanelsAvailable ) ;
+    AddElementInt( ProtNode, 'NUMPANELSAVAILABLE', NumPanels ) ;
 
     AddElementInt( ProtNode, 'NUMZSECTIONSREQUESTED', NumZSectionsRequested ) ;
     AddElementInt( ProtNode, 'NUMTSECTIONSREQUESTED', NumTSectionsRequested ) ;
@@ -3889,7 +3988,7 @@ begin
     UnsavedRawImage := GetElementBool( ProtNode, 'UNSAVEDRAWIMAGE', UnsavedRawImage ) ;
 
     NumTSectionsAvailable := GetElementInt( ProtNode, 'NUMTSECTIONSAVAILABLE', NumTSectionsAvailable ) ;
-    NumPanelsAvailable := GetElementInt( ProtNode, 'NUMPANELSAVAILABLE', NumPanelsAvailable ) ;
+    NumPanels := GetElementInt( ProtNode, 'NUMPANELSAVAILABLE', NumPanels ) ;
 
     NumZSectionsRequested := Max(GetElementInt( ProtNode, 'NUMZSECTIONSREQUESTED', NumZSectionsRequested ),1) ;
     scZSection.Max := NumZSectionsRequested - 1 ;
@@ -3915,6 +4014,8 @@ begin
      Bitmap.ReleasePalette ;
      BitMap.Free ;
      BitMap := Nil ;
+     if EventList <> Nil then FreeMem(EventList) ;
+
      end;
 
 

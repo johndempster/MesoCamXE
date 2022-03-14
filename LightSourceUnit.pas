@@ -19,7 +19,7 @@ interface
 
 
 uses
-  System.SysUtils, System.Classes, Windows, FMX.Dialogs, math, Vcl.ExtCtrls,
+  System.SysUtils, System.Classes, Windows, math, Vcl.ExtCtrls,
   system.StrUtils, System.Character, LightSourceComThreadUnit ;
 
 const
@@ -27,6 +27,8 @@ const
   lsNone = 0 ;
   lsLED = 1 ;
   lsCoolLED = 2 ;
+
+
   // Com port control flags
   dcb_Binary = $00000001;
   dcb_ParityCheck = $00000002;
@@ -54,6 +56,10 @@ const
 
 
 type
+
+
+  TActiveLightSource = Array [0..MaxLightSources-1] of Boolean ;
+
   TLightSource = class(TDataModule)
     Timer: TTimer;
     procedure DataModuleCreate(Sender: TObject);
@@ -84,7 +90,7 @@ type
 
   public
     { Public declarations }
-    Active : Array [0..MaxLightSources-1] of Boolean ;
+    Active : TActiveLightSource ;
     Intensity : Array[0..MaxLightSources-1] of Double ;
     ControlLines : Array[0..MaxLightSources-1] of Integer ;
     Names : Array[0..MaxLightSources-1] of string ;
@@ -98,6 +104,7 @@ type
     CommandList : TstringList ;  // Light Source command list
     ReplyList : TstringList ;    // Light source replies
     Initialised : Boolean ;      // TRUE indicates light is initalised
+    ChangeTime : Double ;        // Time allowed (s) for light source to update.
 
     procedure GetSourceTypes( List : TStrings ) ;
     procedure GetControlLineNames( List : TStrings ) ;
@@ -159,10 +166,11 @@ begin
     NamesChanged := False ;
     FLightSourceIsOpen := False ;
 
-    for I := 0 to High(Names) do begin
+    for I := 0 to High(Names) do
+        begin
         Names[i] := format('LS%d',[i]) ;
         OldNames[i] := '' ;
-        ControlLines[i] := LineDisabled ;
+        ControlLines[i] := ControlDisabled ;
         OldControlLines[i] := -1 ;
         MinLevel[i] := 0.0 ;
         MaxLevel[i] := 5.0 ;
@@ -243,7 +251,7 @@ var
 begin
      List.Clear ;
 
-    List.AddObject('None',TObject(LineDisabled)) ;
+    List.AddObject('None',TObject(ControlDisabled)) ;
     for i := 0 to LabIO.NumResources-1 do
         begin
         if (LabIO.Resource[i].ResourceType = DACOut) then
@@ -301,7 +309,7 @@ var
     i,Dev,Chan,OnState,OffState  : Integer ;
     ResourceType : TResourceType ;
 begin
-     for i := 0 to High(ControlLines) do if ControlLines[i] < LineDisabled then
+     for i := 0 to High(ControlLines) do if ControlLines[i] < ControlDisabled then
         begin
 
         Dev := LabIO.Resource[ControlLines[i]].Device ;
@@ -360,7 +368,7 @@ begin
     SourceLetter[1] := 'CB' ;
     SourceLetter[2] := 'CC' ;
     SourceLetter[3] := 'CD' ;
-    for i := 0 to 3 do if (ControlLines[i] <> LineDisabled) then
+    for i := 0 to 3 do if (ControlLines[i] <> ControlDisabled) then
         begin
         Intensity[i] := Min(Max(Intensity[i],0.0),100.0);
         sIntensity := format('%d',[Round(Intensity[i])]) ;
@@ -432,10 +440,10 @@ begin
     OldInitialised := Initialised ;
 
     // Disable unsupported lines
-    ControlLines[4] := LineDisabled ;
-    ControlLines[5] := LineDisabled ;
-    ControlLines[6] := LineDisabled ;
-    ControlLines[7] := LineDisabled ;
+    ControlLines[4] := ControlDisabled ;
+    ControlLines[5] := ControlDisabled ;
+    ControlLines[6] := ControlDisabled ;
+    ControlLines[7] := ControlDisabled ;
 
     if ReplyList.Count > 0 then
        begin
@@ -533,7 +541,7 @@ var
 begin
 
     // Clear control lines
-    for I := 0 to High(ControlLines) do ControlLines[i] := LineDisabled ;
+    for I := 0 to High(ControlLines) do ControlLines[i] := ControlDisabled ;
 
     // Request list of wavelengths available
     CommandList.Add('LAMS');

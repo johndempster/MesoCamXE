@@ -2,8 +2,8 @@ object MainFrm: TMainFrm
   Left = 122
   Top = 357
   Caption = 'to'
-  ClientHeight = 1158
-  ClientWidth = 1554
+  ClientHeight = 1341
+  ClientWidth = 1463
   Color = clBtnFace
   DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
@@ -20,6 +20,9 @@ object MainFrm: TMainFrm
   OnDestroy = FormDestroy
   OnResize = FormResize
   OnShow = FormShow
+  DesignSize = (
+    1463
+    1341)
   PixelsPerInch = 96
   TextHeight = 13
   object lbReadout: TLabel
@@ -54,7 +57,7 @@ object MainFrm: TMainFrm
     Caption = ' Image Capture  '
     TabOrder = 0
     object Label7: TLabel
-      Left = 257
+      Left = 265
       Top = 20
       Width = 78
       Height = 38
@@ -68,7 +71,7 @@ object MainFrm: TMainFrm
       WordWrap = True
     end
     object Label8: TLabel
-      Left = 259
+      Left = 265
       Top = 75
       Width = 35
       Height = 19
@@ -83,7 +86,7 @@ object MainFrm: TMainFrm
     end
     object Label2: TLabel
       Tag = 112
-      Left = 256
+      Left = 265
       Top = 137
       Width = 38
       Height = 19
@@ -97,8 +100,8 @@ object MainFrm: TMainFrm
       ParentFont = False
     end
     object bCaptureImage: TButton
-      Left = 9
-      Top = 88
+      Left = 8
+      Top = 80
       Width = 218
       Height = 32
       Hint = 'Capture new image(s)'
@@ -115,10 +118,10 @@ object MainFrm: TMainFrm
       OnClick = bCaptureImageClick
     end
     object bStopImage: TButton
-      Left = 9
-      Top = 156
+      Left = 8
+      Top = 143
       Width = 218
-      Height = 34
+      Height = 32
       Hint = 'Stop Image Capture'
       Caption = 'Stop'
       Font.Charset = ANSI_CHARSET
@@ -133,10 +136,10 @@ object MainFrm: TMainFrm
       OnClick = bStopImageClick
     end
     object bLiveImage: TButton
-      Left = 9
-      Top = 13
+      Left = 8
+      Top = 15
       Width = 218
-      Height = 36
+      Height = 32
       Hint = 'Display live images from camera'
       Caption = 'Live Image'
       Font.Charset = ANSI_CHARSET
@@ -151,8 +154,8 @@ object MainFrm: TMainFrm
       OnClick = bLiveImageClick
     end
     object cbCaptureMode: TComboBox
-      Left = 9
-      Top = 127
+      Left = 8
+      Top = 116
       Width = 218
       Height = 21
       Hint = 'Select image superresolution mode (pixel-shifting  cameras only)'
@@ -163,9 +166,9 @@ object MainFrm: TMainFrm
       OnChange = cbCaptureModeChange
     end
     object edExposureTime: TValidatedEdit
-      Left = 257
+      Left = 265
       Top = 41
-      Width = 149
+      Width = 150
       Height = 28
       Hint = 'Exposure time (ms)'
       OnKeyPress = edExposureTimeKeyPress
@@ -186,7 +189,7 @@ object MainFrm: TMainFrm
     object CCDAreaGrp: TGroupBox
       Left = 10
       Top = 200
-      Width = 396
+      Width = 405
       Height = 66
       Caption = 'CCD Capture Area '
       TabOrder = 5
@@ -229,7 +232,7 @@ object MainFrm: TMainFrm
       object bEnterCCDArea: TButton
         Left = 241
         Top = 22
-        Width = 145
+        Width = 152
         Height = 32
         Hint = 'Specify coordinates of CCD readout area'
         Caption = 'Set Area'
@@ -246,9 +249,9 @@ object MainFrm: TMainFrm
       end
     end
     object cbCameraGain: TComboBox
-      Left = 257
-      Top = 96
-      Width = 146
+      Left = 265
+      Top = 100
+      Width = 150
       Height = 33
       Hint = 'Camera analog gain'
       Style = csDropDownList
@@ -264,8 +267,8 @@ object MainFrm: TMainFrm
       OnChange = cbCameraGainChange
     end
     object cbLiveBin: TComboBox
-      Left = 9
-      Top = 55
+      Left = 8
+      Top = 51
       Width = 218
       Height = 21
       Hint = 'Live image binning mode'
@@ -276,8 +279,8 @@ object MainFrm: TMainFrm
       OnChange = cbLiveBinChange
     end
     object cbLens: TComboBox
-      Left = 257
-      Top = 159
+      Left = 265
+      Top = 161
       Width = 150
       Height = 33
       Hint = 'Camera analog gain'
@@ -320,7 +323,7 @@ object MainFrm: TMainFrm
       ParentFont = False
       TabOrder = 0
       object Label5: TLabel
-        Left = 10
+        Left = 8
         Top = 8
         Width = 62
         Height = 18
@@ -413,7 +416,7 @@ object MainFrm: TMainFrm
     end
     object ckAcquireZStack: TCheckBox
       Left = 15
-      Top = 46
+      Top = 44
       Width = 340
       Height = 25
       Hint = 
@@ -476,7 +479,7 @@ object MainFrm: TMainFrm
         ParentFont = False
       end
       object Label4: TLabel
-        Left = 143
+        Left = 180
         Top = 8
         Width = 98
         Height = 18
@@ -509,7 +512,7 @@ object MainFrm: TMainFrm
         HiLimit = 30000.000000000000000000
       end
       object edTimeLapseInterval: TValidatedEdit
-        Left = 249
+        Left = 292
         Top = 8
         Width = 102
         Height = 28
@@ -533,7 +536,7 @@ object MainFrm: TMainFrm
   end
   object ZStageGrp: TGroupBox
     Left = 8
-    Top = 508
+    Top = 500
     Width = 428
     Height = 120
     Caption = ' Stage Position '
@@ -678,7 +681,7 @@ object MainFrm: TMainFrm
   end
   object LightSourceGrp: TGroupBox
     Left = 8
-    Top = 634
+    Top = 626
     Width = 428
     Height = 310
     Caption = ' Light Source '
@@ -1175,10 +1178,10 @@ object MainFrm: TMainFrm
     end
   end
   object DisplayGrp: TGroupBox
-    Left = 10
-    Top = 948
+    Left = 8
+    Top = 943
     Width = 428
-    Height = 157
+    Height = 159
     Caption = ' Display Contrast '
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -1312,6 +1315,10 @@ object MainFrm: TMainFrm
       object SlidersTab: TTabSheet
         Caption = 'Sliders'
         ImageIndex = 1
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label9: TLabel
           Left = 3
           Top = 7
@@ -1421,9 +1428,9 @@ object MainFrm: TMainFrm
   end
   object StatusGrp: TGroupBox
     Left = 10
-    Top = 1258
+    Top = 1107
     Width = 428
-    Height = 239
+    Height = 220
     Caption = ' Pixel Intensity Histogram '
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -1433,9 +1440,9 @@ object MainFrm: TMainFrm
     ParentFont = False
     TabOrder = 5
     object plHistogram: TXYPlotDisplay
-      Left = 15
-      Top = 27
-      Width = 395
+      Left = 13
+      Top = 22
+      Width = 402
       Height = 144
       MaxPointsPerLine = 4096
       XAxisMax = 1.000000000000000000
@@ -1473,9 +1480,9 @@ object MainFrm: TMainFrm
       MetafileHeight = 400
     end
     object edStatus: TEdit
-      Left = 15
-      Top = 180
-      Width = 395
+      Left = 13
+      Top = 172
+      Width = 402
       Height = 33
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
@@ -1489,10 +1496,11 @@ object MainFrm: TMainFrm
   end
   object Page: TPageControl
     Left = 444
-    Top = 15
-    Width = 1035
-    Height = 455
-    ActivePage = tbChan3
+    Top = 8
+    Width = 1011
+    Height = 664
+    ActivePage = tbChan0
+    Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 6
     OnChange = PageChange
     object tbChan0: TTabSheet
@@ -1516,6 +1524,10 @@ object MainFrm: TMainFrm
     object tbChan1: TTabSheet
       Caption = 'Channel 1'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image1: TImage
         Left = 3
         Top = 3
@@ -1535,6 +1547,10 @@ object MainFrm: TMainFrm
     object tbChan2: TTabSheet
       Caption = 'Channel 2'
       ImageIndex = 2
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image2: TImage
         Left = 3
         Top = 3
@@ -1554,6 +1570,10 @@ object MainFrm: TMainFrm
     object tbChan3: TTabSheet
       Caption = 'tbChan3'
       ImageIndex = 3
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image3: TImage
         Left = -3
         Top = 0
@@ -1571,121 +1591,129 @@ object MainFrm: TMainFrm
       end
     end
   end
-  object ZSectionPanel: TPanel
-    Left = 468
-    Top = 483
-    Width = 327
-    Height = 34
-    BevelOuter = bvNone
-    DoubleBuffered = False
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -12
-    Font.Name = 'MS Sans Serif'
-    Font.Style = []
-    ParentDoubleBuffered = False
-    ParentFont = False
+  object SlidersGrp: TGroupBox
+    Left = 444
+    Top = 1286
+    Width = 1009
+    Height = 47
+    Anchors = [akLeft, akRight, akBottom]
     TabOrder = 7
-    object lbZSection: TLabel
-      Left = 230
-      Top = 0
-      Width = 40
-      Height = 25
-      Caption = 'xxxx'
-      Font.Charset = ANSI_CHARSET
+    object TSectionPanel: TPanel
+      Left = 12
+      Top = 10
+      Width = 327
+      Height = 34
+      BevelOuter = bvNone
+      DoubleBuffered = False
+      Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -21
-      Font.Name = 'Arial Narrow'
-      Font.Style = [fsBold]
+      Font.Height = -12
+      Font.Name = 'MS Sans Serif'
+      Font.Style = []
+      ParentDoubleBuffered = False
       ParentFont = False
+      TabOrder = 0
+      object lbTSection: TLabel
+        Left = 230
+        Top = 0
+        Width = 40
+        Height = 25
+        Caption = 'xxxx'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -21
+        Font.Name = 'Arial Narrow'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object Label15: TLabel
+        Left = 0
+        Top = 0
+        Width = 18
+        Height = 24
+        Caption = 'T:'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -21
+        Font.Name = 'Arial'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object scTSection: TScrollBar
+        Left = 24
+        Top = 0
+        Width = 198
+        Height = 27
+        PageSize = 0
+        TabOrder = 0
+        OnChange = scTSectionChange
+      end
     end
-    object Label1: TLabel
-      Left = 0
-      Top = 0
-      Width = 19
-      Height = 24
-      Caption = 'Z:'
+    object ZSectionPanel: TPanel
+      Left = 298
+      Top = 10
+      Width = 327
+      Height = 34
+      BevelOuter = bvNone
+      DoubleBuffered = False
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'MS Sans Serif'
+      Font.Style = []
+      ParentDoubleBuffered = False
+      ParentFont = False
+      TabOrder = 1
+      object lbZSection: TLabel
+        Left = 230
+        Top = 0
+        Width = 40
+        Height = 25
+        Caption = 'xxxx'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -21
+        Font.Name = 'Arial Narrow'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object Label1: TLabel
+        Left = -1
+        Top = 0
+        Width = 19
+        Height = 24
+        Caption = 'Z:'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -21
+        Font.Name = 'Arial'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object scZSection: TScrollBar
+        Left = 24
+        Top = 0
+        Width = 199
+        Height = 27
+        PageSize = 0
+        TabOrder = 0
+        OnChange = scZSectionChange
+      end
+    end
+    object edSaveFileStatus: TEdit
+      Left = 584
+      Top = 13
+      Width = 414
+      Height = 26
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
-      Font.Height = -21
+      Font.Height = -15
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentFont = False
+      TabOrder = 2
+      Text = 'edSaveFileStatus'
     end
-    object scZSection: TScrollBar
-      Left = 24
-      Top = 0
-      Width = 199
-      Height = 27
-      PageSize = 0
-      TabOrder = 0
-      OnChange = scZSectionChange
-    end
-  end
-  object TSectionPanel: TPanel
-    Left = 460
-    Top = 524
-    Width = 327
-    Height = 34
-    BevelOuter = bvNone
-    DoubleBuffered = False
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -12
-    Font.Name = 'MS Sans Serif'
-    Font.Style = []
-    ParentDoubleBuffered = False
-    ParentFont = False
-    TabOrder = 8
-    object lbTSection: TLabel
-      Left = 230
-      Top = 0
-      Width = 40
-      Height = 25
-      Caption = 'xxxx'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -21
-      Font.Name = 'Arial Narrow'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
-    object Label15: TLabel
-      Left = 0
-      Top = 0
-      Width = 18
-      Height = 24
-      Caption = 'T:'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -21
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
-    object scTSection: TScrollBar
-      Left = 25
-      Top = 0
-      Width = 198
-      Height = 27
-      PageSize = 0
-      TabOrder = 0
-      OnChange = scTSectionChange
-    end
-  end
-  object edSaveFileStatus: TEdit
-    Left = 801
-    Top = 476
-    Width = 679
-    Height = 26
-    Font.Charset = ANSI_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -15
-    Font.Name = 'Arial'
-    Font.Style = [fsBold]
-    ParentFont = False
-    TabOrder = 9
-    Text = 'edSaveFileStatus'
   end
   object Timer: TTimer
     Enabled = False
@@ -1699,8 +1727,8 @@ object MainFrm: TMainFrm
     YResolution = 1.000000000000000000
     ZResolution = 1.000000000000000000
     TResolution = 1.000000000000000000
-    Left = 280
-    Top = 272
+    Left = 728
+    Top = 568
   end
   object SaveDialog: TSaveDialog
     Left = 616
@@ -1766,6 +1794,11 @@ object MainFrm: TMainFrm
     NumPixelShiftFrames = 1
     DisableExposureIntervalLimit = False
     MonochromeImage = False
+    CCDTapOffsetLT = 0
+    CCDTapOffsetRT = 0
+    CCDTapOffsetLB = 0
+    CCDTapOffsetRB = 0
+    LightSpeedMode = False
     Left = 688
     Top = 560
   end
