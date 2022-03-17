@@ -94,10 +94,10 @@
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
-        <VerInfo_Release>9</VerInfo_Release>
+        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <Icon_MainIcon>MesoCam_Icon.ico</Icon_MainIcon>
-        <VerInfo_Keys>CompanyName=MesoLens Ltd;FileDescription=;FileVersion=1.8.9.0;InternalName=Mesoscan;LegalCopyright=(c) University of Strathclyde;LegalTrademarks=;OriginalFilename=;ProductName=MesoScan;ProductVersion=1.3.2;Comments=</VerInfo_Keys>
-        <VerInfo_MinorVer>8</VerInfo_MinorVer>
+        <VerInfo_Keys>CompanyName=MesoLens Ltd;FileDescription=;FileVersion=1.9.0.0;InternalName=Mesoscan;LegalCopyright=(c) University of Strathclyde;LegalTrademarks=;OriginalFilename=;ProductName=MesoScan;ProductVersion=1.3.2;Comments=</VerInfo_Keys>
+        <VerInfo_MinorVer>9</VerInfo_MinorVer>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <DCC_RemoteDebug>true</DCC_RemoteDebug>
         <VerInfo_Locale>1033</VerInfo_Locale>
@@ -207,27 +207,12 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployClass Name="DependencyModule">
-                    <Platform Name="Win32">
-                        <Operation>0</Operation>
-                        <Extensions>.dll;.bpl</Extensions>
-                    </Platform>
+                <DeployClass Name="ProjectiOSDeviceResourceRules">
                     <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
-                    <Platform Name="OSX32">
-                        <RemoteDir>Contents\MacOS</RemoteDir>
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
                     </Platform>
                     <Platform Name="iOSDevice32">
                         <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
-                    <Platform Name="iOSSimulator">
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="ProjectOSXResource">
@@ -589,12 +574,27 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <DeployClass Name="ProjectiOSDeviceResourceRules">
+                <DeployClass Name="DependencyModule">
+                    <Platform Name="Win32">
+                        <Operation>0</Operation>
+                        <Extensions>.dll;.bpl</Extensions>
+                    </Platform>
                     <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents\MacOS</RemoteDir>
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
                     </Platform>
                     <Platform Name="iOSDevice32">
                         <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
                     </Platform>
                 </DeployClass>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
