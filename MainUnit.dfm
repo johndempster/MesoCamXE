@@ -2,8 +2,8 @@ object MainFrm: TMainFrm
   Left = 122
   Top = 357
   Caption = 'to'
-  ClientHeight = 1341
-  ClientWidth = 1463
+  ClientHeight = 1194
+  ClientWidth = 1472
   Color = clBtnFace
   DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
@@ -21,8 +21,8 @@ object MainFrm: TMainFrm
   OnResize = FormResize
   OnShow = FormShow
   DesignSize = (
-    1463
-    1341)
+    1472
+    1194)
   PixelsPerInch = 96
   TextHeight = 13
   object lbReadout: TLabel
@@ -1315,10 +1315,6 @@ object MainFrm: TMainFrm
       object SlidersTab: TTabSheet
         Caption = 'Sliders'
         ImageIndex = 1
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object Label9: TLabel
           Left = 3
           Top = 7
@@ -1497,14 +1493,18 @@ object MainFrm: TMainFrm
   object Page: TPageControl
     Left = 444
     Top = 8
-    Width = 1011
-    Height = 664
+    Width = 1020
+    Height = 816
     ActivePage = tbChan0
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 6
     OnChange = PageChange
+    ExplicitWidth = 1011
+    ExplicitHeight = 664
     object tbChan0: TTabSheet
       Caption = 'Channel 0'
+      ExplicitWidth = 1003
+      ExplicitHeight = 636
       object Image0: TImage
         Left = 3
         Top = 3
@@ -1524,10 +1524,6 @@ object MainFrm: TMainFrm
     object tbChan1: TTabSheet
       Caption = 'Channel 1'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image1: TImage
         Left = 3
         Top = 3
@@ -1547,10 +1543,6 @@ object MainFrm: TMainFrm
     object tbChan2: TTabSheet
       Caption = 'Channel 2'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image2: TImage
         Left = 3
         Top = 3
@@ -1570,10 +1562,6 @@ object MainFrm: TMainFrm
     object tbChan3: TTabSheet
       Caption = 'tbChan3'
       ImageIndex = 3
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Image3: TImage
         Left = -3
         Top = 0
@@ -1593,11 +1581,13 @@ object MainFrm: TMainFrm
   end
   object SlidersGrp: TGroupBox
     Left = 444
-    Top = 1286
-    Width = 1009
+    Top = 1438
+    Width = 1018
     Height = 47
     Anchors = [akLeft, akRight, akBottom]
     TabOrder = 7
+    ExplicitTop = 1286
+    ExplicitWidth = 1009
     object TSectionPanel: TPanel
       Left = 12
       Top = 10
@@ -1794,11 +1784,6 @@ object MainFrm: TMainFrm
     NumPixelShiftFrames = 1
     DisableExposureIntervalLimit = False
     MonochromeImage = False
-    CCDTapOffsetLT = 0
-    CCDTapOffsetRT = 0
-    CCDTapOffsetLB = 0
-    CCDTapOffsetRB = 0
-    LightSpeedMode = False
     Left = 688
     Top = 560
   end

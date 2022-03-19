@@ -88,6 +88,7 @@ unit MainUnit;
 //                 Timing of light source, image capture snd Z stage now handled by Event list.
 // V1.9.1 19.03.22 Debugging in progress with Vieworks pixel shift camera
 // V1.9.2 19.03.22 LIGHTSOURCECHANGETIME added to settings file
+// V1.9.3 19.03.22 T and Z scroll bars now fixed at bottom of display
 
 Interface
 
@@ -707,7 +708,7 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.9.2';
+     ProgramName := 'MesoCam V1.9.3';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
@@ -3366,7 +3367,7 @@ var
 begin
 
  // Page.Width := Max(ClientWidth - Page.Left - 5,2) ;
-  Page.Height := Max(ClientHeight - Page.Top - 5 - ZSectionPanel.Height,2) ;
+  Page.Height := Max(ClientHeight - Page.Top - 5 - SlidersGrp.Height,2) ;
 
   lbReadout.Top :=  ZSectionPanel.Top ;
 
@@ -3414,6 +3415,9 @@ begin
   ZStageGrp.Top := LightSourceGrp.Top + LightSourceGrp.Height + 5 ;
   DisplayGrp.Top := ZStageGrp.Top + ZStageGrp.Height + 5 ;
   StatusGrp.Top := DisplayGrp.Top +DisplayGrp.Height + 5 ;
+
+  SLidersGrp.Top := Page.Top + Page.Height + 1 ;
+  SLidersGrp.Left := Page.Left ;
 
   UpdateDisplay := True ;
 
