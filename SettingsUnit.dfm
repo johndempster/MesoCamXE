@@ -520,7 +520,7 @@ object SettingsFrm: TSettingsFrm
       end
       object CoolLEDGrp: TGroupBox
         Left = 8
-        Top = 33
+        Top = 90
         Width = 344
         Height = 202
         Caption = ' CoolLED (USB Control) '
@@ -553,7 +553,7 @@ object SettingsFrm: TSettingsFrm
       end
       object LEDGrp: TGroupBox
         Left = 8
-        Top = 34
+        Top = 80
         Width = 376
         Height = 247
         Caption = ' LED (Digital/Analogue Control) '
@@ -1019,6 +1019,37 @@ object SettingsFrm: TSettingsFrm
             LoLimit = -1.000000015047466E30
             HiLimit = 1.000000015047466E30
           end
+        end
+      end
+      object LSCommonGrp: TGroupBox
+        Left = 8
+        Top = 34
+        Width = 376
+        Height = 41
+        TabOrder = 3
+        object Label24: TLabel
+          Left = 183
+          Top = 8
+          Width = 92
+          Height = 13
+          Alignment = taRightJustify
+          Caption = 'Change time'
+        end
+        object edLightSourceChangeTime: TValidatedEdit
+          Tag = 3
+          Left = 281
+          Top = 8
+          Width = 66
+          Height = 21
+          Hint = 'Time to change light source emission intensity/wavelength (ms)'
+          ShowHint = True
+          Text = ' 0 ms'
+          Value = 0.000000000000000000
+          Scale = 1000.000000000000000000
+          Units = 'ms'
+          NumberFormat = '%.4g'
+          LoLimit = 0.000000000000000000
+          HiLimit = 1.000000015047466E30
         end
       end
     end

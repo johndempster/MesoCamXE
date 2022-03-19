@@ -87,6 +87,7 @@ unit MainUnit;
 // V1.9.0 11.03.22 Time lapse, Z stack and multi-wavelength illumination now supported
 //                 Timing of light source, image capture snd Z stage now handled by Event list.
 // V1.9.1 19.03.22 Debugging in progress with Vieworks pixel shift camera
+// V1.9.2 19.03.22 LIGHTSOURCECHANGETIME added to settings file
 
 Interface
 
@@ -706,7 +707,7 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.9.1';
+     ProgramName := 'MesoCam V1.9.2';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
@@ -3734,6 +3735,9 @@ begin
 
     AddElementInt( ProtNode, 'LIGHTSOURCETYPE', LightSource.SourceType ) ;
     AddElementInt( ProtNode, 'LIGHTSOURCECONTROLPORT', LightSource.ControlPort ) ;
+    AddElementDouble( ProtNode, 'LIGHTSOURCECHANGETIME', LightSource.ChangeTime ) ;
+
+
 //    AddElementInt( ProtNode, 'LIGHTSOURCEBAUDRATE', LightSource.BaudRate ) ;
 
     for i := 0 to High(LightSource.ControlLines) do begin
@@ -3898,6 +3902,7 @@ begin
     LightSource.ControlPort := GetElementInt( ProtNode, 'LIGHTSOURCECONTROLPORT', LightSource.ControlPort ) ;
 //    LightSource.BaudRate := GetElementInt( ProtNode, 'LIGHTSOURCEBAUDRATE', LightSource.BaudRate ) ;
     LightSource.SourceType := GetElementInt( ProtNode, 'LIGHTSOURCETYPE', LightSource.SourceType ) ;
+    LightSource.ChangeTime := GetElementDouble( ProtNode, 'LIGHTSOURCECHANGETIME', LightSource.ChangeTime ) ;
 
     NodeIndex := 0 ;
     Num := High(LightSource.Name) + 1 ;

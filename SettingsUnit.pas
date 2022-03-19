@@ -10,6 +10,7 @@ unit SettingsUnit;
 // 09.10.17 MainFrm.Cam1.CameraTemperatureSetPoint now updated by settings
 // 06.11.17 Cam1.CCDTapOffsetLT etc. CCD tap black offset adjustment properties added and can be changed by user
 // 08.04.19 Calbration bar and temperature set point labells now in correct places
+// 19.03.22 Light source chanage time setting added
 
 interface
 
@@ -143,6 +144,9 @@ type
     SerialNumberPanel: TPanel;
     Label23: TLabel;
     edSerialNumber: TEdit;
+    LSCommonGrp: TGroupBox;
+    edLightSourceChangeTime: TValidatedEdit;
+    Label24: TLabel;
     procedure FormShow(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCancelClick(Sender: TObject);
@@ -215,6 +219,8 @@ begin
     LightSource.GetSourceTypes(cbSourceType.Items);
     cbSourceType.ItemIndex := LightSource.SourceType ;
     ShowLightSourcePanel ;
+
+    edLightSourceChangeTime.Value := LightSource.ChangeTime ;
 
     // COM port list
     LightSource.GetControlPorts(cbLightSourceControlPort.Items);
@@ -329,6 +335,7 @@ begin
     ZStage.SerialNumber := edSerialNumber.Text ;
 
     LightSource.ControlPort := cbLightSourceControlPort.ItemIndex + 1 ;
+    LightSource.ChangeTime := edLightSourceChangeTime.Value ;
     LightSource.Close ;
     LightSource.Open ;
 
