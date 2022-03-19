@@ -53,7 +53,7 @@ object SettingsFrm: TSettingsFrm
     Top = 8
     Width = 532
     Height = 447
-    ActivePage = CameraTab
+    ActivePage = LightSourceTab
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
@@ -543,8 +543,8 @@ object SettingsFrm: TSettingsFrm
         end
       end
       object cbSourceType: TComboBox
-        Left = 38
-        Top = 8
+        Left = 40
+        Top = 7
         Width = 191
         Height = 21
         TabOrder = 2
@@ -1025,10 +1025,6 @@ object SettingsFrm: TSettingsFrm
     object ZStageTab: TTabSheet
       Caption = 'Z Stage'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object GroupBox2: TGroupBox
         Left = 0
         Top = 0
@@ -1226,10 +1222,6 @@ object SettingsFrm: TSettingsFrm
       HelpKeyword = 'Lenses'
       Caption = 'Lenses'
       ImageIndex = 3
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object CalibrationGrp: TGroupBox
         Left = 8
         Top = 3

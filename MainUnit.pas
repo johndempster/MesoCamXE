@@ -86,6 +86,7 @@ unit MainUnit;
 //                 'CAMERAREADOUTSPEED', Cam1.ReadoutSpeed now stored in settings file
 // V1.9.0 11.03.22 Time lapse, Z stack and multi-wavelength illumination now supported
 //                 Timing of light source, image capture snd Z stage now handled by Event list.
+// V1.9.1 19.03.22 Debugging in progress with Vieworks pixel shift camera
 
 Interface
 
@@ -705,13 +706,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.9.0';
+     ProgramName := 'MesoCam V1.9.1';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 14/03/22';
+     ProgramName := ProgramName + ' 19/03/22';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -2081,8 +2082,8 @@ begin
     // to ensure that an extra frame is collected at start of
     // CCD shift sequence (and discarded) because first frame
     // in series has incorrect expsoure time
-    if Cam1.CameraType = IMAQ then CCDShiftCounter := -1
-                              else CCDShiftCounter := 0 ;
+//    if Cam1.CameraType = IMAQ then CCDShiftCounter := -1
+//                              else CCDShiftCounter := 0 ;
 
     UpdateDisplay := True ;
     ResizeImage := True ;
@@ -3434,7 +3435,7 @@ begin
       if (LightSource.ControlLines[Num] < ControlDisabled) and
          (LightSource.SourceType <> lsNone) then Panel.Visible := True
                                             else Panel.Visible := False ;
-      LightSource.Active[Num] := Panel.Visible ;
+//      LightSource.Active[Num] := Panel.Visible ;
 
       if Panel.Visible then begin
          Panel.Top := iTop ;
