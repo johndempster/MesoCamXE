@@ -2,7 +2,7 @@ object MainFrm: TMainFrm
   Left = 122
   Top = 357
   Caption = 'to'
-  ClientHeight = 1191
+  ClientHeight = 1162
   ClientWidth = 1472
   Color = clBtnFace
   DoubleBuffered = True
@@ -22,7 +22,7 @@ object MainFrm: TMainFrm
   OnShow = FormShow
   DesignSize = (
     1472
-    1191)
+    1162)
   PixelsPerInch = 96
   TextHeight = 13
   object lbReadout: TLabel
@@ -1794,11 +1794,6 @@ object MainFrm: TMainFrm
     NumPixelShiftFrames = 1
     DisableExposureIntervalLimit = False
     MonochromeImage = False
-    CCDTapOffsetLT = 0
-    CCDTapOffsetRT = 0
-    CCDTapOffsetLB = 0
-    CCDTapOffsetRB = 0
-    LightSpeedMode = False
     Left = 688
     Top = 560
   end
