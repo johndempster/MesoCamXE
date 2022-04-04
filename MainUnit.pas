@@ -89,6 +89,7 @@ unit MainUnit;
 // V1.9.1 19.03.22 Debugging in progress with Vieworks pixel shift camera
 // V1.9.2 19.03.22 LIGHTSOURCECHANGETIME added to settings file
 // V1.9.3 19.03.22 T and Z scroll bars now fixed at bottom of display
+// V1.9.4 22.03.22 Support for Thorlabs FW102 filter wheel (used as laser light on/off control) added
 
 Interface
 
@@ -708,13 +709,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.9.3';
+     ProgramName := 'MesoCam V1.9.4';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 19/03/22';
+     ProgramName := ProgramName + ' 22/03/22';
      Caption := ProgramName ;
 
      TempBuf := Nil ;

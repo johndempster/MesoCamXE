@@ -3,6 +3,7 @@ unit LightSourceComThreadUnit;
 // COM port I/O handler thread for Laser control unit
 // ==================================================
 // 02.10.18
+// 22.03.22 COM port Baud rate now set by constructor
 
 interface
 
@@ -26,6 +27,9 @@ type
 
     function SendCommand( const Line : string ) : Boolean ;
     function ReceiveBytes( var EndOfLine : Boolean ) : string ;
+
+  public
+    constructor Create( BaudRate : DWord ) ;
 
   protected
     procedure Execute; override;
@@ -59,6 +63,20 @@ const
   dcb_RtsControlToggle = $00003000;
   dcb_AbortOnError = $00004000;
   dcb_Reserveds = $FFFF8000;
+
+
+constructor TLightSourceComThread.Create( BaudRate : DWord ) ;
+// ------------------
+// Thread constructor
+// ------------------
+begin
+    // Create thread
+    inherited Create(False);
+
+    FBaudRate := BaudRate ;
+
+end ;
+
 
 procedure TLightSourceComThread.Execute;
 // --------------------------------
@@ -143,7 +161,7 @@ begin
      { Get current state of COM port and fill device control block }
      GetCommState( FComHandle, DCB ) ;
      { Change settings to those required for CoolLED }
-     DCB.BaudRate := CBR_9600 ;
+     DCB.BaudRate := FBaudRate ; //Old value pre 22.3.22 CBR_9600 ;
      DCB.ByteSize := 8 ;
      DCB.Parity := NOPARITY ;
      DCB.StopBits := ONESTOPBIT ;

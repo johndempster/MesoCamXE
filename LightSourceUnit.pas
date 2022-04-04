@@ -13,6 +13,7 @@ unit LightSourceUnit;
 // 30.10.18 Now used ComThread for COM I/O to CoolLED
 // 21.11.18 CoolLED light source list now obtained once after initialisation
 //          .Update blocked until initialisation completed
+// 22.03.22 Thorlabs FW102C filter wheel control added  (only positions 0 and 1 used)
 
 interface
 
@@ -27,6 +28,7 @@ const
   lsNone = 0 ;
   lsLED = 1 ;
   lsCoolLED = 2 ;
+  lsThorlabsFW102 = 3 ;
 
 
   // Com port control flags
@@ -86,6 +88,10 @@ type
     procedure CoolLEDHandleMessages ;
     procedure CoolLEDUpdate ;
     procedure LEDUpdate ;
+
+    procedure ThorlabsFW102Init ;
+    procedure ThorlabsFW102Update ;
+
     procedure StopComThread ;
 
   public
@@ -146,6 +152,8 @@ begin
       List.Add('None') ;
       List.Add('LED (Digital/Analogue Control)') ;
       List.Add('Cool-LED pe-4000/pe-2') ;
+      List.Add('Thorlabs FW102') ;
+
       end;
 
 procedure TLightSource.DataModuleCreate(Sender: TObject);
@@ -211,15 +219,25 @@ begin
     StopComThread ;
 
     case FSourceType of
+
         lsCoolLED : begin
-          ComThread := TLightSourceComThread.Create ;
+          ComThread := TLightSourceComThread.Create( 9600 ) ;
           CoolLEDInit ;
           FLightSourceIsOpen := True ;
           end ;
+
         lsLED : begin
           Initialised := True ;
           FLightSourceIsOpen := True ;
           end;
+
+        lsThorlabsFW102 : begin
+          ComThread := TLightSourceComThread.Create( 115200 ) ;
+          ThorlabsFW102Init ;
+          FLightSourceIsOpen := True ;
+          Initialised := True ;
+          end ;
+
         else FLightSourceIsOpen := True ;
         end;
 
@@ -295,6 +313,7 @@ begin
    case SourceType of
         lsLED : LEDUpdate ;
         lsCoolLED : CoolLEDUpdate ;
+        lsThorlabsFW102 : ThorlabsFW102Update ;
         end;
 
 end;
@@ -315,7 +334,6 @@ begin
         Dev := LabIO.Resource[ControlLines[i]].Device ;
         Chan := LabIO.Resource[ControlLines[i]].StartChannel ;
         ResourceType := LabIO.Resource[ControlLines[i]].ResourceType ;
-
 
         if ResourceType = DACOut then
            begin
@@ -379,6 +397,39 @@ begin
                              else s := SourceLetter[i] + 'F' ;
         CommandList.Add(s) ;
         end ;
+
+    end;
+
+
+procedure TLightSource.ThorlabsFW102Init ;
+// -----------------------------------------------
+// Initialise Thorlabs FW102 filter wheel settings
+// -----------------------------------------------
+var
+    i : Integer ;
+begin
+   // Clear existing settings
+   for i := 0 to High(ControlLines) do ControlLines[i] := ControlDisabled ;
+
+   // Set a single light source control line
+   ControlLines[0] := 0 ;
+   Names[0] := 'LS0' ;
+
+end;
+
+procedure TLightSource.ThorlabsFW102Update ;
+// ----------------------------------
+// Update Thorlabs FW102 filter wheel
+// ----------------------------------
+var
+  s : string ;
+begin
+
+    // Set FW position = 0 to turn light on, position=1 for off
+
+    if FOn and Active[0] then s := 'pos=0'
+                         else s := 'pos=1' ;
+    CommandList.Add(s) ;
 
     end;
 

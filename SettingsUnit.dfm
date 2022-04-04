@@ -1028,9 +1028,9 @@ object SettingsFrm: TSettingsFrm
         Height = 41
         TabOrder = 3
         object Label24: TLabel
-          Left = 183
+          Left = 215
           Top = 8
-          Width = 92
+          Width = 60
           Height = 13
           Alignment = taRightJustify
           Caption = 'Change time'
@@ -1044,11 +1044,9 @@ object SettingsFrm: TSettingsFrm
           Hint = 'Time to change light source emission intensity/wavelength (ms)'
           ShowHint = True
           Text = ' 0 ms'
-          Value = 0.000000000000000000
           Scale = 1000.000000000000000000
           Units = 'ms'
           NumberFormat = '%.4g'
-          LoLimit = 0.000000000000000000
           HiLimit = 1.000000015047466E30
         end
       end

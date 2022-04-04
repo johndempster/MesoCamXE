@@ -294,7 +294,7 @@ begin
     CoolLEDGrp.Visible := False ;
     case LightSource.SourceType of
          lsLED : LEDGrp.Visible := True ;
-         lsCoolLED : CoolLEDGrp.Visible := True ;
+         lsCoolLED,lsThorlabsFW102 : CoolLEDGrp.Visible := True ;
          end ;
     end ;
 
