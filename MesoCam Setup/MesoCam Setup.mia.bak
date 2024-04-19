@@ -1455,7 +1455,7 @@ Removes this InstallAware Software Corporation product
 0
 {B878B609-BA0A-4A2F-B49F-743402D75123}
 $TARGETDIR$\MesoCam.exe
-MesoCam V1.8.2
+MesoCam V1.9.0
 $DESKTOPDIR$
 MesoScope Image Capture Application
 
@@ -1465,7 +1465,7 @@ MesoScope Image Capture Application
 0|
 {263F4550-C94C-4730-8CB9-91D225D9DEDA}
 $TARGETDIR$\MesoCam.exe
-MesoCam V1.8.2
+MesoCam V1.9.0
 $SHORTCUTFOLDER$
 MesoScope Image Capture Application
 
@@ -1475,7 +1475,7 @@ MesoScope Image Capture Application
 0|
 {DD95B3BE-2D2F-4079-B0F2-17965A1E6330}
 $TARGETDIR$\MesoCam.exe
-MesoCam V1.8.2
+MesoCam V1.9.0
 $SHORTCUTROOT$
 MesoScope Image Capture Application
 
