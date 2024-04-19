@@ -90,6 +90,7 @@ unit MainUnit;
 // V1.9.2 19.03.22 LIGHTSOURCECHANGETIME added to settings file
 // V1.9.3 19.03.22 T and Z scroll bars now fixed at bottom of display
 // V1.9.4 22.03.22 Support for Thorlabs FW102 filter wheel (used as laser light on/off control) added
+// V1.9.5 19.04.24 Mutex Dempster.MesoCam added to prevent mutltiple instances of program being launched
 
 Interface
 
@@ -709,13 +710,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.9.4';
+     ProgramName := 'MesoCam V1.9.5';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 22/03/22';
+     ProgramName := ProgramName + ' 19/04/22';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
