@@ -91,6 +91,7 @@ unit MainUnit;
 // V1.9.3 19.03.22 T and Z scroll bars now fixed at bottom of display
 // V1.9.4 22.03.22 Support for Thorlabs FW102 filter wheel (used as laser light on/off control) added
 // V1.9.5 19.04.24 Mutex Dempster.MesoCam added to prevent mutltiple instances of program being launched
+// V1.9.5 28.08.24 External trigger now suoported on Vieworks VA-29MC-5M and also via analog in.
 
 Interface
 
@@ -118,6 +119,9 @@ const
     evImageWait = 5 ;
     evSequenceStart = 6 ;
     evSequenceEnd = 7 ;
+    ctmFreeRun = 0 ;
+    ctmCameraExtTrigger = 1 ;
+    ctmDigInTrigger = 2 ;
 type
 
  TPaletteType = (palGrey,palGreen,palRed,palBlue,palFalseColor) ;
@@ -380,8 +384,10 @@ type
     CalibrationBarSize : double ;          // Display calibration bar size (microns)
     LiveBinSelected : Integer ;            // Selected live binning option
     MagnifiedCameraPixelSize : double ;    // Image pixel size (microns)
-    CameraTriggerOutput : Integer ;        // Camera trigger digital output line
+    CameraTriggerMode : Integer ;          // Camera trigger mode
+    CameraTriggerInput : Integer ;        // Camera trigger digital input line
     CameraTriggerActiveHigh : Boolean ;    // TTL high level triggers camera
+    CameraPulseIntervalMode : Boolean ;   // TRUE = exposure time determined by ext. trigger pulse interval
     CameraGainIndex : Integer ;
     CCDShiftCounter : Integer ;            // CCD stage shift counter
     Initialising : Boolean ;
@@ -693,6 +699,12 @@ begin
      NumTSectionsAvailable := 0 ;
      CursorReadoutText := '' ;
      edSaveFileStatus.Visible := False ;
+
+     CameraTriggerMode := ctmFreeRun ;     // Exposure trigger mode
+     CameraTriggerInput := 0 ;             // Trigger input AI line (Dig In mode)
+     CameraTriggerActiveHigh := True ;     // Dig In Trigger polarity
+     CameraPulseIntervalMode := False ;    // Pulse interval mode off
+
      end;
 
 
@@ -710,13 +722,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.9.5';
+     ProgramName := 'MesoCam V1.9.6';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 19/04/22';
+     ProgramName := ProgramName + ' 23/08/24';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -2496,6 +2508,7 @@ var
     FrameRate : Double ;
     s : string ;
     TNow : Cardinal ;
+    V : Single ;
 begin
 
     if TimerBusy then Exit ;
@@ -2552,10 +2565,38 @@ begin
               // Acquire image
               evExposure :
                 begin
-                Cam1.SnapImage ;
-                ImageCaptured := False ;
-                TNextEvent := TNow + EventList[EventCounter].Delay ;
-                Inc(EventCounter) ;
+
+                if CameraTriggerMode = ctmDigInTrigger then
+                     begin
+
+                     // Wait from camera triger input AI channel to change to trigger level
+                     // then snap image
+
+                     V := LabIO.ReadADCV( LabIO.Resource[CameraTriggerInput].Device,
+                                          LabIO.Resource[CameraTriggerInput].StartChannel ) ;
+                     if (CameraTriggerActiveHigh and (V >= 2.5)) or
+                        ((not CameraTriggerActiveHigh) and (V < 2.5)) then
+                        begin
+                        Cam1.SnapImage ;
+                        ImageCaptured := False ;
+                        TNextEvent := TNow + EventList[EventCounter].Delay ;
+                        Inc(EventCounter) ;
+                        end;
+
+                     end
+                else
+                    begin
+
+                    // Snap image immediately or upon receiveing trigger on camera external trigger input
+
+                    if CameraTriggerMode = ctmCameraExtTrigger then Cam1.TriggerMode := CamExtTrigger
+                                                               else Cam1.TriggerMode := CamFreeRun ;
+                    Cam1.SnapImage ;
+                    ImageCaptured := False ;
+                    TNextEvent := TNow + EventList[EventCounter].Delay ;
+                    Inc(EventCounter) ;
+                    end;
+
                 end;
 
               // Wait for image
@@ -3727,8 +3768,10 @@ begin
 //    AddElementDouble( ProtNode, 'LASERINTENSITY', LaserIntensity ) ;
 //    AddElementDouble( ProtNode, 'ADCVOLTAGERANGE', ADCVoltageRange ) ;
 
-    AddElementInt( ProtNode, 'CAMERATRIGGEROUTPUT', MainFrm.CameraTriggerOutput ) ;
+    AddElementInt( ProtNode, 'CAMERATRIGGERMODE', MainFrm.CameraTriggerMode ) ;
+    AddElementInt( ProtNode, 'CAMERATRIGGERINPUT', MainFrm.CameraTriggerInput ) ;
     AddElementBool( ProtNode, 'CAMERATRIGGERACTIVEHIGH', MainFrm.CameraTriggerActiveHigh ) ;
+    AddElementBool( ProtNode, 'CAMERAPULSEINTERVALMODE', MainFrm.CameraPulseIntervalMode ) ;
 
     // Z stack
     iNode := ProtNode.AddChild( 'ZSTACK' ) ;
@@ -3890,8 +3933,10 @@ begin
     cbPalette.ItemIndex := GetElementInt( ProtNode, 'PALETTE', cbPalette.ItemIndex ) ;
     PaletteType := TPaletteType(cbPalette.Items.Objects[cbPalette.ItemIndex]) ;
 
-    CameraTriggerOutput := GetElementInt( ProtNode, 'CAMERATRIGGEROUTPUT', CameraTriggerOutput ) ;
+    CameraTriggerMode := GetElementInt( ProtNode, 'CAMERATRIGGERMODE', MainFrm.CameraTriggerMode ) ;
+    CameraTriggerInput := GetElementInt( ProtNode, 'CAMERATRIGGERINPUT', MainFrm.CameraTriggerInput ) ;
     CameraTriggerActiveHigh := GetElementBool( ProtNode, 'CAMERATRIGGERACTIVEHIGH', CameraTriggerActiveHigh ) ;
+    CameraPulseIntervalMode := GetElementBool( ProtNode, 'CAMERAPULSEINTERVALMODE', CameraPulseIntervalMode ) ;
 
     NodeIndex := 0 ;
     While FindXMLNode(ProtNode,'ZSTACK',iNode,NodeIndex) do

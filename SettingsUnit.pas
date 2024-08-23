@@ -11,6 +11,7 @@ unit SettingsUnit;
 // 06.11.17 Cam1.CCDTapOffsetLT etc. CCD tap black offset adjustment properties added and can be changed by user
 // 08.04.19 Calbration bar and temperature set point labells now in correct places
 // 19.03.22 Light source chanage time setting added
+// 20.08.24 CameraTriggerMode setting added
 
 interface
 
@@ -25,7 +26,7 @@ type
     bCancel: TButton;
     Page: TPageControl;
     CameraTab: TTabSheet;
-    GroupBox4: TGroupBox;
+    gpCamera: TGroupBox;
     cbCamera: TComboBox;
     ModePanel: TPanel;
     lbCameraMode: TLabel;
@@ -95,7 +96,7 @@ type
     ComboBox9: TComboBox;
     ValidatedEdit17: TValidatedEdit;
     ValidatedEdit18: TValidatedEdit;
-    GroupBox5: TGroupBox;
+    gpFilePaths: TGroupBox;
     Label25: TLabel;
     edImageJPath: TEdit;
     ckSaveAsMultipageTIFF: TCheckBox;
@@ -131,7 +132,7 @@ type
     edCCDTapOffsetLB: TValidatedEdit;
     edCCDTapOffsetLT: TValidatedEdit;
     edCCDTapOffsetRB: TValidatedEdit;
-    GroupBox1: TGroupBox;
+    gpCalibration: TGroupBox;
     Label3: TLabel;
     Label9: TLabel;
     Label41: TLabel;
@@ -147,6 +148,16 @@ type
     LSCommonGrp: TGroupBox;
     edLightSourceChangeTime: TValidatedEdit;
     Label24: TLabel;
+    gpTrigger: TGroupBox;
+    cbCameraTrigger: TComboBox;
+    lbCameraTrigger: TLabel;
+    gpDigInTrigger: TGroupBox;
+    lbDigInTriggerLine: TLabel;
+    lbTriggerPolarity: TLabel;
+    cbCameraTriggerInput: TComboBox;
+    cbCameraTriggerPolarity: TComboBox;
+    gpExtTrigger: TGroupBox;
+    ckPulseIntervalMode: TCheckBox;
     procedure FormShow(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCancelClick(Sender: TObject);
@@ -159,6 +170,7 @@ type
       NewValue: Integer; Direction: TUpDownDirection);
     procedure edNumLensesKeyPress(Sender: TObject; var Key: Char);
     procedure cbSourceTypeChange(Sender: TObject);
+    procedure cbCameraTriggerChange(Sender: TObject);
   private
     { Private declarations }
     procedure ShowLightSourcePanel ;
@@ -204,6 +216,21 @@ begin
 
      // Get camera COM port
      cbCameraPort.ItemIndex := MainFrm.Cam1.ComPort - 1 ;
+
+     // Camera Trigger mode
+     cbCameraTrigger.ItemIndex :=  Min(Max(MainFrm.CameraTriggerMode,0),cbCameraTrigger.Items.Count-1);
+
+     if cbCameraTrigger.ItemIndex = ctmDigInTrigger then gpDigInTrigger.Visible := True
+                                                    else gpDigInTrigger.Visible := False ;
+     if cbCameraTrigger.ItemIndex = ctmCameraExtTrigger then gpExtTrigger.Visible := True
+                                                        else gpExtTrigger.Visible := False ;
+
+     // Digital trigger via AI input of NI card
+     LabIO.GetAIPorts( cbCameraTriggerInput.Items ) ;
+     cbCameraTriggerInput.ItemIndex := Max(cbCameraTriggerInput.Items.IndexOfObject(TObject(MainFrm.CameraTriggerInput)),0);
+     if MainFrm.CameraTriggerActiveHigh then cbCameraTriggerPolarity.ItemIndex := 0
+                                       else cbCameraTriggerPolarity.ItemIndex := 1 ;
+     ckPulseIntervalMode.Checked := Mainfrm.CameraPulseIntervalMode ;
 
      // Reset camera
      NewCamera(false) ;
@@ -355,6 +382,15 @@ begin
 
     MainFrm.CalibrationBarSize := edCalibrationBarSize.Value ;
 
+    // Camera trigger mode
+    MainFrm.CameraTriggerMode := cbCameraTrigger.ItemIndex ;
+    MainFrm.CameraPulseIntervalMode := ckPulseIntervalMode.Checked ;
+
+   // Digital trigger via AI input of NI card
+   MainFrm.CameraTriggerInput:= Integer( cbCameraTriggerInput.Items.Objects[cbCameraTriggerInput.ItemIndex] ) ;
+   if cbCameraTriggerPolarity.ItemIndex = 0 then MainFrm.CameraTriggerActiveHigh := True
+                                            else MainFrm.CameraTriggerActiveHigh := False ;
+
     // CCD tap black level offsets
     MainFRm.Cam1.CCDTapOffsetLT := Round(edCCDTapOffsetLT.Value) ;
     MainFRm.Cam1.CCDTapOffsetRT := Round(edCCDTapOffsetRT.Value) ;
@@ -413,6 +449,19 @@ procedure TSettingsFrm.cbCameraNamesChange(Sender: TObject);
 begin
     MainFrm.Cam1.SelectedCamera := cbCameraNames.ItemIndex ;
     NewCamera(true) ;
+end;
+
+procedure TSettingsFrm.cbCameraTriggerChange(Sender: TObject);
+// ----------------------------
+// Camera trigger mode changed
+// ----------------------------
+begin
+
+     if cbCameraTrigger.ItemIndex = ctmDigInTrigger then gpDigInTrigger.Visible := True
+                                                    else gpDigInTrigger.Visible := False ;
+     if cbCameraTrigger.ItemIndex = ctmCameraExtTrigger then gpExtTrigger.Visible := True
+                                                        else gpExtTrigger.Visible := False ;
+
 end;
 
 procedure TSettingsFrm.cbSourceTypeChange(Sender: TObject);

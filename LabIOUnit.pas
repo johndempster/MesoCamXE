@@ -324,6 +324,12 @@ type
               ADCVoltageRange : Single
               ) : Integer ;
 
+     function ReadADCV(
+              Device : Integer ;
+              Channel : Integer
+              ) : Single ;
+
+
   procedure WriteBit(
           Device : Integer ;  // Device
           On : Boolean ;      // On/off
@@ -407,6 +413,8 @@ begin
     for i := 1 to MaxDevices do ADCVoltageRangeAtX1Gain[i] := 1.0 ;
     for i := 1 to MaxDevices do for j := 0 to MaxDACs-1 do DACOutState[i,j] := 0.0 ;
     NumResources := 0 ;
+
+    ADCInputMode := imDifferential ; // Default input mode is differential
 
     end;
 
@@ -531,13 +539,25 @@ function TLabIO.ReadADC(
          ADCVoltageRange : Single
          ) : Integer ;
 // ---------------
-// Read A/D inputs
+// Read A/D inputs (return as ADC integer level
 // ---------------
 begin
-    Result := NIDAQMX_ReadADC( Device,
-                                             Channel,
-                                             ADCVoltageRange ) ;
+    Result := NIDAQMX_ReadADC( Device,Channel,ADCVoltageRange ) ;
     end ;
+
+
+function TLabIO.ReadADCV(
+         Device : Integer ;
+         Channel : Integer
+         ) : Single ;
+// ---------------
+// Read A/D inputs (return as Volts)
+// ---------------
+begin
+      Result := ReadADC( Device, Channel, ADCVoltageRangeAtX1Gain[Device] ) ;
+      Result := (Result*ADCVoltageRangeAtX1Gain[Device]) / ADCMaxValue[Device] ;
+end;
+
 
 
 procedure TLabIO.WriteToDigitalOutPutPort(
@@ -674,12 +694,13 @@ begin
        GetDeviceADCChannelProperties( DeviceNum ) ;
        // Add to resource list
        if NumADCs[DeviceNum] > 0 then
+       for i := 0 to NumADCs[DeviceNum]-1 do
           begin
           Resource[NumResources].Device := DeviceNum ;
           Resource[NumResources].ResourceType := ADCIn ;
-          Resource[NumResources].StartChannel := 0 ;
-          Resource[NumResources].EndChannel := NumADCs[DeviceNum]-1 ;
-          Resource[NumResources].Name := format('Dev%d:AI0',[DeviceNum]) ;
+          Resource[NumResources].StartChannel := i ;
+          Resource[NumResources].EndChannel := i ;
+          Resource[NumResources].Name := format('Dev%d:AI%d',[DeviceNum,i]) ;
           Inc(NumResources) ;
           end ;
 
@@ -731,7 +752,8 @@ procedure TLabIO.GetAIPorts( List : TStrings ) ;
 // Return list of analogue input ports available
 // ----------------------------------------------
 var
-    i : Cardinal ;
+    i,ch : Cardinal ;
+    DevName : String ;
 begin
     List.Clear ;
     List.AddObject( 'None',TObject(MaxResources));

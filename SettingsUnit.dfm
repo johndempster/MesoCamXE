@@ -11,10 +11,8 @@ object SettingsFrm: TSettingsFrm
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poMainFormCenter
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object bOK: TButton
     Left = 8
@@ -53,11 +51,11 @@ object SettingsFrm: TSettingsFrm
     Top = 8
     Width = 532
     Height = 447
-    ActivePage = LightSourceTab
+    ActivePage = CameraTab
     TabOrder = 2
     object CameraTab: TTabSheet
       Caption = 'Camera'
-      object GroupBox4: TGroupBox
+      object gpCamera: TGroupBox
         Left = 8
         Top = 2
         Width = 229
@@ -142,7 +140,7 @@ object SettingsFrm: TSettingsFrm
           TabOrder = 3
           object Label1: TLabel
             Left = 25
-            Top = 8
+            Top = 0
             Width = 83
             Height = 14
             Alignment = taRightJustify
@@ -340,9 +338,9 @@ object SettingsFrm: TSettingsFrm
             HiLimit = 100.000000000000000000
           end
         end
-        object GroupBox1: TGroupBox
+        object gpCalibration: TGroupBox
           Left = 8
-          Top = 217
+          Top = 213
           Width = 212
           Height = 87
           TabOrder = 7
@@ -437,7 +435,7 @@ object SettingsFrm: TSettingsFrm
           end
         end
       end
-      object GroupBox5: TGroupBox
+      object gpFilePaths: TGroupBox
         Left = 243
         Top = 3
         Width = 267
@@ -478,9 +476,9 @@ object SettingsFrm: TSettingsFrm
           Text = 'edImageJPath'
         end
         object ckSaveAsMultipageTIFF: TCheckBox
-          Left = 78
-          Top = 51
-          Width = 182
+          Left = 60
+          Top = 52
+          Width = 204
           Height = 15
           Alignment = taLeftJustify
           Caption = 'Save stacks as multipage TIFF'
@@ -499,6 +497,124 @@ object SettingsFrm: TSettingsFrm
           Height = 21
           TabOrder = 2
           Text = 'edImageJPath'
+        end
+      end
+      object gpTrigger: TGroupBox
+        Left = 243
+        Top = 176
+        Width = 267
+        Height = 166
+        Caption = ' Exposure Trigger '
+        TabOrder = 2
+        object lbCameraTrigger: TLabel
+          Left = 8
+          Top = 22
+          Width = 83
+          Height = 13
+          Alignment = taRightJustify
+          Caption = 'Trigger Source'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object cbCameraTrigger: TComboBox
+          Left = 97
+          Top = 22
+          Width = 160
+          Height = 21
+          TabOrder = 0
+          Text = 'cbCameraTrigger'
+          OnChange = cbCameraTriggerChange
+          Items.Strings = (
+            'Free Run'
+            'Ext Trigger (Camera)'
+            'Ext Trigger (Dig. In)')
+        end
+        object gpDigInTrigger: TGroupBox
+          Left = 35
+          Top = 49
+          Width = 222
+          Height = 66
+          TabOrder = 1
+          object lbDigInTriggerLine: TLabel
+            Left = 36
+            Top = 9
+            Width = 62
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'Dig. In Line'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object lbTriggerPolarity: TLabel
+            Left = 10
+            Top = 36
+            Width = 88
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'Trigger Polarity'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object cbCameraTriggerInput: TComboBox
+            Left = 112
+            Top = 9
+            Width = 97
+            Height = 21
+            TabOrder = 0
+            Text = 'cbCameraTrigger'
+            Items.Strings = (
+              'Free Run'
+              'Ext Trigger (Camera)'
+              'Ext Trigger (Dig. In)')
+          end
+          object cbCameraTriggerPolarity: TComboBox
+            Left = 112
+            Top = 36
+            Width = 97
+            Height = 21
+            Hint = 'Trigger Polarity: Active High (5 V), Active Low (0 V)'
+            ParentShowHint = False
+            ShowHint = True
+            TabOrder = 1
+            Text = 'cbCameraTrigger'
+            Items.Strings = (
+              'Active High'
+              'Active Low')
+          end
+        end
+        object gpExtTrigger: TGroupBox
+          Left = 35
+          Top = 49
+          Width = 222
+          Height = 40
+          TabOrder = 2
+          object ckPulseIntervalMode: TCheckBox
+            Left = 48
+            Top = 8
+            Width = 161
+            Height = 25
+            Alignment = taLeftJustify
+            Caption = 'Pulse Interval Mode'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+            TabOrder = 0
+          end
         end
       end
     end
@@ -1047,6 +1163,7 @@ object SettingsFrm: TSettingsFrm
           Scale = 1000.000000000000000000
           Units = 'ms'
           NumberFormat = '%.4g'
+          LoLimit = -1.000000015047466E30
           HiLimit = 1.000000015047466E30
         end
       end
