@@ -1589,7 +1589,7 @@ begin
      Images[Page.TabIndex].Height := BitMap.Height ;
 
      // Show Z section slider bar
-     scZSection.Max := Max( Min( NumZSectionsRequested, NumImagesInRawFile div NumPanels ) -1,0);
+     scZSection.Max := Max( Min( NumZSectionsRequested, NumImagesInRawFile div Max(NumPanels,1) ) -1,0);
      lbZSection.Caption := format(' %d/%d',[scZSection.Position+1,scZSection.Max+1]) ;
 
      // Show T section slider bar

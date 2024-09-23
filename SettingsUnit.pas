@@ -572,10 +572,12 @@ procedure TSettingsFrm.NewCamera(Reopen : Boolean) ;
 // Setup up dialog box for newly selected camera
 // ---------------------------------------------
 var
-    iTop : Integer ;
+    iTop,KeepCameraMode : Integer ;
 begin
 
      // Close existing camera and re-open new if required
+
+     KeepCameraMode := MainFrm.Cam1.CameraMode ;
 
      if Reopen then
         begin
@@ -623,6 +625,7 @@ begin
 
      if cbCameraMode.Items.Count > 1 then ModePanel.Visible := True
                                      else ModePanel.Visible := False ;
+     MainFrm.Cam1.CameraMode := KeepCameraMode ;
      cbCameraMode.ItemIndex := Min(MainFrm.Cam1.CameraMode,cbCameraMode.Items.Count-1) ;
      if ModePanel.Visible then iTop := iTop + ModePanel.Height ;
 
