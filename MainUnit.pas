@@ -92,6 +92,8 @@ unit MainUnit;
 // V1.9.4 22.03.22 Support for Thorlabs FW102 filter wheel (used as laser light on/off control) added
 // V1.9.5 19.04.24 Mutex Dempster.MesoCam added to prevent mutltiple instances of program being launched
 // V1.9.5 28.08.24 External trigger now suoported on Vieworks VA-29MC-5M and also via analog in.
+// V1.9.7 02.09.24 Pulse interval trigger mode now works with Vieworks VA-29MC-5M
+// V1.9.8 22.09.24 Support for FLIR BlackFly camera
 
 Interface
 
@@ -163,7 +165,7 @@ type
     mnExit: TMenuItem;
     mnSetup: TMenuItem;
     mnScanSettings: TMenuItem;
-    ImageSizeGrp: TGroupBox;
+    ImageModeGrp: TGroupBox;
     ZStackGrp: TGroupBox;
     Label5: TLabel;
     Label6: TLabel;
@@ -173,24 +175,6 @@ type
     ZStageGrp: TGroupBox;
     edGotoXPosition: TValidatedEdit;
     bGotoZPosition: TButton;
-    LightSourceGrp: TGroupBox;
-    DisplayGrp: TGroupBox;
-    cbPalette: TComboBox;
-    ContrastPage: TPageControl;
-    RangeTab: TTabSheet;
-    bFullScale: TButton;
-    bMaxContrast: TButton;
-    edDisplayIntensityRange: TRangeEdit;
-    ckContrast6SDOnly: TCheckBox;
-    ckAutoOptimise: TCheckBox;
-    SlidersTab: TTabSheet;
-    Label9: TLabel;
-    Label10: TLabel;
-    Label11: TLabel;
-    Label13: TLabel;
-    Label12: TLabel;
-    Label14: TLabel;
-    StatusGrp: TGroupBox;
     bLiveImage: TButton;
     mnSaveImage: TMenuItem;
     cbCaptureMode: TComboBox;
@@ -202,7 +186,60 @@ type
     bEnterCCDArea: TButton;
     Label8: TLabel;
     cbCameraGain: TComboBox;
+    Page: TPageControl;
+    tbChan0: TTabSheet;
+    tbChan1: TTabSheet;
+    tbChan2: TTabSheet;
+    Image0: TImage;
+    lbReadout: TLabel;
+    Image1: TImage;
+    Image2: TImage;
+    mnSaveToImageJ: TMenuItem;
+    ckSeparateLightSources: TCheckBox;
+    ckAcquireZStack: TCheckBox;
+    tbChan3: TTabSheet;
+    Image3: TImage;
+    cbLiveBin: TComboBox;
+    Label2: TLabel;
+    cbLens: TComboBox;
+    mnHelp: TMenuItem;
+    mnContents: TMenuItem;
+    mnABout: TMenuItem;
+    edGotoYPosition: TValidatedEdit;
+    edGotoZPosition: TValidatedEdit;
+    edXYZPosition: TEdit;
+    ckAcquireTimeLapseSeries: TCheckBox;
+    TimeLapseGrp: TGroupBox;
+    Label3: TLabel;
+    Label4: TLabel;
+    edNumTimeLapsePoints: TValidatedEdit;
+    edTimeLapseInterval: TValidatedEdit;
+    bGoToXPosition: TButton;
+    bGoToYPosition: TButton;
+    Cam1: TSESCam;
+    lbSaveFilename: TLabel;
+    SlidersGrp: TGroupBox;
+    TSectionPanel: TPanel;
+    lbTSection: TLabel;
+    Label15: TLabel;
+    scTSection: TScrollBar;
+    ZSectionPanel: TPanel;
+    lbZSection: TLabel;
+    Label1: TLabel;
+    scZSection: TScrollBar;
+    edSaveFileStatus: TEdit;
+    DisplayPage: TPageControl;
+    RangeTab: TTabSheet;
+    bFullScale: TButton;
+    bMaxContrast: TButton;
+    edDisplayIntensityRange: TRangeEdit;
+    ckContrast6SDOnly: TCheckBox;
+    ckAutoOptimise: TCheckBox;
+    LightSourcesTab: TTabSheet;
+    cbPalette: TComboBox;
+    plHistogram: TXYPlotDisplay;
     edStatus: TEdit;
+    LightSourceGrp: TGroupBox;
     pnLightSource0: TPanel;
     ckLightSourceOn0: TCheckBox;
     edName: TEdit;
@@ -243,51 +280,9 @@ type
     Edit7: TEdit;
     TrackBar8: TTrackBar;
     ValidatedEdit8: TValidatedEdit;
-    Page: TPageControl;
-    tbChan0: TTabSheet;
-    tbChan1: TTabSheet;
-    tbChan2: TTabSheet;
-    Image0: TImage;
-    lbReadout: TLabel;
-    Image1: TImage;
-    Image2: TImage;
-    mnSaveToImageJ: TMenuItem;
-    tbContrast: TTrackBar;
-    tbBrightness: TTrackBar;
-    ckSeparateLightSources: TCheckBox;
-    ckAcquireZStack: TCheckBox;
-    tbChan3: TTabSheet;
-    Image3: TImage;
-    cbLiveBin: TComboBox;
-    plHistogram: TXYPlotDisplay;
-    Label2: TLabel;
-    cbLens: TComboBox;
-    mnHelp: TMenuItem;
-    mnContents: TMenuItem;
-    mnABout: TMenuItem;
-    edGotoYPosition: TValidatedEdit;
-    edGotoZPosition: TValidatedEdit;
-    edXYZPosition: TEdit;
-    ckAcquireTimeLapseSeries: TCheckBox;
-    TimeLapseGrp: TGroupBox;
-    Label3: TLabel;
-    Label4: TLabel;
-    edNumTimeLapsePoints: TValidatedEdit;
-    edTimeLapseInterval: TValidatedEdit;
-    bGoToXPosition: TButton;
-    bGoToYPosition: TButton;
-    Cam1: TSESCam;
-    lbSaveFilename: TLabel;
-    SlidersGrp: TGroupBox;
-    TSectionPanel: TPanel;
-    lbTSection: TLabel;
-    Label15: TLabel;
-    scTSection: TScrollBar;
-    ZSectionPanel: TPanel;
-    lbZSection: TLabel;
-    Label1: TLabel;
-    scZSection: TScrollBar;
-    edSaveFileStatus: TEdit;
+    bRange: TButton;
+    bCursors: TButton;
+    cbCaptureBin: TComboBox;
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -318,7 +313,6 @@ type
     procedure edNumPixelsPerZStepKeyPress(Sender: TObject; var Key: Char);
     procedure edMicronsPerZStepKeyPress(Sender: TObject; var Key: Char);
     procedure edGotoXPositionKeyPress(Sender: TObject; var Key: Char);
-    procedure sbContrastChange(Sender: TObject);
     procedure bLiveImageClick(Sender: TObject);
     procedure mnSaveImageClick(Sender: TObject);
     procedure edExposureTimeKeyPress(Sender: TObject; var Key: Char);
@@ -330,8 +324,6 @@ type
     procedure ckLightSourceOn0Click(Sender: TObject);
     procedure bSelectedRegionClick(Sender: TObject);
     procedure mnSaveToImageJClick(Sender: TObject);
-    procedure tbBrightnessChange(Sender: TObject);
-    procedure tbContrastChange(Sender: TObject);
     procedure bEnterCCDAreaClick(Sender: TObject);
     procedure ckAcquireZStackClick(Sender: TObject);
     procedure ckSeparateLightSourcesClick(Sender: TObject);
@@ -350,6 +342,10 @@ type
     procedure rbZoomModeClick(Sender: TObject);
     procedure bGoToXPositionClick(Sender: TObject);
     procedure bGoToYPositionClick(Sender: TObject);
+    procedure bRangeClick(Sender: TObject);
+    procedure plHistogramCursorChange(Sender: TObject);
+    procedure bCursorsClick(Sender: TObject);
+    procedure cbCaptureBinChange(Sender: TObject);
   private
 
     { Private declarations }
@@ -383,6 +379,7 @@ type
     CameraPixelSize : double ;             // Camera pixel size (microns)
     CalibrationBarSize : double ;          // Display calibration bar size (microns)
     LiveBinSelected : Integer ;            // Selected live binning option
+    CaptureBinSelected : Integer ;         // Selected Capture binning option
     MagnifiedCameraPixelSize : double ;    // Image pixel size (microns)
     CameraTriggerMode : Integer ;          // Camera trigger mode
     CameraTriggerInput : Integer ;        // Camera trigger digital input line
@@ -530,6 +527,10 @@ type
 
     HistogramNumBins : Integer ;
     Histogram : Array[0..MaxHistogramBins-1] of Single ;
+    HistogramCursorLo : Integer ;
+    HistogramCursorHi : Integer ;
+    GreyLoCursorPosition : Integer ;
+    GreyHiCursorPosition : Integer ;
 
     IgnorePanelControls : Boolean ;
 
@@ -722,13 +723,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.9.6';
+     ProgramName := 'MesoCam V1.9.8';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 23/08/24';
+     ProgramName := ProgramName + ' 23/09/24';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -761,6 +762,14 @@ begin
      cbLiveBin.Items.AddObject('Live Bin 1x1',TObject(1));
      cbLiveBin.ItemIndex := 0 ;
      LiveBinSelected := 0 ;
+
+     // Capture mode binning
+     cbCaptureBin.Clear ;
+     cbCaptureBin.Items.AddObject('Capture Bin 4x4',TObject(4));
+     cbCaptureBin.Items.AddObject('Capture Bin 2x2',TObject(2));
+     cbCaptureBin.Items.AddObject('Capture Bin 1x1',TObject(1));
+     cbCaptureBin.ItemIndex := 0 ;
+     CaptureBinSelected := 0 ;
 
      cbCaptureMode.Clear ;
      cbCaptureMode.Items.AddObject('Standard (1X1)',TObject(1));
@@ -1312,10 +1321,11 @@ begin
      edDisplayIntensityRange.HiLimit := GreyLevelMax  ;
      edDisplayIntensityRange.LoValue := LoValue  ;
      edDisplayIntensityRange.HiValue := HiValue  ;
-     tbBrightness.Max := GreyLevelMax ;
-     tbContrast.Max := GreyLevelMax ;
-     tbBrightness.Position := tbBrightness.Max - (LoValue + HiValue) div 2 ;
-     tbContrast.Position := tbContrast.Max - Abs(HiValue - LoValue) ;
+
+     GreyLoCursorPosition := GreyLo ;
+     GreyHiCursorPosition := GreyHi ;
+
+
 end ;
 
 
@@ -1728,6 +1738,24 @@ begin
 end ;
 
 
+procedure TMainFrm.bCursorsClick(Sender: TObject);
+// ----------------------------------------------------
+// Set display min-max contrast using histogram cursors
+// ----------------------------------------------------
+begin
+     // Set intensity range and sliders
+
+     GreyLo := GreyLoCursorPosition ;
+     GreyHi := GreyHiCursorPosition ;
+
+     UpdateLUT( GreyLevelMax ) ;
+
+     SetDisplayIntensityRange( GreyLo,GreyHi ) ;
+
+     UpdateDisplay := True ;
+
+end;
+
 procedure TMainFrm.bEnterCCDAreaClick(Sender: TObject);
 // -----------------------------------------
 // Set CCD readout region as % of total area
@@ -1959,46 +1987,6 @@ begin
     end ;
 
 
-procedure TMainFrm.tbBrightnessChange(Sender: TObject);
-// -------------------------
-// Brightness slider changed
-// -------------------------
-var
-    HalfRange : Integer ;
-begin
-
-     HalfRange := Abs((GreyHi - GreyLo) div 2) ;
-     GreyHi := GreyLevelMax - Min(tbBrightness.Position - HalfRange,GreyLevelMax) ;
-     GreyLo := GreyLevelMax - Max(tbBrightness.Position + HalfRange,0) ;
-
-     edDisplayIntensityRange.LoValue := GreyLo  ;
-     edDisplayIntensityRange.HiValue := GreyHi  ;
-
-     UpdateLUT( GreyLevelMax ) ;
-
-end;
-
-
-procedure TMainFrm.tbContrastChange(Sender: TObject);
-// -------------------------
-// Contrast slider changed
-// -------------------------
-var
-    HalfRange : Integer ;
-begin
-
-     HalfRange := Max((tbContrast.Max - tbContrast.Position) div 2,1) ;
-     GreyHi := tbBrightness.Max - Min(tbBrightness.Position - HalfRange,GreyLevelMax) ;
-     GreyLo := tbBrightness.Max - Max(tbBrightness.Position + HalfRange,0) ;
-
-     edDisplayIntensityRange.LoValue := GreyLo  ;
-     edDisplayIntensityRange.HiValue := GreyHi  ;
-
-     UpdateLUT( GreyLevelMax ) ;
-
-     end;
-
-
 procedure TMainFrm.StartCamera ;
 // ---------------
 // Scan image scan
@@ -2026,13 +2014,12 @@ begin
        begin
        Cam1.BinFactor := Integer(cbLiveBin.Items.Objects[cbLiveBin.ItemIndex]) ;
        if (CCDRegion.Height < 0.5) {or (Cam1.ReadoutTime <= 0.1)} then Cam1.BinFactor := 1 ;
-
        Cam1.TriggerMode := camFreeRun ;
        Cam1.NumPixelShiftFrames := 1 ;
        end
     else
        begin
-       Cam1.BinFactor := 1 ;
+       Cam1.BinFactor :=  Integer(cbCaptureBin.Items.Objects[cbCaptureBin.ItemIndex]) ;
        Cam1.TriggerMode := CamExtTrigger ;
        Cam1.NumPixelShiftFrames := Integer(cbCaptureMode.Items.Objects[cbCaptureMode.ItemIndex]) ;
        NumPixelShiftFrames := Integer(cbCaptureMode.Items.Objects[cbCaptureMode.ItemIndex]) ;
@@ -2315,6 +2302,30 @@ begin
 end;
 
 
+procedure TMainFrm.bRangeClick(Sender: TObject);
+// --------------------------------------------------
+// Set display intensity range from user entered range
+// ---------------------------------------------------
+begin
+
+    if edDisplayIntensityRange.LoValue = edDisplayIntensityRange.HiValue then
+        begin
+        edDisplayIntensityRange.LoValue := edDisplayIntensityRange.LoValue - 1.0 ;
+        edDisplayIntensityRange.HiValue := edDisplayIntensityRange.HiValue + 1.0 ;
+        end ;
+
+     GreyLo := Round(edDisplayIntensityRange.LoValue) ;
+     GreyHi := Round(edDisplayIntensityRange.HiValue) ;
+
+     UpdateLUT( GreyLevelMax ) ;
+
+     // Set intensity range and sliders
+     SetDisplayIntensityRange( GreyLo, GreyHi ) ;
+
+     UpdateDisplay := True ;
+end;
+
+
 procedure TMainFrm.CalculateMaxContrast ;
 // ---------------------------------------------------------
 // Calculate and set display for maximum grey scale contrast
@@ -2465,6 +2476,13 @@ begin
     plHistogram.YAxisLabel := '' ;
     plHistogram.ScreenFontSize := 8 ;
 
+    plHistogram.ClearVerticalCursors ;
+    HistogramCursorLo := plHistogram.AddVerticalCursor( clGray, '|', 0 ) ;
+    HistogramCursorHi := plHistogram.AddVerticalCursor( clGray, '|', 0 ) ;
+    plHistogram.LinkVerticalCursors( HistogramCursorLo, HistogramCursorHi ) ;
+    plHistogram.VerticalCursors[HistogramCursorLo] := GreyLoCursorPosition ;
+    plHistogram.VerticalCursors[HistogramCursorHi] := GreyHiCursorPosition ;
+
     // Create Histogram plot
     plHistogram.CreateHistogram( 0 ) ;
 
@@ -2589,8 +2607,13 @@ begin
 
                     // Snap image immediately or upon receiveing trigger on camera external trigger input
 
-                    if CameraTriggerMode = ctmCameraExtTrigger then Cam1.TriggerMode := CamExtTrigger
-                                                               else Cam1.TriggerMode := CamFreeRun ;
+                    if CameraTriggerMode = ctmCameraExtTrigger then
+                       begin
+                       Cam1.TriggerMode := CamExtTrigger ;
+                       Cam1.PulseIntervalTriggerMode := True ;
+                       end
+                    else Cam1.TriggerMode := CamFreeRun ;
+
                     Cam1.SnapImage ;
                     ImageCaptured := False ;
                     TNextEvent := TNow + EventList[EventCounter].Delay ;
@@ -2925,17 +2948,25 @@ procedure TMainFrm.bSelectedRegionClick(Sender: TObject);
 // ---------------------------
 // Set new frame capture area
 // ---------------------------
+var
+   OldCCDRegion : TDoubleRect ;
+
 begin
 
     if LiveImagingInProgress then StopCamera ;
 
      bSelectedRegion.Enabled := False ;
 
+     // Current settings
+     OldCCDRegion := CCDRegion ;
+     OldCCDRegion.Width := OldCCDRegion.Right - OldCCDRegion.Left ;
+     OldCCDRegion.Height := OldCCDRegion.Bottom - OldCCDRegion.Top ;
+
      // Set CCD region to selected ROI region
-     CCDRegion.Left := SelectedRect.Left ;
-     CCDRegion.Right := SelectedRect.Right ;
-     CCDRegion.Top := SelectedRect.Top ;
-     CCDRegion.Bottom := SelectedRect.Bottom ;
+     CCDRegion.Left := OldCCDRegion.Left + OldCCDRegion.Width*SelectedRect.Left ;
+     CCDRegion.Right := OldCCDRegion.Left + OldCCDRegion.Width*SelectedRect.Right ;
+     CCDRegion.Top := OldCCDRegion.Top + OldCCDRegion.Height*SelectedRect.Top ;
+     CCDRegion.Bottom := OldCCDRegion.Top + OldCCDRegion.Height*SelectedRect.Bottom ;
 
      // Reset selected ROI to full image
      SelectedRect.Left := 0 ;
@@ -3012,6 +3043,19 @@ begin
     if LiveImagingInProgress then StartCamera ;
     end;
 
+
+procedure TMainFrm.cbCaptureBinChange(Sender: TObject);
+// -------------------------
+// Capture binning mode changed
+// -------------------------
+begin
+   CaptureBinSelected := cbCaptureBin.ItemIndex ;
+   if LiveImagingInProgress then
+      begin
+      StopCamera ;
+      StartCamera ;
+      end;
+end;
 
 procedure TMainFrm.cbCaptureModeChange(Sender: TObject);
 var
@@ -3179,6 +3223,13 @@ begin
 
      UpdateDisplay := True ;
      end;
+
+
+procedure TMainFrm.plHistogramCursorChange(Sender: TObject);
+begin
+    GreyLoCursorPosition := Round(plHistogram.VerticalCursors[HistogramCursorLo]) ;
+    GreyHiCursorPosition := Round(plHistogram.VerticalCursors[HistogramCursorHi]) ;
+end;
 
 
 procedure TMainFrm.mnSaveImageClick(Sender: TObject);
@@ -3421,7 +3472,7 @@ begin
 
   // Image series options
 
-  ImageSizeGrp.ClientHeight := ckSeparateLightSources.Top +
+  ImageModeGrp.ClientHeight := ckSeparateLightSources.Top +
                                ckSeparateLightSources.Height +
                                ckAcquireZStack.Height +
                                ckAcquireTimeLapseSeries.Height + 25 ;
@@ -3432,13 +3483,13 @@ begin
   if ZStackGrp.Visible then
      begin
      ckAcquireTimeLapseSeries.Top := ZStackGrp.Top + ZStackGrp.Height + 2 ;
-     ImageSizeGrp.ClientHeight := ImageSizeGrp.ClientHeight + ZStackGrp.Height + 2 ;
+     ImageModeGrp.ClientHeight := ImageModeGrp.ClientHeight + ZStackGrp.Height + 2 ;
      end
   else ckAcquireTimeLapseSeries.Top := ckAcquireZStack.Top + ckAcquireZStack.Height + 2 ;
 
   TimeLapseGrp.Top := ckAcquireTimeLapseSeries.Top + ckAcquireTimeLapseSeries.Height + 2 ;
   TimeLapseGrp.Visible := ckAcquireTimeLapseSeries.Checked ;
-  if TimeLapseGrp.Visible then ImageSizeGrp.ClientHeight := ImageSizeGrp.ClientHeight + TimeLapseGrp.Height + 2 ;
+  if TimeLapseGrp.Visible then ImageModeGrp.ClientHeight := ImageModeGrp.ClientHeight + TimeLapseGrp.Height + 2 ;
 
   // Set light source panels
   iTop := 16 ;
@@ -3452,12 +3503,11 @@ begin
   SetLightSourcePanel(6,pnLightSource6,iTop ) ;
   SetLightSourcePanel(7,pnLightSource7,iTop ) ;
   IgnorePanelControls := False ;
-  LightSourceGrp.ClientHeight := iTop + 10 ;
+//  LightSourceGrp.ClientHeight := iTop + 10 ;
 
-  LightSourceGrp.Top := ImageSizeGrp.Top + ImageSizeGrp.Height + 5 ;
-  ZStageGrp.Top := LightSourceGrp.Top + LightSourceGrp.Height + 5 ;
-  DisplayGrp.Top := ZStageGrp.Top + ZStageGrp.Height + 5 ;
-  StatusGrp.Top := DisplayGrp.Top +DisplayGrp.Height + 5 ;
+  ZStageGrp.Top := ImageModeGrp.Top +  ImageModeGrp.Height + 5 ;
+  DisplayPage.Top := ZStageGrp.Top + ZStageGrp.Height + 5 ;
+
 
   SLidersGrp.Top := Page.Top + Page.Height + 1 ;
   SLidersGrp.Left := Page.Left ;
@@ -3553,31 +3603,6 @@ begin
       end;
 
 
-procedure TMainFrm.sbContrastChange(Sender: TObject);
-// --------------------------------------------------------
-// Set display grey scale to new contrast slider setting
-// --------------------------------------------------------
-begin
-
-     if ContrastPage.ActivePage <> SlidersTab then Exit ;
-
-     edDisplayIntensityRange.LoValue := tbBrightness.Position - (tbContrast.Position div 2) ;
-     edDisplayIntensityRange.HiValue := tbBrightness.Position + (tbContrast.Position div 2) ;
-
-     if edDisplayIntensityRange.LoValue = edDisplayIntensityRange.HiValue then
-        begin
-        edDisplayIntensityRange.LoValue := edDisplayIntensityRange.LoValue - 1.0 ;
-        edDisplayIntensityRange.HiValue := edDisplayIntensityRange.HiValue + 1.0 ;
-        end ;
-
-     GreyLo := Round(edDisplayIntensityRange.LoValue) ;
-     GreyHi := Round(edDisplayIntensityRange.HiValue) ;
-
-     SetDisplayIntensityRange( GreyLo, GreyHi ) ;
-     UpdateLUT(GreyLevelMax ) ;
-     UpdateDisplay := True ;
-
-     end;
 
 
 procedure TMainFrm.scTSectionChange(Sender: TObject);
@@ -3754,6 +3779,7 @@ begin
     AddElementInt( ProtNode, 'CAMERAGAIN', CameraGainIndex ) ;
 
     AddElementInt( ProtNode, 'LIVEBINSELECTED', LiveBinSelected ) ;
+    AddElementInt( ProtNode, 'CAPTUREBINSELECTED', CaptureBinSelected ) ;
 
     AddElementInt( ProtNode, 'HRFRAMEWIDTH', HRFrameWidth ) ;
     AddElementInt( ProtNode, 'HRFRAMEHEIGHT', HRFrameHeight ) ;
@@ -3919,6 +3945,9 @@ begin
 
     LiveBinSelected := GetElementInt( ProtNode, 'LIVEBINSELECTED', LiveBinSelected ) ;
     cbLiveBin.ItemIndex := LiveBinSelected ;
+
+    CaptureBinSelected := GetElementInt( ProtNode, 'CAPTUREBINSELECTED', CaptureBinSelected ) ;
+    cbCaptureBin.ItemIndex :=  CaptureBinSelected ;
 
     HRFrameWidth := GetElementInt( ProtNode, 'HRFRAMEWIDTH', HRFrameWidth ) ;
     HRFrameHeight := GetElementInt( ProtNode, 'HRFRAMEHEIGHT', HRFrameHeight ) ;
