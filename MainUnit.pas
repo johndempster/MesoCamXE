@@ -94,6 +94,7 @@ unit MainUnit;
 // V1.9.5 28.08.24 External trigger now suoported on Vieworks VA-29MC-5M and also via analog in.
 // V1.9.7 02.09.24 Pulse interval trigger mode now works with Vieworks VA-29MC-5M
 // V1.9.8 22.09.24 Support for FLIR BlackFly camera
+// V1.9.9 27.04.26 Support for Photometrics Iris camera added
 
 Interface
 
@@ -723,13 +724,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.9.8';
+     ProgramName := 'MesoCam V1.9.9';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 23/09/24';
+     ProgramName := ProgramName + ' 27/04/26';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
