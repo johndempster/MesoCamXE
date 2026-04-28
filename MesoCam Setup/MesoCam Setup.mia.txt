@@ -6,12 +6,6 @@ if Variable CHECKSYSTEM not Equals TRUE
   MessageBox: $TITLE$ Setup Error, This product requires at least Administrator Privileges.$NEWLINE$$NEWLINE$Setup cannot continue.
   Terminate Installation
 end
-Get System Setting Windows in 64 bit Mode into CHECKSYSTEM
-if Variable CHECKSYSTEM not Equals TRUE
-  MessageBox: $TITLE$ Setup Error, This product requires at least a 64 bit operating system.$NEWLINE$$NEWLINE$Setup cannot continue.
-  Terminate Installation
-end
-Set x64 - Native 64 bit Windows, AMD64 and EM64T Architectures - installation mode
 [END REGION]
  
 [DEFINE REGION: Check/Install Application Pre-Requisites]
@@ -280,9 +274,9 @@ else
   [OFFLINE CONTENT]
   Install Files C:\Users\John\Documents\Embarcadero\Studio\Projects\MesoCamXE\MesoCam.exe to $TARGETDIR$
   Get Folder Location Start Menu->Start Menu Group into SHORTCUTROOT
-  Create Shortcut $SHORTCUTROOT$\MesoCam V1.9.6 to $TARGETDIR$\MesoCam.exe
-  Create Shortcut $SHORTCUTFOLDER$\MesoCam V1.9.6 to $TARGETDIR$\MesoCam.exe
-  Create Shortcut $DESKTOPDIR$\MesoCam V1.9.6 to $TARGETDIR$\MesoCam.exe
+  Create Shortcut $SHORTCUTROOT$\MesoCam V1.9.8 to $TARGETDIR$\MesoCam.exe
+  Create Shortcut $SHORTCUTFOLDER$\MesoCam V1.9.8 to $TARGETDIR$\MesoCam.exe
+  Create Shortcut $DESKTOPDIR$\MesoCam V1.9.8 to $TARGETDIR$\MesoCam.exe
   Install Files C:\Users\John\Documents\Embarcadero\Studio\Projects\MesoCamXE\MesoCam.chm to $TARGETDIR$
   Install Files C:\Users\John\Documents\Embarcadero\Studio\Projects\MesoCamXE\ProScan III_ Manual.pdf to $TARGETDIR$
   Create Shortcut $SHORTCUTFOLDER$\ProScan III_ Manual to $TARGETDIR$\ProScan III_ Manual.pdf

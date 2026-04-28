@@ -341,8 +341,7 @@ procedure TZStage.GetControlPorts( List : TStrings ) ;
 // Get list of available control ports
 // -----------------------------------
 var
-    i : Integer ;
-  iDev: Integer;
+    i,item,iDev : Integer ;
 begin
      List.Clear ;
      case FStageType of
@@ -353,9 +352,12 @@ begin
           end ;
         stPiezo : begin
           // Analog outputs
+          List.Add('None');
+          item := 1 ;
           for iDev := 1 to LabIO.NumDevices do
               for i := 0 to LabIO.NumDACs[iDev]-1 do begin
-                List.Add(Format('Dev%d:AO%d',[iDev,i])) ;
+                List.Add(Format('Dev%d:AO%d',[iDev,item])) ;
+                Inc(item) ;
                 end;
           end;
         else begin
@@ -685,7 +687,7 @@ begin
 
     ZPosition := Position ;
 
-    iPort := 0 ;
+    iPort := 1 ;
     for iDev := 1 to LabIO.NumDevices do
         for iChan := 0 to LabIO.NumDACs[iDev]-1 do
             begin

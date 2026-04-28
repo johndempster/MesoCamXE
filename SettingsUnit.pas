@@ -516,8 +516,7 @@ begin
       for i := 0 to 3 do if Panel.Controls[i].Tag = 1 then
           begin
           LightSource.GetControlLineNames( TComboBox(Panel.Controls[i]).Items ) ;
-          TComboBox(Panel.Controls[i]).ItemIndex :=
-             TComboBox(Panel.Controls[i]).Items.IndexOfObject(TObject(LightSource.ControlLines[Num])) ;
+          TComboBox(Panel.Controls[i]).ItemIndex := Max(0,TComboBox(Panel.Controls[i]).Items.IndexOfObject(TObject(LightSource.ControlLines[Num]))) ;
           end ;
       for i := 0 to 3 do if Panel.Controls[i].Tag = 2 then
           TValidatedEdit(Panel.Controls[i]).Value := LightSource.MinLevel[Num] ;

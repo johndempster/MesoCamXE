@@ -857,7 +857,7 @@ object MainFrm: TMainFrm
     end
   end
   object Page: TPageControl
-    Left = 316
+    Left = 311
     Top = 7
     Width = 649
     Height = 564

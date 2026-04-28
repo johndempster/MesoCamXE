@@ -827,8 +827,7 @@ begin
      CameraPixelSize := 1.0 ;
      CalibrationBarSize := 100.0 ;
 
-     MagnifiedCameraPixelSize := CameraPixelSize /
-                                 Max(RelayLensMagnification*LensMagnification[LensSelected],1E-3) ;
+     MagnifiedCameraPixelSize := CameraPixelSize / Max(RelayLensMagnification*LensMagnification[LensSelected],1E-3) ;
 
      // Image-J program path
      ImageJPath := 'C:\ImageJ\imagej.exe';

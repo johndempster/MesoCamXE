@@ -629,8 +629,9 @@ var
     DeviceNum : Integer ;
 begin
 
-   // Clear number of devices
+   // Clear number of devices & resources
    NumDevices := 0 ;
+   NumResources := 0 ;
 
    { Clear A/D and D/A in progress flags }
 
@@ -643,7 +644,7 @@ begin
    if not LibraryLoaded then LibraryLoaded := NIDAQMX_LoadLibrary( LibraryHnd ) ;
    if not LibraryLoaded then
       begin
-      LogFrm.AddLine('NIDAQ-MX library (nicaiu.dll) not found!') ;
+      ShowMessage('NIDAQ-MX library (nicaiu.dll) not found!') ;
       Exit ;
       end ;
 
@@ -752,15 +753,17 @@ procedure TLabIO.GetAIPorts( List : TStrings ) ;
 // Return list of analogue input ports available
 // ----------------------------------------------
 var
-    i,ch : Cardinal ;
+    i,ch : Integer ;
     DevName : String ;
 begin
     List.Clear ;
     List.AddObject( 'None',TObject(MaxResources));
-    for i := 0 to High(Resource) do
-        if (Resource[i].ResourceType = ADCIn) then
+    for i := 0 to NumResources-1 do
         begin
-        List.AddObject( Resource[i].Name,TObject(i));
+        if (Resource[i].ResourceType = ADCIn) then
+           begin
+           List.AddObject( Resource[i].Name,TObject(i));
+           end;
         end;
 end;
 
@@ -770,11 +773,11 @@ procedure TLabIO.GetAOPorts( List : TStrings ) ;
 // Return list of analogue output ports available
 // ----------------------------------------------
 var
-    i : Cardinal ;
+    i : Integer ;
 begin
     List.Clear ;
     List.AddObject( 'None',TObject(MaxResources));
-    for i := 0 to High(Resource) do
+    for i := 0 to NumResources-1 do
         if (Resource[i].ResourceType = DACOut) then
         begin
         List.AddObject( Resource[i].Name,TObject(i));
@@ -787,11 +790,11 @@ procedure TLabIO.GetPOPorts( List : TStrings ) ;
 // Return list of digital output ports available
 // ----------------------------------------------
 var
-    i : Cardinal ;
+    i : Integer ;
 begin
     List.Clear ;
     List.AddObject( 'None',TObject(MaxResources));
-    for i := 0 to High(Resource) do
+    for i := 0 to NumResources-1 do
         if (Resource[i].ResourceType = DigOut) then
         begin
         List.AddObject( Resource[i].Name,TObject(i));
@@ -814,6 +817,8 @@ begin
 
    // Clear number of devices
    NumDevices := 0 ;
+   NumResources := 0 ;
+   Result := False ;
 
    { Clear A/D and D/A in progress flags }
 
@@ -825,7 +830,7 @@ begin
    // Load API function library
    if not LibraryLoaded then LibraryLoaded := NIDAQMX_LoadLibrary( LibraryHnd ) ;
    if not LibraryLoaded then begin
-      LogFrm.AddLine('NIDAQ-MX library (nicaiu.dll) not found!') ;
+      ShowMessage('NIDAQ-MX library (nicaiuxdll) not found!') ;
       Exit ;
       end ;
 
@@ -918,7 +923,6 @@ begin
             Inc(NumResources) ;
             end ;
         end ;
-
 
    Result := True ;
 
@@ -2043,7 +2047,10 @@ var
     Device : SmallInt ;
 begin
 
-     for Device := 1 to NumDevices do begin
+     if not LibraryLoaded then Exit ;
+
+     for Device := 1 to NumDevices do
+         begin
          if DACActive[Device] then StopDAC(Device) ;
          if ADCActive[Device] then StopADC(Device) ;
          end ;
