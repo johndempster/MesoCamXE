@@ -869,8 +869,6 @@ object MainFrm: TMainFrm
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 3
     OnChange = PageChange
-    ExplicitWidth = 645
-    ExplicitHeight = 563
     object tbChan0: TTabSheet
       Margins.Left = 2
       Margins.Top = 2
@@ -990,8 +988,6 @@ object MainFrm: TMainFrm
     Margins.Bottom = 2
     Anchors = [akLeft, akRight, akBottom]
     TabOrder = 4
-    ExplicitTop = 1075
-    ExplicitWidth = 675
     object TSectionPanel: TPanel
       Left = 8
       Top = 7
