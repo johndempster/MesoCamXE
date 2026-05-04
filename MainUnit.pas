@@ -95,6 +95,7 @@ unit MainUnit;
 // V1.9.7 02.09.24 Pulse interval trigger mode now works with Vieworks VA-29MC-5M
 // V1.9.8 22.09.24 Support for FLIR BlackFly camera
 // V1.9.9 27.04.26 Support for Photometrics Iris camera added
+// V2.0.0 04.05.26 PulseInterval trigger node support added to PVCAM.
 
 Interface
 
@@ -724,13 +725,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V1.9.9';
+     ProgramName := 'MesoCam V2.0.0';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 27/04/26';
+     ProgramName := ProgramName + ' 04/05/26';
      Caption := ProgramName ;
 
      TempBuf := Nil ;

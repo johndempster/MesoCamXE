@@ -1,6 +1,6 @@
 object MainFrm: TMainFrm
-  Left = 122
-  Top = 287
+  Left = 107
+  Top = 50
   Caption = 'to'
   ClientHeight = 894
   ClientWidth = 981
@@ -56,7 +56,7 @@ object MainFrm: TMainFrm
     ParentFont = False
   end
   object ControlGrp: TGroupBox
-    Left = 7
+    Left = 8
     Top = 7
     Width = 300
     Height = 230
@@ -383,7 +383,7 @@ object MainFrm: TMainFrm
     end
   end
   object ImageModeGrp: TGroupBox
-    Left = 7
+    Left = 8
     Top = 241
     Width = 300
     Height = 164
@@ -680,8 +680,8 @@ object MainFrm: TMainFrm
     end
   end
   object ZStageGrp: TGroupBox
-    Left = 7
-    Top = 400
+    Left = 8
+    Top = 404
     Width = 300
     Height = 112
     Margins.Left = 2
@@ -699,7 +699,7 @@ object MainFrm: TMainFrm
     object edGotoXPosition: TValidatedEdit
       Left = 8
       Top = 76
-      Width = 80
+      Width = 85
       Height = 23
       Hint = 'Z axis position to move to'
       Margins.Left = 2
@@ -722,9 +722,9 @@ object MainFrm: TMainFrm
       HiLimit = 1000000.000000000000000000
     end
     object bGotoZPosition: TButton
-      Left = 210
+      Left = 205
       Top = 50
-      Width = 80
+      Width = 85
       Height = 20
       Hint = 'Move stage to specified Z axis position'
       Margins.Left = 2
@@ -744,9 +744,9 @@ object MainFrm: TMainFrm
       OnClick = bGotoZPositionClick
     end
     object edGotoYPosition: TValidatedEdit
-      Left = 110
+      Left = 107
       Top = 76
-      Width = 80
+      Width = 85
       Height = 23
       Hint = 'Z axis position to move to'
       Margins.Left = 2
@@ -769,9 +769,9 @@ object MainFrm: TMainFrm
       HiLimit = 1000000.000000000000000000
     end
     object edGotoZPosition: TValidatedEdit
-      Left = 210
+      Left = 205
       Top = 76
-      Width = 80
+      Width = 85
       Height = 23
       Hint = 'Z axis position to move to'
       Margins.Left = 2
@@ -814,7 +814,7 @@ object MainFrm: TMainFrm
     object bGoToXPosition: TButton
       Left = 8
       Top = 50
-      Width = 80
+      Width = 85
       Height = 20
       Hint = 'Move stage to specified X axis position'
       Margins.Left = 2
@@ -834,9 +834,9 @@ object MainFrm: TMainFrm
       OnClick = bGoToXPositionClick
     end
     object bGoToYPosition: TButton
-      Left = 110
+      Left = 107
       Top = 50
-      Width = 80
+      Width = 85
       Height = 20
       Hint = 'Move stage to specified Y axis position'
       Margins.Left = 2
@@ -1268,12 +1268,12 @@ object MainFrm: TMainFrm
         Font.Name = 'Arial'
         Font.Style = [fsBold]
         ShowHint = True
-        Text = ' 4096.00 - 4096.00 '
+        Text = ' 4096 - 4096 '
         LoValue = 4096.000000000000000000
         HiValue = 4096.000000000000000000
         HiLimit = 1.000000015047466E30
         Scale = 1.000000000000000000
-        NumberFormat = '%.f - %.f'
+        NumberFormat = '%.0f - %.0f'
       end
       object ckContrast6SDOnly: TCheckBox
         Left = 109
