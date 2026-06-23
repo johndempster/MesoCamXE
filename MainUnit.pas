@@ -96,6 +96,7 @@ unit MainUnit;
 // V1.9.8 22.09.24 Support for FLIR BlackFly camera
 // V1.9.9 27.04.26 Support for Photometrics Iris camera added
 // V2.0.0 04.05.26 PulseInterval trigger node support added to PVCAM.
+// V2.0.1 23.06.26 Testing pixel shifting mode with LED sequencer (in progress)
 
 Interface
 
@@ -352,6 +353,7 @@ type
 
     { Private declarations }
         TimerBusy : Boolean ;
+        TsysSnap : Integer ;
         BitMap : TBitMap ;  // Image internal bitmaps
         procedure DisplayROI( BitMap : TBitmap ) ;
         procedure DisplaySquare(
@@ -725,13 +727,13 @@ begin
      ShowCapturedImage := False ;
      UpdateLightSource := False ;
 
-     ProgramName := 'MesoCam V2.0.0';
+     ProgramName := 'MesoCam V2.0.1';
      {$IFDEF WIN32}
      ProgramName := ProgramName + ' (32 bit)';
     {$ELSE}
      ProgramName := ProgramName + ' (64 bit)';
     {$IFEND}
-     ProgramName := ProgramName + ' 04/05/26';
+     ProgramName := ProgramName + ' 23/06/26';
      Caption := ProgramName ;
 
      TempBuf := Nil ;
@@ -2611,7 +2613,8 @@ begin
                     if CameraTriggerMode = ctmCameraExtTrigger then
                        begin
                        Cam1.TriggerMode := CamExtTrigger ;
-                       Cam1.PulseIntervalTriggerMode := True ;
+                       if CameraPulseIntervalMode then Cam1.PulseIntervalTriggerMode := True
+                                                  else Cam1.PulseIntervalTriggerMode := False ;
                        end
                     else Cam1.TriggerMode := CamFreeRun ;
 
@@ -2619,6 +2622,13 @@ begin
                     ImageCaptured := False ;
                     TNextEvent := TNow + EventList[EventCounter].Delay ;
                     Inc(EventCounter) ;
+
+                    if (Cam1.TriggerMode = CamExtTrigger) and Cam1.PulseIntervalTriggerMode then s := '(Trigger Mode: Exposure Interval)'
+                    else if Cam1.TriggerMode = CamExtTrigger then s := '(Trigger Mode: Exposure Start)'
+                    else s := '(Trigger Mode: Free Run)' ;
+                    outputdebugstring(pchar('SnapImage Requested ' + s));
+                    TsysSnap := TimeGetTime ;
+
                     end;
 
                 end;
@@ -3641,7 +3651,7 @@ var
     i : DWORD ;
     NumBytes : Int64 ;
 begin
-      outputdebugstring(pchar(format('Save Raw %d',[iImage])));
+
       // Copy into I/O buf
       NumBytes := Int64(HRNumComponentsPerFrame)*Int64(SizeOf(Word)) ;
       pBufW := GetMemory( NumBytes ) ;
@@ -3672,6 +3682,8 @@ begin
 
       // Save settings to INI file (to preserve raw file data settings)
       SaveSettingsToXMLFile( INIFileName ) ;
+
+      outputdebugstring(pchar(format('Save Raw %d (%d)',[iImage,TimeGetTime-TsysSnap])));
 
       end;
 

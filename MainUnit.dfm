@@ -42,7 +42,7 @@ object MainFrm: TMainFrm
   object lbSaveFilename: TLabel
     Left = 546
     Top = 323
-    Width = 3
+    Width = 4
     Height = 16
     Margins.Left = 2
     Margins.Top = 2
@@ -869,6 +869,8 @@ object MainFrm: TMainFrm
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 3
     OnChange = PageChange
+    ExplicitWidth = 643
+    ExplicitHeight = 547
     object tbChan0: TTabSheet
       Margins.Left = 2
       Margins.Top = 2
@@ -988,6 +990,8 @@ object MainFrm: TMainFrm
     Margins.Bottom = 2
     Anchors = [akLeft, akRight, akBottom]
     TabOrder = 4
+    ExplicitTop = 1059
+    ExplicitWidth = 673
     object TSectionPanel: TPanel
       Left = 8
       Top = 7
@@ -1010,8 +1014,8 @@ object MainFrm: TMainFrm
       object lbTSection: TLabel
         Left = 153
         Top = 0
-        Width = 24
-        Height = 17
+        Width = 32
+        Height = 16
         Margins.Left = 2
         Margins.Top = 2
         Margins.Right = 2
@@ -1077,8 +1081,8 @@ object MainFrm: TMainFrm
       object lbZSection: TLabel
         Left = 153
         Top = 0
-        Width = 24
-        Height = 17
+        Width = 32
+        Height = 16
         Margins.Left = 2
         Margins.Top = 2
         Margins.Right = 2
@@ -1343,7 +1347,7 @@ object MainFrm: TMainFrm
         Left = 2
         Top = 280
         Width = 279
-        Height = 25
+        Height = 24
         Margins.Left = 2
         Margins.Top = 2
         Margins.Right = 2
